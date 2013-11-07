@@ -21,9 +21,6 @@ our @EXPORT_OK = qw(
   archive_entry_pathname
   archive_read_data_skip
   
-  malloc
-  free
-  
   ARCHIVE_OK
 );
 
@@ -65,8 +62,5 @@ attach_function 'archive_error_string', [ _ptr ], _str;
 attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int;
 attach_function 'archive_entry_pathname', [ _ptr ], _str;
 attach_function 'archive_read_data_skip', [ _ptr ], _int;
-
-attach_function 'malloc', [ _int ], _ptr;
-attach_function 'free', [ _ptr ], _void;
 
 1;

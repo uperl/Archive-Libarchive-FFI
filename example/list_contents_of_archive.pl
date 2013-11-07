@@ -3,6 +3,12 @@ use warnings;
 use lib '../lib';
 use Archive::Libarchive::FFI qw( :all );
 
+use FFI::Sweet qw( attach_function ffi_lib :types );
+ffi_lib \'./libdumb.so';
+attach_function 'malloc', [ _int ], _ptr;
+attach_function 'free', [ _ptr ], _void;
+attach_function 'deref', [ _ptr ], _ptr;
+
 my $a = archive_read_new();
 archive_read_support_filter_all($a);
 archive_read_support_format_all($a);
@@ -16,7 +22,7 @@ if($r != ARCHIVE_OK)
 
 my $entry = malloc(8);
 while (archive_read_next_header($a, $entry) == ARCHIVE_OK) {
-  #print archive_entry_pathname($entry), "\n";
+  print archive_entry_pathname(deref($entry)), "\n";
   archive_read_data_skip($a); 
 }
 free($entry);
