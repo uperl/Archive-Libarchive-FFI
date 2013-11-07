@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib '../lib';
 use Archive::Libarchive::FFI qw( :all );
+use Config ();
 
 use FFI::Sweet qw( attach_function ffi_lib :types );
 ffi_lib \'./libdumb.so';
@@ -18,7 +19,7 @@ if($r != ARCHIVE_OK)
   die "error opening archive.tar: ", archive_error_string($a);
 }
 
-my $entry = FFI::Raw::MemPtr->new(8);
+my $entry = FFI::Raw::MemPtr->new($Config::Config{ptrsize});
 while (archive_read_next_header($a, $entry) == ARCHIVE_OK) {
   print archive_entry_pathname(deref($entry)), "\n";
   archive_read_data_skip($a); 
