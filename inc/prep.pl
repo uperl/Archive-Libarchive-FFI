@@ -30,7 +30,7 @@ do { # constants.pm
     print $fh "  $const\n";
   }
   
-  print $fh ")\n\n";
+  print $fh ");\n\n";
   
   print $fh "1;\n";
   

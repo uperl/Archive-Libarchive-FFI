@@ -3,6 +3,7 @@ package Archive::Libarchive::FFI;
 use strict;
 use warnings;
 use Alien::Libarchive;
+use FFI::Raw::PtrPtr;
 use FFI::Sweet qw( ffi_lib attach_function :types );
 use base qw( Exporter );
 
@@ -12,6 +13,7 @@ use base qw( Exporter );
 our %EXPORT_TAGS = ( all => [], const => [], func => [] );
 
 require Archive::Libarchive::FFI::constants;
+require Archive::Libarchive::FFI::functions;
 
 @{ $EXPORT_TAGS{func} } = qw(
   archive_read_new
@@ -36,9 +38,15 @@ attach_function 'archive_read_support_format_all', [ _ptr ], _int;
 attach_function 'archive_read_open_filename', [ _ptr, _str, _int ], _int;
 attach_function 'archive_read_free', [ _ptr ], _int;
 attach_function 'archive_error_string', [ _ptr ], _str;
-
-attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int;
 attach_function 'archive_entry_pathname', [ _ptr ], _str;
 attach_function 'archive_read_data_skip', [ _ptr ], _int;
+
+sub archive_read_next_header
+{
+  my $entry = FFI::Raw::PtrPtr->new;  
+  my $ret = Archive::Libarchive::FFI::functions::archive_read_next_header($_[0], $entry);
+  $_[1] = $entry->dereference;
+  $ret;
+}
 
 1;

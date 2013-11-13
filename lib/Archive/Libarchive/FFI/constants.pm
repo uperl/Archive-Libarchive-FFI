@@ -285,6 +285,6 @@ push @{ $Archive::Libarchive::FFI::EXPORT_TAGS{const} }, qw(
   ARCHIVE_RETRY
   ARCHIVE_VERSION_NUMBER
   ARCHIVE_WARN
-)
+);
 
 1;
