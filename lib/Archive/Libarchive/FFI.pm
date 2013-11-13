@@ -49,7 +49,7 @@ attach_function 'archive_version_string',              undef, _str;
 attach_function "archive_read_support_filter_$_",  [ _ptr ], _int for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
 attach_function "archive_read_support_format_$_",  [ _ptr ], _int for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 
-push @{ $EXPORT_TAGS{func} }, qw( archive_read_next_header archive_read_open_memory );
+push @{ $EXPORT_TAGS{func} }, qw( archive_read_next_header archive_read_open_memory archive_read_data );
 
 sub archive_read_next_header
 {
@@ -65,6 +65,15 @@ sub archive_read_open_memory
   my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
   my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
   Archive::Libarchive::FFI::functions::archive_read_open_memory($archive, $ptr, $length);
+}
+
+sub archive_read_data
+{
+  # 0 archive 1 buffer 2 size
+  my $buffer = FFI::Raw::MemPtr->new($_[2]);
+  my $ret = Archive::Libarchive::FFI::functions::archive_read_data($_[0], $buffer, $_[2]);
+  $_[1] = $buffer->tostr($ret);
+  $ret;
 }
 
 @{ $EXPORT_TAGS{func} } = sort @{ $EXPORT_TAGS{func} };
@@ -196,6 +205,14 @@ codes.
 =head2 archive_format_name($archive)
 
 A textual description of the format of the current entry.
+
+=head2 archive_read_data($archive, $buffer, $max_size)
+
+Read data associated with the header just read.  Internally, this is a
+convenience function that calls C<archive_read_data_block> and fills
+any gaps with nulls so that callers see a single continuous stream of
+data.  Returns the actual number of bytes read, 0 on end of data and
+a negative value on error.
 
 =head2 archive_read_data_skip($archive)
 
