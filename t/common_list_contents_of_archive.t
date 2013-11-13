@@ -5,11 +5,14 @@ use Test::More tests => 10;
 use FindBin ();
 use File::Spec;
 
+my %failures;
+
 foreach my $mode (qw( memory filename ))
 {
   foreach my $format (qw( tar tar.gz tar.bz2 xar zip ))
   {
-    subtest "$format $mode" => sub {
+    my $testname = "$format $mode";
+    my $ok = subtest $testname=> sub {
       plan tests => 17;
     
       my $filename = File::Spec->catfile($FindBin::Bin, "foo.$format");
@@ -82,6 +85,13 @@ foreach my $mode (qw( memory filename ))
  
       $r = archive_read_free($a);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_free)";
-    }
+    };
+    $failures{$testname} = 1 unless $ok;
   }
+}
+
+if(%failures)
+{
+  diag "failure summary:";
+  diag "  $_" for keys %failures;
 }
