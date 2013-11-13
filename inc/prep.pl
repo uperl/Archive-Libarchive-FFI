@@ -87,3 +87,31 @@ do { # import tests from XS version
   }
 
 };
+
+do { # import documentation
+  use Pod::Abstract;
+
+  my $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS.pm ));
+  my $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI.pm ));
+
+  say $source->absolute;
+
+  my @content = $dest->slurp;
+  
+  pop @content while $content[-1] ne "__END__\n";
+  
+  unless(@content > 0)
+  {
+    die "didn't find __END__";
+  }
+
+  my $pa = Pod::Abstract->load_file( $source->stringify );
+  $_->detach for $pa->select('//#cut');
+
+  my $doc = $pa->pod;
+  $doc =~ s/XS/FFI/g;
+
+  my $fh = $dest->openw;
+  print $fh @content, "\n", $doc;  
+
+};
