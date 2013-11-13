@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 8;
+use Test::More tests => 7;
 use FindBin ();
 use File::Spec;
 
@@ -12,8 +12,6 @@ my $entry;
 note "filename = $filename";
 
 my $a = archive_read_new();
-
-isa_ok $a, "Archive::Libarchive::FFI::archive";
 
 $r = archive_read_support_filter_all($a);
 is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_support_filter_all)";

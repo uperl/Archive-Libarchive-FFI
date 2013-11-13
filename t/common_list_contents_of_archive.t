@@ -10,7 +10,7 @@ foreach my $mode (qw( memory filename ))
   foreach my $format (qw( tar tar.gz tar.bz2 xar zip ))
   {
     subtest "$format $mode" => sub {
-      plan tests => 21;
+      plan tests => 17;
     
       my $filename = File::Spec->catfile($FindBin::Bin, "foo.$format");
       my $r;
@@ -20,8 +20,6 @@ foreach my $mode (qw( memory filename ))
 
       my $a = archive_read_new();
 
-      isa_ok $a, "Archive::Libarchive::FFI::archive";
- 
       $r = archive_read_support_filter_all($a);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_support_filter_all)";
 
@@ -43,7 +41,6 @@ foreach my $mode (qw( memory filename ))
 
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 1)";
-      isa_ok $entry, "Archive::Libarchive::FFI::archive_entry";
 
       is archive_file_count($a), 1, "archive_file_count = 1";
 
@@ -62,7 +59,6 @@ foreach my $mode (qw( memory filename ))
 
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 2)";
-      isa_ok $entry, "Archive::Libarchive::FFI::archive_entry";
 
       is archive_file_count($a), 2, "archive_file_count = 2";
 
@@ -73,7 +69,6 @@ foreach my $mode (qw( memory filename ))
 
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 3)";
-      isa_ok $entry, "Archive::Libarchive::FFI::archive_entry";
 
       is archive_file_count($a), 3, "archive_file_count = 3";
 
