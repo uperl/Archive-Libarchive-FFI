@@ -45,8 +45,8 @@ attach_function 'archive_read_support_format_by_code', [ _ptr, _int ], _int;
 attach_function 'archive_version_number',              undef, _int;
 attach_function 'archive_version_string',              undef, _str;
 
-attach_function "archive_read_support_filter_$_",  [ _ptr ], _int for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
-attach_function "archive_read_support_format_$_",  [ _ptr ], _int for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
+eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
+eval { attach_function "archive_read_support_format_$_",  [ _ptr ], _int } for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 
 push @{ $EXPORT_TAGS{func} }, qw(
   archive_read_next_header
@@ -140,6 +140,20 @@ Current operation cannot complete
 No more operations are possible
 
 =back
+
+If you are linking against an older version of libarchive, some of these 
+functions may not be available.  You can use the C<can> method to test if
+a function or constant is available, for example:
+
+ if(Archive::Libarchive::FFI->can('archive_read_support_filter_grzip')
+ {
+   # grzip filter is available.
+ }
+
+You can use this one-liner to determine which functions and constants
+are unavailable:
+
+ % perl -MArchive::Libarchive::FFI    -E 'for(@Archive::Libarchive::FFI::EXPORT_OK) { say $_ unless Archive::Libarchive::FFI->can($_) }'
 
 =head2 archive_clear_error($archive)
 
@@ -263,9 +277,14 @@ TODO: a NULL filename represents standard input.
 
 =head2 archive_read_open_memory($archive, $buffer)
 
-Like C<archive_read_open>, except that it uses a Perl scalar that holds the content of the
-archive.  This function does not make a copy of the data stored in C<$buffer>, so you should
-not modify the buffer until you have free the archive using C<archive_read_free>.
+Like C<archive_read_open>, except that it uses a Perl scalar that holds the 
+content of the archive.  This function does not make a copy of the data stored 
+in C<$buffer>, so you should not modify the buffer until you have free the 
+archive using C<archive_read_free>.
+
+Bad things will happen if the buffer falls out of scope and is deallocated
+before you free the archive, so make sure that there is a reference to the
+buffer somewhere in your programmer until C<archive_read_free> is called.
 
 =head2 archive_read_support_filter_all($archive)
 

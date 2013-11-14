@@ -43,6 +43,20 @@ with one of the following values:
 
     No more operations are possible
 
+If you are linking against an older version of libarchive, some of these 
+functions may not be available.  You can use the `can` method to test if
+a function or constant is available, for example:
+
+    if(Archive::Libarchive::FFI->can('archive_read_support_filter_grzip')
+    {
+      # grzip filter is available.
+    }
+
+You can use this one-liner to determine which functions and constants
+are unavailable:
+
+    % perl -MArchive::Libarchive::FFI    -E 'for(@Archive::Libarchive::FFI::EXPORT_OK) { say $_ unless Archive::Libarchive::FFI->can($_) }'
+
 ## archive\_clear\_error($archive)
 
 Clears any error information left over from a previous call Not
@@ -165,9 +179,14 @@ TODO: a NULL filename represents standard input.
 
 ## archive\_read\_open\_memory($archive, $buffer)
 
-Like `archive_read_open`, except that it uses a Perl scalar that holds the content of the
-archive.  This function does not make a copy of the data stored in `$buffer`, so you should
-not modify the buffer until you have free the archive using `archive_read_free`.
+Like `archive_read_open`, except that it uses a Perl scalar that holds the 
+content of the archive.  This function does not make a copy of the data stored 
+in `$buffer`, so you should not modify the buffer until you have free the 
+archive using `archive_read_free`.
+
+Bad things will happen if the buffer falls out of scope and is deallocated
+before you free the archive, so make sure that there is a reference to the
+buffer somewhere in your programmer until `archive_read_free` is called.
 
 ## archive\_read\_support\_filter\_all($archive)
 

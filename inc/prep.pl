@@ -10,36 +10,40 @@ do { # constants.pm
   
   $file->parent->mkpath(0,0755);
   
-  my $fh = $file->openw;
+  eval {
+    my $buffer = '';
+    $buffer .= "package Archive::Libarchive::FFI::constants;\n\n";
+    $buffer .= "use strict;\n";
+    $buffer .= "use warnings;\n\n";
   
-  print $fh "package Archive::Libarchive::FFI::constants;\n\n";
-  print $fh "use strict;\n";
-  print $fh "use warnings;\n\n";
+    $buffer .= "# VERSION\n\n";
   
-  print $fh "# VERSION\n\n";
-  
-  print $fh "package\n  Archive::Libarchive::FFI;\n\n";
+    $buffer .= "package\n  Archive::Libarchive::FFI;\n\n";
 
-  print $fh "use constant {\n";
-  foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
-  {
-    my $value = eval qq{ Archive::Libarchive::XS::$const() };
-    print $fh "  $const => $value,\n";
-  }
-  print $fh "};\n\n";
+    $buffer .= "use constant {\n";
+    foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
+    {
+      my $value = eval qq{ Archive::Libarchive::XS::$const() };
+      die $@ if $@;
+      $buffer .= "  $const => $value,\n";
+    }
+    $buffer .= "};\n\n";
   
-  print $fh "push \@{ \$Archive::Libarchive::FFI::EXPORT_TAGS{const} }, qw(\n";
+    $buffer .= "push \@{ \$Archive::Libarchive::FFI::EXPORT_TAGS{const} }, qw(\n";
   
-  foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
-  {
-    print $fh "  $const\n";
-  }
+    foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
+    {
+      $buffer .= "  $const\n";
+    }
   
-  print $fh ");\n\n";
+    $buffer .= ");\n\n";
   
-  print $fh "1;\n";
+    $buffer .= "1;\n";
+    
+    $file->spew($buffer);
+  };
   
-  close $fh;
+  warn "WARNING: did not regenerate constants.pm because there are missing constatns: $@";
 };
 
 do { # import SEE ALSO
