@@ -63,7 +63,7 @@ sub archive_read_open_memory
 {
   my($archive, $buffer) = @_;
   my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
-  my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
+  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
   Archive::Libarchive::FFI::functions::archive_read_open_memory($archive, $ptr, $length);
 }
 
