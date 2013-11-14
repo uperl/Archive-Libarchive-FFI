@@ -29,7 +29,6 @@ attach_function 'archive_read_support_filter_all',     [ _ptr ], _int;
 attach_function 'archive_read_support_format_all',     [ _ptr ], _int;
 attach_function 'archive_read_open_filename',          [ _ptr, _str, _int ], _int;
 attach_function 'archive_read_free',                   [ _ptr ], _int;
-attach_function 'archive_error_string',                [ _ptr ], _str;
 attach_function 'archive_entry_pathname',              [ _ptr ], _str;
 attach_function 'archive_read_data_skip',              [ _ptr ], _int;
 attach_function 'archive_clear_error',                 [ _ptr ], _void;
@@ -49,7 +48,12 @@ attach_function 'archive_version_string',              undef, _str;
 attach_function "archive_read_support_filter_$_",  [ _ptr ], _int for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
 attach_function "archive_read_support_format_$_",  [ _ptr ], _int for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 
-push @{ $EXPORT_TAGS{func} }, qw( archive_read_next_header archive_read_open_memory archive_read_data );
+push @{ $EXPORT_TAGS{func} }, qw(
+  archive_read_next_header
+  archive_read_open_memory
+  archive_read_data
+  archive_error_string
+);
 
 sub archive_read_next_header
 {
@@ -74,6 +78,13 @@ sub archive_read_data
   my $ret = Archive::Libarchive::FFI::functions::archive_read_data($_[0], $buffer, $_[2]);
   $_[1] = $buffer->tostr($ret);
   $ret;
+}
+
+sub archive_error_string
+{
+  my $str = Archive::Libarchive::FFI::functions::archive_error_string($_[0]);
+  return '' unless defined $str;
+  $str;
 }
 
 @{ $EXPORT_TAGS{func} } = sort @{ $EXPORT_TAGS{func} };

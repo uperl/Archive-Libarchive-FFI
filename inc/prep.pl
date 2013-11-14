@@ -12,10 +12,14 @@ do { # constants.pm
   
   my $fh = $file->openw;
   
-  print $fh "package Archive::Libarchive::FFI;\n\n";
+  print $fh "package Archive::Libarchive::FFI::constants;\n\n";
   print $fh "use strict;\n";
   print $fh "use warnings;\n\n";
   
+  print $fh "# VERSION\n\n";
+  
+  print $fh "package\n  Archive::Libarchive::FFI;\n\n";
+
   print $fh "use constant {\n";
   foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
   {

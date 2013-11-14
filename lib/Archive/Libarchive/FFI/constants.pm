@@ -1,7 +1,12 @@
-package Archive::Libarchive::FFI;
+package Archive::Libarchive::FFI::constants;
 
 use strict;
 use warnings;
+
+# VERSION
+
+package
+  Archive::Libarchive::FFI;
 
 use constant {
   AE_IFBLK => 24576,
