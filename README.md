@@ -444,6 +444,17 @@ The intent of this module is to provide a low level fairly thin direct
 interface to libarchive, on which a more Perlish OO layer could easily
 be written.
 
+- [Archive::Libarchive::XS](https://metacpan.org/pod/Archive::Libarchive::XS)
+- [Archive::Libarchive::FFI](https://metacpan.org/pod/Archive::Libarchive::FFI)
+
+    Both of these provide the same API to libarchive via [Alien::Libarchive](https://metacpan.org/pod/Alien::Libarchive),
+    but the bindings are implemented in XS for one and via [FFI::Sweet](https://metacpan.org/pod/FFI::Sweet) for
+    the other.
+
+- [Archive::Libarchive::Any](https://metacpan.org/pod/Archive::Libarchive::Any)
+
+    Offers whichever is available, either the XS or FFI version.
+
 - [Archive::Peek::Libarchive](https://metacpan.org/pod/Archive::Peek::Libarchive)
 - [Archive::Extract::Libarchive](https://metacpan.org/pod/Archive::Extract::Libarchive)
 

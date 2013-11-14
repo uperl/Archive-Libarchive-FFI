@@ -38,6 +38,13 @@ do { # constants.pm
   close $fh;
 };
 
+do { # import SEE ALSO
+  my $source = file(__FILE__)->parent->parent->parent->file('Archive-Libarchive-XS', 'inc', 'SeeAlso.pm');
+  my $dest   = file(__FILE__)->parent->file('SeeAlso.pm');
+  say $source->absolute;
+  $dest->spew(scalar $source->slurp);
+};
+
 do { # import examples from XS version
 
   my $source = file(__FILE__)->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('example');

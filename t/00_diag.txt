@@ -1,10 +1,10 @@
 Alien::Libarchive
 Exporter
-ExtUtils::MakeMaker
 FFI::Raw::PtrPtr
 FFI::Sweet
 File::Spec
 FindBin
+Module::Build
 Test::More
 bytes
 constant
