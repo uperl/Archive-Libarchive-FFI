@@ -10,7 +10,7 @@ use base qw( Exporter );
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
-ffi_lib \$_ for map { print "$_\n" if 0; $_ } DynaLoader::dl_findfile(split /\s+/, Alien::Libarchive->new->libs);
+ffi_lib \$_ for DynaLoader::dl_findfile(split /\s+/, Alien::Libarchive->new->libs);
 
 our %EXPORT_TAGS = ( all => [], const => [], func => [] );
 
