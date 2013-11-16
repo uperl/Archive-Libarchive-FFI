@@ -909,12 +909,15 @@ be written.
 
 - [Archive::Libarchive::Any](https://metacpan.org/pod/Archive::Libarchive::Any)
 
-    Offers whichever is available, either the XS or FFI version.
+    Offers whichever is available, either the XS or FFI version.  The
+    actual algorithm as to which is picked is subject to change, depending
+    on with version seems to be the most reliable.
 
 - [Archive::Peek::Libarchive](https://metacpan.org/pod/Archive::Peek::Libarchive)
 - [Archive::Extract::Libarchive](https://metacpan.org/pod/Archive::Extract::Libarchive)
 
-    Both of these provide a higher level perlish interface to libarchive.
+    Both of these provide a higher level, less complete perlish interface
+    to libarchive.
 
 - [Archive::Tar](https://metacpan.org/pod/Archive::Tar)
 - [Archive::Tar::Wrapper](https://metacpan.org/pod/Archive::Tar::Wrapper)
