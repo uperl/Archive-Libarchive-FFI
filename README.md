@@ -704,11 +704,71 @@ These examples are also included with the distribution.
 
 ## List contents of archive stored in file
 
-\# EXAMPLE: example/list\_contents\_of\_archive\_stored\_in\_file.pl
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-List_contents_of_Archive_stored_in_File
+    
+    my $a = archive_read_new();
+    archive_read_support_filter_all($a);
+    archive_read_support_format_all($a);
+    
+    my $r = archive_read_open_filename($a, "archive.tar", 10240);
+    if($r != ARCHIVE_OK)
+    {
+      print "r = $r\n";
+      die "error opening archive.tar: ", archive_error_string($a);
+    }
+    
+    while (archive_read_next_header($a, my $entry) == ARCHIVE_OK)
+    {
+      print archive_entry_pathname($entry), "\n";
+      archive_read_data_skip($a); 
+    }
+    
+    $r = archive_read_free($a);
+    if($r != ARCHIVE_OK)
+    {
+      die "error freeing archive";
+    }
 
 ## List contents of archive stored in memory
 
-\# EXAMPLE: example/list\_contents\_of\_archive\_stored\_in\_memory.pl
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-List_contents_of_Archive_stored_in_Memory
+    
+    my $buff = do {
+      open my $fh, '<', "archive.tar.gz";
+      local $/;
+      <$fh>
+    };
+    
+    my $a = archive_read_new();
+    archive_read_support_filter_gzip($a);
+    archive_read_support_format_tar($a);
+    my $r = archive_read_open_memory($a, $buff);
+    if($r != ARCHIVE_OK)
+    {
+      print "r = $r\n";
+      die "error opening archive.tar: ", archive_error_string($a);
+    }
+    
+    while (archive_read_next_header($a, my $entry) == ARCHIVE_OK) {
+      print archive_entry_pathname($entry), "\n";
+      archive_read_data_skip($a); 
+    }
+    
+    $r = archive_read_free($a);
+    if($r != ARCHIVE_OK)
+    {
+      die "error freeing archive";
+    }
 
 ## List contents of archive with custom read functions
 
@@ -716,11 +776,104 @@ TODO
 
 ## A universal decompressor
 
-\# EXAMPLE: example/universal\_decompressor.pl
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#a-universal-decompressor
+    
+    my $r;
+    
+    my $a = archive_read_new();
+    archive_read_support_filter_all($a);
+    archive_read_support_format_raw($a);
+    $r = archive_read_open_filename($a, "hello.txt.gz.uu", 16384);
+    if($r != ARCHIVE_OK)
+    {
+      die archive_error_string($a);
+    }
+    
+    $r = archive_read_next_header($a, my $ae);
+    if($r != ARCHIVE_OK)
+    {
+      die archive_error_string($a);     
+    }
+    
+    while(1)
+    {
+      my $size = archive_read_data($a, my $buff, 1024);
+      if($size < 0)
+      {
+        die archive_error_string($a);
+      }
+      if($size == 0)
+      {
+        last;
+      }
+      print $buff;
+    }
+    
+    archive_read_free($a);
 
 ## A basic write example
 
-\# EXAMPLE: example/basic\_write.pl
+    use strict;
+    use warnings;
+    use autodie;
+    use File::stat;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-A_Basic_Write_Example
+    
+    sub write_archive
+    {
+      my($outname, @filenames) = @_;
+      
+    my $a = archive_write_new();
+    
+    archive_write_add_filter_gzip($a);
+    archive_write_set_format_pax_restricted($a);
+    archive_write_open_filename($a, $outname);
+    
+    foreach my $filename (@filenames)
+    {
+      my $st = stat $filename;
+      my $entry = archive_entry_new();
+      archive_entry_set_pathname($entry, $filename);
+      archive_entry_set_size($entry, $st->size);
+      archive_entry_set_filetype($entry, AE_IFREG);
+      archive_entry_set_perm($entry, 0644);
+      archive_write_header($a, $entry);
+      open my $fh, '<', $filename;
+      my $len = read $fh, my $buff, 8192;
+      while($len > 0)
+      {
+        archive_write_data($a, $buff);
+        $len = read $fh, $buff, 8192;
+      }
+      close $fh;
+      
+        archive_entry_free($entry);
+      }
+      archive_write_close($a);
+      archive_write_free($a);
+    }
+    
+    unless(@ARGV > 0)
+    {
+      print "usage: perl basic_write.pl archive.tar.gz file1 [ file2 [ ... ] ]\n";
+      exit 2;
+    }
+    
+    unless(@ARGV > 1)
+    {
+      print "Cowardly refusing to create an empty archive\n";
+      exit 2;
+    }
+    
+    write_archive(@ARGV);
 
 ## Constructing objects on disk
 
