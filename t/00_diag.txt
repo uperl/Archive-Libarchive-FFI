@@ -3,6 +3,7 @@ Exporter
 FFI::Raw::PtrPtr
 FFI::Sweet
 File::Spec
+File::Temp
 FindBin
 Module::Build
 Test::More

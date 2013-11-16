@@ -66,11 +66,70 @@ generally used in client code.  Does not return a value.
 
 Copies error information from one archive to another.
 
+## archive\_entry\_clear
+
+Erases the object, resetting all internal fields to the same state as a newly-created object.  This is provided
+to allow you to quickly recycle objects without thrashing the heap.
+
+## archive\_entry\_clone
+
+A deep copy operation; all text fields are duplicated.
+
+## archive\_entry\_free
+
+Releases the struct archive\_entry object.
+
+## archive\_entry\_new
+
+Allocate and return a blank struct archive\_entry object.
+
+## archive\_entry\_new2
+
+This form of `archive_entry_new2` will pull character-set
+conversion information from the specified archive handle.  The
+older `archive_entry_new` form will result in the use of an internal
+default character-set conversion.
+
 ## archive\_entry\_pathname($entry)
 
 Retrieve the pathname of the entry.
 
 Returns a string value.
+
+## archive\_entry\_set\_filetype($entry, $code)
+
+Sets the filetype in the archive.  Code should be one of
+
+- AE\_IFMT
+- AE\_IFREG
+- AE\_IFLNK
+- AE\_IFSOCK
+- AE\_IFCHR
+- AE\_IFBLK
+- AE\_IFDIR
+- AE\_IFIFO
+
+Does not return anything.
+
+## archive\_entry\_set\_pathname($entry, $name)
+
+Sets the path in the archive as a string.
+
+Does not return anything.
+
+## archive\_entry\_set\_perm
+
+Set the permission bits for the entry.  This is the usual UNIX octal permission thing.
+
+Does not return anything.
+
+## archive\_entry\_set\_size($entry, $size)
+
+Sets the size of the file in the archive.
+
+Does not return anything.
+
+FIXME: size is 64bit
 
 ## archive\_errno($archive)
 
@@ -156,7 +215,7 @@ release all resources.
 Allocates and initializes a archive object suitable for reading from an archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
-any of the functions documented here with an <$archive> argument.
+any of the read functions documented here with an <$archive> argument.
 
 TODO: handle the unusual circumstance when this would return C NULL pointer.
 
@@ -311,6 +370,186 @@ Return the libarchive as a version.
 
 Returns a string value.
 
+## archive\_write\_add\_filter($archive, $code)
+
+A convenience function to set the filter based on the code.
+
+## archive\_write\_add\_filter\_b64encode($archive)
+
+Add b64encode filter
+
+## archive\_write\_add\_filter\_by\_name($archive, $name)
+
+A convenience function to set the filter based on the name.
+
+## archive\_write\_add\_filter\_bzip2($archive)
+
+Add bzip2 filter
+
+## archive\_write\_add\_filter\_compress($archive)
+
+Add compress filter
+
+## archive\_write\_add\_filter\_grzip($archive)
+
+Add grzip filter
+
+## archive\_write\_add\_filter\_gzip($archive)
+
+Add gzip filter
+
+## archive\_write\_add\_filter\_lrzip($archive)
+
+Add lrzip filter
+
+## archive\_write\_add\_filter\_lzip($archive)
+
+Add lzip filter
+
+## archive\_write\_add\_filter\_lzma($archive)
+
+Add lzma filter
+
+## archive\_write\_add\_filter\_lzop($archive)
+
+Add lzop filter
+
+## archive\_write\_add\_filter\_none($archive)
+
+Add none filter
+
+## archive\_write\_add\_filter\_program($archive, $cmd)
+
+The archive will be fed into the specified compression program. 
+The output of that program is blocked and written to the client
+write callbacks.
+
+## archive\_write\_add\_filter\_uuencode($archive)
+
+Add uuencode filter
+
+## archive\_write\_add\_filter\_xz($archive)
+
+Add xz filter
+
+## archive\_write\_close(archive)
+
+Complete the archive and invoke the close callback.
+
+## archive\_write\_data(archive, buffer)
+
+Write data corresponding to the header just written.
+
+This function returns the number of bytes actually written, or -1 on error.
+
+## archive\_write\_free($archive)
+
+Invokes `archive_write_close` if it was not invoked manually, then
+release all resources.
+
+## archive\_write\_header($archive, $entry)
+
+Build and write a header using the data in the provided struct archive\_entry structure.
+You can use `archive_entry_new` to create an `$entry` object and populate it with
+`archive_entry_set*` functions.
+
+## archive\_write\_new
+
+Allocates and initializes a archive object suitable for writing an new archive.
+Returns an opaque archive which may be a perl style object, or a C pointer
+(depending on the implementation), either way, it can be passed into
+any of the functions write documented here with an <$archive> argument.
+
+TODO: handle the unusual circumstance when this would return C NULL pointer.
+
+## archive\_write\_open\_filename($archive, $filename)
+
+A convenience form of `archive_write_open` that accepts a filename.  A NULL argument indicates that the output
+should be written to standard output; an argument of "-" will open a file with that name.  If you have not
+invoked `archive_write_set_bytes_in_last_block`, then `archive_write_open_filename` will adjust the last-block
+padding depending on the file: it will enable padding when writing to standard output or to a character or block
+device node, it will disable padding otherwise.  You can override this by manually invoking
+`archive_write_set_bytes_in_last_block` before `calling archive_write_open`.  The `archive_write_open_filename`
+function is safe for use with tape drives or other block-oriented devices.
+
+TODO: How to pass NULL in?
+
+## archive\_write\_set\_format($archive, $code)
+
+A convenience function to set the format based on the code.
+
+## archive\_write\_set\_format\_7zip($archive)
+
+Set the archive format to 7zip
+
+## archive\_write\_set\_format\_ar\_bsd($archive)
+
+Set the archive format to ar\_bsd
+
+## archive\_write\_set\_format\_ar\_svr4($archive)
+
+Set the archive format to ar\_svr4
+
+## archive\_write\_set\_format\_by\_name($archive, $name)
+
+A convenience function to set the format based on the name.
+
+## archive\_write\_set\_format\_cpio($archive)
+
+Set the archive format to cpio
+
+## archive\_write\_set\_format\_cpio\_newc($archive)
+
+Set the archive format to cpio\_newc
+
+## archive\_write\_set\_format\_gnutar($archive)
+
+Set the archive format to gnutar
+
+## archive\_write\_set\_format\_iso9660($archive)
+
+Set the archive format to iso9660
+
+## archive\_write\_set\_format\_mtree($archive)
+
+Set the archive format to mtree
+
+## archive\_write\_set\_format\_mtree\_classic($archive)
+
+Set the archive format to mtree\_classic
+
+## archive\_write\_set\_format\_pax($archive)
+
+Set the archive format to pax
+
+## archive\_write\_set\_format\_pax\_restricted($archive)
+
+Set the archive format to pax\_restricted
+
+## archive\_write\_set\_format\_shar($archive)
+
+Set the archive format to shar
+
+## archive\_write\_set\_format\_shar\_dump($archive)
+
+Set the archive format to shar\_dump
+
+## archive\_write\_set\_format\_ustar($archive)
+
+Set the archive format to ustar
+
+## archive\_write\_set\_format\_v7tar($archive)
+
+Set the archive format to v7tar
+
+## archive\_write\_set\_format\_xar($archive)
+
+Set the archive format to xar
+
+## archive\_write\_set\_format\_zip($archive)
+
+Set the archive format to zip
+
 # CONSTANTS
 
 If provided by your libarchive library, these constants will be available and
@@ -457,6 +696,51 @@ constants using the `:const` export tag).
 - ARCHIVE\_VERSION\_NUMBER
 - ARCHIVE\_WARN
 
+# EXAMPLES
+
+These examples are translated from equivalent C versions provided on the
+libarchive website, and are annotated here with Perl specific details.
+These examples are also included with the distribution.
+
+## List contents of archive stored in file
+
+\# EXAMPLE: example/list\_contents\_of\_archive\_stored\_in\_file.pl
+
+## List contents of archive stored in memory
+
+\# EXAMPLE: example/list\_contents\_of\_archive\_stored\_in\_memory.pl
+
+## List contents of archive with custom read functions
+
+TODO
+
+## A universal decompressor
+
+\# EXAMPLE: example/universal\_decompressor.pl
+
+## A basic write example
+
+\# EXAMPLE: example/basic\_write.pl
+
+## Constructing objects on disk
+
+TODO
+
+## A complete extractor
+
+TODO
+
+# CAVEATS
+
+Archive and entry objects are really pointers to opaque C structures
+and need to be freed using one of `archive_read_free`, `archive_write_free`
+or `archive_entry_free`, in order to free the resources associated
+with those objects.
+
+The documentation that comes with libarchive is not that great, but
+is serviceable.  The documentation for this library is copied largely
+from libarchive, with adjustments for Perl.
+
 # SEE ALSO
 
 The intent of this module is to provide a low level fairly thin direct
@@ -478,6 +762,21 @@ be written.
 - [Archive::Extract::Libarchive](https://metacpan.org/pod/Archive::Extract::Libarchive)
 
     Both of these provide a higher level perlish interface to libarchive.
+
+- [Archive::Tar](https://metacpan.org/pod/Archive::Tar)
+- [Archive::Tar::Wrapper](https://metacpan.org/pod/Archive::Tar::Wrapper)
+
+    Just some of the many modules on CPAN that will read/write tar archives.
+
+- [Archive::Zip](https://metacpan.org/pod/Archive::Zip)
+
+    Just one of the many modules on CPAN that will read/write zip archives.
+
+- [Archive::Any](https://metacpan.org/pod/Archive::Any)
+
+    A module attempts to read/write multiple formats using different methods
+    depending on what perl modules are installed, and preferring pure perl
+    modules.
 
 # AUTHOR
 

@@ -53,6 +53,22 @@ Offers whichever is available, either the XS or FFI version.
 
 Both of these provide a higher level perlish interface to libarchive.
 
+=item L<Archive::Tar>
+
+=item L<Archive::Tar::Wrapper>
+
+Just some of the many modules on CPAN that will read/write tar archives.
+
+=item L<Archive::Zip>
+
+Just one of the many modules on CPAN that will read/write zip archives.
+
+=item L<Archive::Any>
+
+A module attempts to read/write multiple formats using different methods
+depending on what perl modules are installed, and preferring pure perl
+modules.
+
 =back
 
 =cut

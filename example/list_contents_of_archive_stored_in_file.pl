@@ -16,7 +16,8 @@ if($r != ARCHIVE_OK)
   die "error opening archive.tar: ", archive_error_string($a);
 }
 
-while (archive_read_next_header($a, my $entry) == ARCHIVE_OK) {
+while (archive_read_next_header($a, my $entry) == ARCHIVE_OK)
+{
   print archive_entry_pathname($entry), "\n";
   archive_read_data_skip($a); 
 }

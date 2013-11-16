@@ -29,7 +29,6 @@ attach_function 'archive_read_support_filter_all',     [ _ptr ], _int;
 attach_function 'archive_read_support_format_all',     [ _ptr ], _int;
 attach_function 'archive_read_open_filename',          [ _ptr, _str, _int ], _int;
 attach_function 'archive_read_free',                   [ _ptr ], _int;
-attach_function 'archive_entry_pathname',              [ _ptr ], _str;
 attach_function 'archive_read_data_skip',              [ _ptr ], _int;
 attach_function 'archive_clear_error',                 [ _ptr ], _void;
 attach_function 'archive_copy_error',                  [ _ptr ], _int;
@@ -45,14 +44,45 @@ attach_function 'archive_read_support_format_by_code', [ _ptr, _int ], _int;
 attach_function 'archive_version_number',              undef, _int;
 attach_function 'archive_version_string',              undef, _str;
 
-eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
-eval { attach_function "archive_read_support_format_$_",  [ _ptr ], _int } for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
+attach_function 'archive_write_new',                   undef, _ptr;
+attach_function 'archive_write_free',                  [ _ptr ], _int;
+attach_function 'archive_write_add_filter',            [ _ptr, _int ], _int;
+attach_function 'archive_write_add_filter_by_name',    [ _ptr, _str ], _int;
+attach_function 'archive_write_add_filter_program',    [ _ptr, _str ], _int;
+attach_function 'archive_write_set_format',            [ _ptr, _int ], _int;
+attach_function 'archive_write_set_format_by_name',    [ _ptr, _str ], _int;
+attach_function 'archive_write_open_filename',         [ _ptr, _str ], _int;
+attach_function 'archive_write_header',                [ _ptr, _ptr ], _int;
+attach_function 'archive_write_close',                 [ _ptr ], _int;
+
+attach_function 'archive_entry_clear',                 [ _ptr ], _void;
+attach_function 'archive_entry_clone',                 [ _ptr ], _ptr;
+attach_function 'archive_entry_free',                  [ _ptr ], _void;
+attach_function 'archive_entry_new',                   undef, _ptr;
+attach_function 'archive_entry_new2',                  [ _ptr ], _ptr;
+attach_function 'archive_entry_pathname',              [ _ptr ], _str;
+attach_function 'archive_entry_set_pathname',          [ _ptr, _str ], _void;
+attach_function 'archive_entry_set_size',              [ _ptr, _int ], _void; # FIXME: arg is really 64bit
+attach_function 'archive_entry_set_perm',              [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_filetype',          [ _ptr, _int ], _void;
+
+eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } 
+  for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
+eval { attach_function "archive_read_support_format_$_",  [ _ptr ], _int } 
+  for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
+eval { attach_function "archive_write_add_filter_$_", [ _ptr ], _int }
+  for qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz );
+eval { attach_function "archive_write_set_format_$_", [ _ptr ], _int }
+  for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
+          pax pax_restricted shar shar_dump ustar v7tar xar zip);
+
 
 push @{ $EXPORT_TAGS{func} }, qw(
   archive_read_next_header
   archive_read_open_memory
   archive_read_data
   archive_error_string
+  archive_write_data
 );
 
 sub archive_read_next_header
@@ -78,6 +108,14 @@ sub archive_read_data
   my $ret = Archive::Libarchive::FFI::functions::archive_read_data($_[0], $buffer, $_[2]);
   $_[1] = $buffer->tostr($ret);
   $ret;
+}
+
+sub archive_write_data
+{
+  my($archive, $buffer) = @_;
+  my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
+  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
+  Archive::Libarchive::FFI::functions::archive_write_data($archive, $ptr, $length);
 }
 
 sub archive_error_string
@@ -164,11 +202,81 @@ generally used in client code.  Does not return a value.
 
 Copies error information from one archive to another.
 
+=head2 archive_entry_clear
+
+Erases the object, resetting all internal fields to the same state as a newly-created object.  This is provided
+to allow you to quickly recycle objects without thrashing the heap.
+
+=head2 archive_entry_clone
+
+A deep copy operation; all text fields are duplicated.
+
+=head2 archive_entry_free
+
+Releases the struct archive_entry object.
+
+=head2 archive_entry_new
+
+Allocate and return a blank struct archive_entry object.
+
+=head2 archive_entry_new2
+
+This form of C<archive_entry_new2> will pull character-set
+conversion information from the specified archive handle.  The
+older C<archive_entry_new> form will result in the use of an internal
+default character-set conversion.
+
 =head2 archive_entry_pathname($entry)
 
 Retrieve the pathname of the entry.
 
 Returns a string value.
+
+=head2 archive_entry_set_filetype($entry, $code)
+
+Sets the filetype in the archive.  Code should be one of
+
+=over 4
+
+=item AE_IFMT
+
+=item AE_IFREG
+
+=item AE_IFLNK
+
+=item AE_IFSOCK
+
+=item AE_IFCHR
+
+=item AE_IFBLK
+
+=item AE_IFDIR
+
+=item AE_IFIFO
+
+=back
+
+Does not return anything.
+
+=head2 archive_entry_set_pathname($entry, $name)
+
+Sets the path in the archive as a string.
+
+Does not return anything.
+
+=head2 archive_entry_set_perm
+
+Set the permission bits for the entry.  This is the usual UNIX octal permission thing.
+
+Does not return anything.
+
+=head2 archive_entry_set_size($entry, $size)
+
+Sets the size of the file in the archive.
+
+Does not return anything.
+
+FIXME: size is 64bit
 
 =head2 archive_errno($archive)
 
@@ -254,7 +362,7 @@ release all resources.
 Allocates and initializes a archive object suitable for reading from an archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
-any of the functions documented here with an <$archive> argument.
+any of the read functions documented here with an <$archive> argument.
 
 TODO: handle the unusual circumstance when this would return C NULL pointer.
 
@@ -408,6 +516,186 @@ Return the libarchive version as an integer.
 Return the libarchive as a version.
 
 Returns a string value.
+
+=head2 archive_write_add_filter($archive, $code)
+
+A convenience function to set the filter based on the code.
+
+=head2 archive_write_add_filter_b64encode($archive)
+
+Add b64encode filter
+
+=head2 archive_write_add_filter_by_name($archive, $name)
+
+A convenience function to set the filter based on the name.
+
+=head2 archive_write_add_filter_bzip2($archive)
+
+Add bzip2 filter
+
+=head2 archive_write_add_filter_compress($archive)
+
+Add compress filter
+
+=head2 archive_write_add_filter_grzip($archive)
+
+Add grzip filter
+
+=head2 archive_write_add_filter_gzip($archive)
+
+Add gzip filter
+
+=head2 archive_write_add_filter_lrzip($archive)
+
+Add lrzip filter
+
+=head2 archive_write_add_filter_lzip($archive)
+
+Add lzip filter
+
+=head2 archive_write_add_filter_lzma($archive)
+
+Add lzma filter
+
+=head2 archive_write_add_filter_lzop($archive)
+
+Add lzop filter
+
+=head2 archive_write_add_filter_none($archive)
+
+Add none filter
+
+=head2 archive_write_add_filter_program($archive, $cmd)
+
+The archive will be fed into the specified compression program. 
+The output of that program is blocked and written to the client
+write callbacks.
+
+=head2 archive_write_add_filter_uuencode($archive)
+
+Add uuencode filter
+
+=head2 archive_write_add_filter_xz($archive)
+
+Add xz filter
+
+=head2 archive_write_close(archive)
+
+Complete the archive and invoke the close callback.
+
+=head2 archive_write_data(archive, buffer)
+
+Write data corresponding to the header just written.
+
+This function returns the number of bytes actually written, or -1 on error.
+
+=head2 archive_write_free($archive)
+
+Invokes C<archive_write_close> if it was not invoked manually, then
+release all resources.
+
+=head2 archive_write_header($archive, $entry)
+
+Build and write a header using the data in the provided struct archive_entry structure.
+You can use C<archive_entry_new> to create an C<$entry> object and populate it with
+C<archive_entry_set*> functions.
+
+=head2 archive_write_new
+
+Allocates and initializes a archive object suitable for writing an new archive.
+Returns an opaque archive which may be a perl style object, or a C pointer
+(depending on the implementation), either way, it can be passed into
+any of the functions write documented here with an <$archive> argument.
+
+TODO: handle the unusual circumstance when this would return C NULL pointer.
+
+=head2 archive_write_open_filename($archive, $filename)
+
+A convenience form of C<archive_write_open> that accepts a filename.  A NULL argument indicates that the output
+should be written to standard output; an argument of "-" will open a file with that name.  If you have not
+invoked C<archive_write_set_bytes_in_last_block>, then C<archive_write_open_filename> will adjust the last-block
+padding depending on the file: it will enable padding when writing to standard output or to a character or block
+device node, it will disable padding otherwise.  You can override this by manually invoking
+C<archive_write_set_bytes_in_last_block> before C<calling archive_write_open>.  The C<archive_write_open_filename>
+function is safe for use with tape drives or other block-oriented devices.
+
+TODO: How to pass NULL in?
+
+=head2 archive_write_set_format($archive, $code)
+
+A convenience function to set the format based on the code.
+
+=head2 archive_write_set_format_7zip($archive)
+
+Set the archive format to 7zip
+
+=head2 archive_write_set_format_ar_bsd($archive)
+
+Set the archive format to ar_bsd
+
+=head2 archive_write_set_format_ar_svr4($archive)
+
+Set the archive format to ar_svr4
+
+=head2 archive_write_set_format_by_name($archive, $name)
+
+A convenience function to set the format based on the name.
+
+=head2 archive_write_set_format_cpio($archive)
+
+Set the archive format to cpio
+
+=head2 archive_write_set_format_cpio_newc($archive)
+
+Set the archive format to cpio_newc
+
+=head2 archive_write_set_format_gnutar($archive)
+
+Set the archive format to gnutar
+
+=head2 archive_write_set_format_iso9660($archive)
+
+Set the archive format to iso9660
+
+=head2 archive_write_set_format_mtree($archive)
+
+Set the archive format to mtree
+
+=head2 archive_write_set_format_mtree_classic($archive)
+
+Set the archive format to mtree_classic
+
+=head2 archive_write_set_format_pax($archive)
+
+Set the archive format to pax
+
+=head2 archive_write_set_format_pax_restricted($archive)
+
+Set the archive format to pax_restricted
+
+=head2 archive_write_set_format_shar($archive)
+
+Set the archive format to shar
+
+=head2 archive_write_set_format_shar_dump($archive)
+
+Set the archive format to shar_dump
+
+=head2 archive_write_set_format_ustar($archive)
+
+Set the archive format to ustar
+
+=head2 archive_write_set_format_v7tar($archive)
+
+Set the archive format to v7tar
+
+=head2 archive_write_set_format_xar($archive)
+
+Set the archive format to xar
+
+=head2 archive_write_set_format_zip($archive)
+
+Set the archive format to zip
 
 =head1 CONSTANTS
 
@@ -696,4 +984,49 @@ constants using the C<:const> export tag).
 =item ARCHIVE_WARN
 
 =back
+
+=head1 EXAMPLES
+
+These examples are translated from equivalent C versions provided on the
+libarchive website, and are annotated here with Perl specific details.
+These examples are also included with the distribution.
+
+=head2 List contents of archive stored in file
+
+# EXAMPLE: example/list_contents_of_archive_stored_in_file.pl
+
+=head2 List contents of archive stored in memory
+
+# EXAMPLE: example/list_contents_of_archive_stored_in_memory.pl
+
+=head2 List contents of archive with custom read functions
+
+TODO
+
+=head2 A universal decompressor
+
+# EXAMPLE: example/universal_decompressor.pl
+
+=head2 A basic write example
+
+# EXAMPLE: example/basic_write.pl
+
+=head2 Constructing objects on disk
+
+TODO
+
+=head2 A complete extractor
+
+TODO
+
+=head1 CAVEATS
+
+Archive and entry objects are really pointers to opaque C structures
+and need to be freed using one of C<archive_read_free>, C<archive_write_free>
+or C<archive_entry_free>, in order to free the resources associated
+with those objects.
+
+The documentation that comes with libarchive is not that great, but
+is serviceable.  The documentation for this library is copied largely
+from libarchive, with adjustments for Perl.
 

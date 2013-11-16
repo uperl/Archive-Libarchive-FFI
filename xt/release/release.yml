@@ -25,6 +25,13 @@ pod_spelling_system:
     - uudecoding
     - uuencoded
     - FFI
+    - decompressor
+    - filetype
+    - pax
+    - shar
+    - ustar
+    - uuencode
+    - xz
 
 
 pod_coverage:

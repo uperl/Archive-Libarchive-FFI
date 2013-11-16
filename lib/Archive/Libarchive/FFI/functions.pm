@@ -13,5 +13,6 @@ attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int;
 attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int; # TODO: third argument is actually a size_t
 attach_function 'archive_read_data',        [ _ptr, _ptr, _int ], _int; # TODO: third argument is actually a size_t
 attach_function 'archive_error_string',     [ _ptr ], _str;
+attach_function 'archive_write_data',       [ _ptr, _ptr, _int ], _int; # TODO: third argument is actually a size_t
 
 1;
