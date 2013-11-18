@@ -54,6 +54,9 @@ attach_function 'archive_write_set_format_by_name',    [ _ptr, _str ], _int;
 attach_function 'archive_write_open_filename',         [ _ptr, _str ], _int;
 attach_function 'archive_write_header',                [ _ptr, _ptr ], _int;
 attach_function 'archive_write_close',                 [ _ptr ], _int;
+attach_function 'archive_write_disk_new',              undef, _ptr;
+attach_function 'archive_write_disk_set_options',      [ _ptr, _int ], _int;
+attach_function 'archive_write_finish_entry',          [ _ptr ], _int;
 
 attach_function 'archive_entry_clear',                 [ _ptr ], _void;
 attach_function 'archive_entry_clone',                 [ _ptr ], _ptr;
@@ -65,6 +68,7 @@ attach_function 'archive_entry_set_pathname',          [ _ptr, _str ], _void;
 attach_function 'archive_entry_set_size',              [ _ptr, _int ], _void; # FIXME: arg is really 64bit
 attach_function 'archive_entry_set_perm',              [ _ptr, _int ], _void;
 attach_function 'archive_entry_set_filetype',          [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_mtime',             [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
 
 eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } 
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
@@ -257,6 +261,12 @@ Sets the filetype in the archive.  Code should be one of
 =back
 
 Does not return anything.
+
+=head2 archive_entry_set_mtime($entry, $sec, $nanosec)
+
+Set the mtime for the entry object.
+
+Does not return a value.
 
 =head2 archive_entry_set_pathname($entry, $name)
 
@@ -589,6 +599,56 @@ Write data corresponding to the header just written.
 
 This function returns the number of bytes actually written, or -1 on error.
 
+=head2 archive_write_disk_new
+
+Allocates and initializes a struct archive object suitable for
+writing objects to disk.
+
+Returns an opaque archive which may be a perl style object, or a C pointer
+(Depending on the implementation), either way, it can be passed into
+any of the write functions documented here with an C<$archive> argument.
+
+=head2 archive_write_disk_set_options($archive, $flags)
+
+The options field consists of a bitwise OR of one or more of the 
+following values:
+
+=over 4
+
+=item ARCHIVE_EXTRACT_OWNER
+
+=item ARCHIVE_EXTRACT_PERM
+
+=item ARCHIVE_EXTRACT_TIME
+
+=item ARCHIVE_EXTRACT_NO_OVERWRITE
+
+=item ARCHIVE_EXTRACT_UNLINK
+
+=item ARCHIVE_EXTRACT_ACL
+
+=item ARCHIVE_EXTRACT_FFLAGS
+
+=item ARCHIVE_EXTRACT_XATTR
+
+=item ARCHIVE_EXTRACT_SECURE_SYMLINKS
+
+=item ARCHIVE_EXTRACT_SECURE_NODOTDOT
+
+=item ARCHIVE_EXTRACT_SPARSE
+
+=back
+
+=head2 archive_write_finish_entry($archive)
+
+Close out the entry just written.  Ordinarily, 
+clients never need to call this, as it is called 
+automatically by C<archive_write_next_header> and 
+C<archive_write_close> as needed.  However, some
+file attributes are written to disk only after 
+the file is closed, so this can be necessary 
+if you need to work with the file on disk right away.
+
 =head2 archive_write_free($archive)
 
 Invokes C<archive_write_close> if it was not invoked manually, then
@@ -605,7 +665,7 @@ C<archive_entry_set*> functions.
 Allocates and initializes a archive object suitable for writing an new archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
-any of the functions write documented here with an <$archive> argument.
+any of the write functions documented here with an C<$archive> argument.
 
 TODO: handle the unusual circumstance when this would return C NULL pointer.
 
@@ -1013,7 +1073,7 @@ TODO
 
 =head2 Constructing objects on disk
 
-TODO
+# EXAMPLE: example/constructing_objects_on_disk.pl
 
 =head2 A complete extractor
 

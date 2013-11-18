@@ -111,6 +111,12 @@ Sets the filetype in the archive.  Code should be one of
 
 Does not return anything.
 
+## archive\_entry\_set\_mtime($entry, $sec, $nanosec)
+
+Set the mtime for the entry object.
+
+Does not return a value.
+
 ## archive\_entry\_set\_pathname($entry, $name)
 
 Sets the path in the archive as a string.
@@ -442,6 +448,42 @@ Write data corresponding to the header just written.
 
 This function returns the number of bytes actually written, or -1 on error.
 
+## archive\_write\_disk\_new
+
+Allocates and initializes a struct archive object suitable for
+writing objects to disk.
+
+Returns an opaque archive which may be a perl style object, or a C pointer
+(Depending on the implementation), either way, it can be passed into
+any of the write functions documented here with an `$archive` argument.
+
+## archive\_write\_disk\_set\_options($archive, $flags)
+
+The options field consists of a bitwise OR of one or more of the 
+following values:
+
+- ARCHIVE\_EXTRACT\_OWNER
+- ARCHIVE\_EXTRACT\_PERM
+- ARCHIVE\_EXTRACT\_TIME
+- ARCHIVE\_EXTRACT\_NO\_OVERWRITE
+- ARCHIVE\_EXTRACT\_UNLINK
+- ARCHIVE\_EXTRACT\_ACL
+- ARCHIVE\_EXTRACT\_FFLAGS
+- ARCHIVE\_EXTRACT\_XATTR
+- ARCHIVE\_EXTRACT\_SECURE\_SYMLINKS
+- ARCHIVE\_EXTRACT\_SECURE\_NODOTDOT
+- ARCHIVE\_EXTRACT\_SPARSE
+
+## archive\_write\_finish\_entry($archive)
+
+Close out the entry just written.  Ordinarily, 
+clients never need to call this, as it is called 
+automatically by `archive_write_next_header` and 
+`archive_write_close` as needed.  However, some
+file attributes are written to disk only after 
+the file is closed, so this can be necessary 
+if you need to work with the file on disk right away.
+
 ## archive\_write\_free($archive)
 
 Invokes `archive_write_close` if it was not invoked manually, then
@@ -458,7 +500,7 @@ You can use `archive_entry_new` to create an `$entry` object and populate it wit
 Allocates and initializes a archive object suitable for writing an new archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
-any of the functions write documented here with an <$archive> argument.
+any of the write functions documented here with an `$archive` argument.
 
 TODO: handle the unusual circumstance when this would return C NULL pointer.
 
@@ -877,7 +919,24 @@ TODO
 
 ## Constructing objects on disk
 
-TODO
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    my $a = archive_write_disk_new();
+    archive_write_disk_set_options($a, ARCHIVE_EXTRACT_TIME);
+    
+    my $entry = archive_entry_new();
+    archive_entry_set_pathname($entry, "my_file.txt");
+    archive_entry_set_filetype($entry, AE_IFREG);
+    archive_entry_set_size($entry, 5);
+    archive_entry_set_mtime($entry, 123456789, 0);
+    archive_entry_set_perm($entry, 0644);
+    archive_write_header($a, $entry);
+    archive_write_data($a, "abcde");
+    archive_write_finish_entry($a);
+    archive_write_free($a);
+    archive_entry_free($entry);
 
 ## A complete extractor
 
