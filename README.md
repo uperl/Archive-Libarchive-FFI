@@ -504,15 +504,19 @@ any of the write functions documented here with an `$archive` argument.
 
 ## archive\_write\_open\_filename($archive, $filename)
 
-A convenience form of `archive_write_open` that accepts a filename.  A NULL argument indicates that the output
-should be written to standard output; an argument of "-" will open a file with that name.  If you have not
-invoked `archive_write_set_bytes_in_last_block`, then `archive_write_open_filename` will adjust the last-block
-padding depending on the file: it will enable padding when writing to standard output or to a character or block
-device node, it will disable padding otherwise.  You can override this by manually invoking
-`archive_write_set_bytes_in_last_block` before `calling archive_write_open`.  The `archive_write_open_filename`
-function is safe for use with tape drives or other block-oriented devices.
+A convenience form of `archive_write_open` that accepts a filename.  If you have 
+not invoked `archive_write_set_bytes_in_last_block`, then 
+`archive_write_open_filename` will adjust the last-block padding depending on the 
+file: it will enable padding when writing to standard output or to a character or 
+block device node, it will disable padding otherwise.  You can override this by 
+manually invoking `archive_write_set_bytes_in_last_block` before `calling 
+archive_write_open`.  The `archive_write_open_filename` function is safe for use 
+with tape drives or other block-oriented devices.
 
-TODO: How to pass NULL in?
+## archive\_write\_open\_stdout($archive, $filename)
+
+This is the same as `archive_write_open_filename`, except a C NULL pointer is passed
+in for the filename, which indicates stdout.
 
 ## archive\_write\_set\_format($archive, $code)
 

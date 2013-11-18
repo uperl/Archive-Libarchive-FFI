@@ -88,11 +88,17 @@ push @{ $EXPORT_TAGS{func} }, qw(
   archive_error_string
   archive_write_data
   archive_read_open_stdin
+  archive_write_open_stdout
 );
 
 sub archive_read_open_stdin
 {
   archive_read_open_filename($_[0], 0, $_[1]);
+}
+
+sub archive_write_open_stdout
+{
+  archive_write_open_filename($_[0], 0);
 }
 
 sub archive_read_next_header
@@ -675,15 +681,19 @@ any of the write functions documented here with an C<$archive> argument.
 
 =head2 archive_write_open_filename($archive, $filename)
 
-A convenience form of C<archive_write_open> that accepts a filename.  A NULL argument indicates that the output
-should be written to standard output; an argument of "-" will open a file with that name.  If you have not
-invoked C<archive_write_set_bytes_in_last_block>, then C<archive_write_open_filename> will adjust the last-block
-padding depending on the file: it will enable padding when writing to standard output or to a character or block
-device node, it will disable padding otherwise.  You can override this by manually invoking
-C<archive_write_set_bytes_in_last_block> before C<calling archive_write_open>.  The C<archive_write_open_filename>
-function is safe for use with tape drives or other block-oriented devices.
+A convenience form of C<archive_write_open> that accepts a filename.  If you have 
+not invoked C<archive_write_set_bytes_in_last_block>, then 
+C<archive_write_open_filename> will adjust the last-block padding depending on the 
+file: it will enable padding when writing to standard output or to a character or 
+block device node, it will disable padding otherwise.  You can override this by 
+manually invoking C<archive_write_set_bytes_in_last_block> before C<calling 
+archive_write_open>.  The C<archive_write_open_filename> function is safe for use 
+with tape drives or other block-oriented devices.
 
-TODO: How to pass NULL in?
+=head2 archive_write_open_stdout($archive, $filename)
+
+This is the same as C<archive_write_open_filename>, except a C NULL pointer is passed
+in for the filename, which indicates stdout.
 
 =head2 archive_write_set_format($archive, $code)
 
