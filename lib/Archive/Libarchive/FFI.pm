@@ -87,7 +87,13 @@ push @{ $EXPORT_TAGS{func} }, qw(
   archive_read_data
   archive_error_string
   archive_write_data
+  archive_read_open_stdin
 );
+
+sub archive_read_open_stdin
+{
+  archive_read_open_filename($_[0], 0, $_[1]);
+}
 
 sub archive_read_next_header
 {
@@ -385,8 +391,6 @@ Like C<archive_read_open>, except that it accepts a simple filename
 and a block size.  This function is safe for use with tape drives
 or other blocked devices.
 
-TODO: a NULL filename represents standard input.
-
 =head2 archive_read_open_memory($archive, $buffer)
 
 Like C<archive_read_open>, except that it uses a Perl scalar that holds the 
@@ -397,6 +401,16 @@ archive using C<archive_read_free>.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until C<archive_read_free> is called.
+
+=head2 archive_read_open_stdin($archive, $block_size)
+
+This is just like C<archive_read_open_filename> except, read from
+standard input instead of a file.
+
+Note: this function does not exist in the C API, it is offered here
+instead this C call, which does the same thing:
+
+ archive_read_open_filename(archive, NULL, block_size);
 
 =head2 archive_read_support_filter_all($archive)
 
