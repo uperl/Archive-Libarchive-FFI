@@ -135,6 +135,10 @@ Sets the size of the file in the archive.
 
 Does not return anything.
 
+## archive\_entry\_size($entry)
+
+Returns the size of the entry in bytes.
+
 ## archive\_errno($archive)
 
 Returns a numeric error code indicating the reason for the most
@@ -194,6 +198,10 @@ codes.
 
 A textual description of the format of the current entry.
 
+## archive\_read\_close($archive)
+
+Complete the archive and invoke the close callback.
+
 ## archive\_read\_data($archive, $buffer, $max\_size)
 
 Read data associated with the header just read.  Internally, this is a
@@ -201,6 +209,16 @@ convenience function that calls `archive_read_data_block` and fills
 any gaps with nulls so that callers see a single continuous stream of
 data.  Returns the actual number of bytes read, 0 on end of data and
 a negative value on error.
+
+## archive\_read\_data\_block($archive, $buff, $offset)
+
+Return the next available block of data for this entry.  Unlike
+`archive_read_data`, this function allows you to correctly
+handle sparse files, as supported by some archive formats.  The
+library guarantees that offsets will increase and that blocks
+will not overlap.  Note that the blocks returned from this
+function can be much larger than the block size read from disk,
+due to compression and internal buffer optimizations.
 
 ## archive\_read\_data\_skip($archive)
 
@@ -448,6 +466,11 @@ Write data corresponding to the header just written.
 
 This function returns the number of bytes actually written, or -1 on error.
 
+## archive\_write\_data\_block($archive, $buff, $offset)
+
+Writes the buffer to the current entry in the given archive
+starting at the given offset.
+
 ## archive\_write\_disk\_new
 
 Allocates and initializes a struct archive object suitable for
@@ -473,6 +496,15 @@ following values:
 - ARCHIVE\_EXTRACT\_SECURE\_SYMLINKS
 - ARCHIVE\_EXTRACT\_SECURE\_NODOTDOT
 - ARCHIVE\_EXTRACT\_SPARSE
+
+## archive\_write\_disk\_set\_standard\_lookup($archive)
+
+This convenience function installs a standard set of user and
+group lookup functions.  These functions use `getpwnam` and
+`getgrnam` to convert names to ids, defaulting to the ids
+if the names cannot be looked up.  These functions also implement
+a simple memory cache to reduce the number of calls to 
+`getpwnam` and `getgrnam`.
 
 ## archive\_write\_finish\_entry($archive)
 
@@ -762,7 +794,6 @@ These examples are also included with the distribution.
     my $r = archive_read_open_filename($a, "archive.tar", 10240);
     if($r != ARCHIVE_OK)
     {
-      print "r = $r\n";
       die "error opening archive.tar: ", archive_error_string($a);
     }
     
@@ -925,6 +956,9 @@ TODO
     use warnings;
     use Archive::Libarchive::FFI qw( :all );
     
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-Constructing_Objects_On_Disk
+    
     my $a = archive_write_disk_new();
     archive_write_disk_set_options($a, ARCHIVE_EXTRACT_TIME);
     
@@ -942,7 +976,88 @@ TODO
 
 ## A complete extractor
 
-TODO
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    # this is a translation to perl for this:
+    #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-A_Complete_Extractor
+    
+    my $filename = shift @ARGV;
+    
+    my $r;
+    
+    my $flags = ARCHIVE_EXTRACT_TIME
+              | ARCHIVE_EXTRACT_PERM
+              | ARCHIVE_EXTRACT_ACL
+              | ARCHIVE_EXTRACT_FFLAGS;
+    
+    my $a = archive_read_new();
+    archive_read_support_filter_all($a);
+    archive_read_support_format_all($a);
+    my $ext = archive_write_disk_new();
+    archive_write_disk_set_options($ext, $flags);
+    archive_write_disk_set_standard_lookup($ext);
+    
+    $r = archive_read_open_filename($a, $filename, 10240);
+    if($r != ARCHIVE_OK)
+    {
+      die "error opening $filename: ", archive_error_string($a);
+    }
+    
+    while(1)
+    {
+      $r = archive_read_next_header($a, my $entry);
+      if($r == ARCHIVE_EOF)
+      {
+        last;
+      }
+      if($r != ARCHIVE_OK)
+      {
+        print archive_error_string($a), "\n";
+      }
+      if($r < ARCHIVE_WARN)
+      {
+        exit 1;
+      }
+      $r = archive_write_header($ext, $entry);
+      if($r != ARCHIVE_OK)
+      {
+        print archive_error_string($ext), "\n";
+      }
+      elsif(archive_entry_size($entry) > 0)
+      {
+        $r = copy_data($a, $ext);
+      }
+    }
+    
+    archive_read_close($a);
+    archive_read_free($a);
+    archive_write_close($ext);
+    archive_write_free($ext);
+    
+    sub copy_data
+    {
+      my($ar, $aw) = @_;
+      my $r;
+      while(1)
+      {
+        $r = archive_read_data_block($ar, my $buff, my $offset);
+        if($r == ARCHIVE_EOF)
+        {
+          return ARCHIVE_OK;
+        }
+        if($r != ARCHIVE_OK)
+        {
+          die archive_error_string($ar), "\n";
+        }
+        $r = archive_write_data_block($aw, $buff, $offset);
+        if($r != ARCHIVE_OK)
+        {
+          die archive_error_string($aw), "\n";
+        }
+      }
+    }
 
 # CAVEATS
 

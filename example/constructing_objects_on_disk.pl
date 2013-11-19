@@ -2,6 +2,9 @@ use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
 
+# this is a translation to perl for this:
+#  https://github.com/libarchive/libarchive/wiki/Examples#wiki-Constructing_Objects_On_Disk
+
 my $a = archive_write_disk_new();
 archive_write_disk_set_options($a, ARCHIVE_EXTRACT_TIME);
 

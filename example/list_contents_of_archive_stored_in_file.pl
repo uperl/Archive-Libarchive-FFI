@@ -12,7 +12,6 @@ archive_read_support_format_all($a);
 my $r = archive_read_open_filename($a, "archive.tar", 10240);
 if($r != ARCHIVE_OK)
 {
-  print "r = $r\n";
   die "error opening archive.tar: ", archive_error_string($a);
 }
 

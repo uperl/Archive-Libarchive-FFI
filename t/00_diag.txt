@@ -1,7 +1,9 @@
 Alien::Libarchive
 Exporter
+FFI::Raw
 FFI::Raw::PtrPtr
 FFI::Sweet
+File::Basename
 File::Spec
 File::Temp
 FindBin

@@ -3,9 +3,13 @@ package Archive::Libarchive::FFI;
 use strict;
 use warnings;
 use Alien::Libarchive;
+use FFI::Raw ();
 use FFI::Raw::PtrPtr;
 use FFI::Sweet qw( ffi_lib :types );
 use base qw( Exporter );
+
+sub _int64  { FFI::Raw::int64() }
+sub _uint64 { FFI::Raw::uint64() }
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
@@ -24,51 +28,56 @@ sub attach_function ($$$)
   FFI::Sweet::attach_function($name, $arg, $rv);
 }
 
-attach_function 'archive_read_new',                    undef, _ptr;
-attach_function 'archive_read_support_filter_all',     [ _ptr ], _int;
-attach_function 'archive_read_support_format_all',     [ _ptr ], _int;
-attach_function 'archive_read_open_filename',          [ _ptr, _str, _int ], _int;
-attach_function 'archive_read_free',                   [ _ptr ], _int;
-attach_function 'archive_read_data_skip',              [ _ptr ], _int;
-attach_function 'archive_clear_error',                 [ _ptr ], _void;
-attach_function 'archive_copy_error',                  [ _ptr ], _int;
-attach_function 'archive_filter_code',                 [ _ptr, _int ], _int;
-attach_function 'archive_filter_count',                [ _ptr ], _int;
-attach_function 'archive_filter_name',                 [ _ptr, _int ], _str;
-attach_function 'archive_errno',                       [ _ptr ], _int;
-attach_function 'archive_file_count',                  [ _ptr ], _int;
-attach_function 'archive_format',                      [ _ptr ], _int;
-attach_function 'archive_format_name',                 [ _ptr ], _str;
-attach_function 'archive_read_support_filter_program', [ _ptr, _str ], _int;
-attach_function 'archive_read_support_format_by_code', [ _ptr, _int ], _int;
-attach_function 'archive_version_number',              undef, _int;
-attach_function 'archive_version_string',              undef, _str;
+attach_function 'archive_version_number',                 undef, _int;
+attach_function 'archive_version_string',                 undef, _str;
+attach_function 'archive_clear_error',                    [ _ptr ], _void;
+attach_function 'archive_copy_error',                     [ _ptr ], _int;
+attach_function 'archive_errno',                          [ _ptr ], _int;
+attach_function 'archive_file_count',                     [ _ptr ], _int;
+attach_function 'archive_format',                         [ _ptr ], _int;
+attach_function 'archive_format_name',                    [ _ptr ], _str;
 
-attach_function 'archive_write_new',                   undef, _ptr;
-attach_function 'archive_write_free',                  [ _ptr ], _int;
-attach_function 'archive_write_add_filter',            [ _ptr, _int ], _int;
-attach_function 'archive_write_add_filter_by_name',    [ _ptr, _str ], _int;
-attach_function 'archive_write_add_filter_program',    [ _ptr, _str ], _int;
-attach_function 'archive_write_set_format',            [ _ptr, _int ], _int;
-attach_function 'archive_write_set_format_by_name',    [ _ptr, _str ], _int;
-attach_function 'archive_write_open_filename',         [ _ptr, _str ], _int;
-attach_function 'archive_write_header',                [ _ptr, _ptr ], _int;
-attach_function 'archive_write_close',                 [ _ptr ], _int;
-attach_function 'archive_write_disk_new',              undef, _ptr;
-attach_function 'archive_write_disk_set_options',      [ _ptr, _int ], _int;
-attach_function 'archive_write_finish_entry',          [ _ptr ], _int;
+attach_function 'archive_read_new',                       undef, _ptr;
+attach_function 'archive_read_support_filter_all',        [ _ptr ], _int;
+attach_function 'archive_read_support_format_all',        [ _ptr ], _int;
+attach_function 'archive_read_open_filename',             [ _ptr, _str, _int ], _int;
+attach_function 'archive_read_free',                      [ _ptr ], _int;
+attach_function 'archive_read_data_skip',                 [ _ptr ], _int;
+attach_function 'archive_read_close',                     [ _ptr ], _int;
+attach_function 'archive_read_support_filter_program',    [ _ptr, _str ], _int;
+attach_function 'archive_read_support_format_by_code',    [ _ptr, _int ], _int;
 
-attach_function 'archive_entry_clear',                 [ _ptr ], _void;
-attach_function 'archive_entry_clone',                 [ _ptr ], _ptr;
-attach_function 'archive_entry_free',                  [ _ptr ], _void;
-attach_function 'archive_entry_new',                   undef, _ptr;
-attach_function 'archive_entry_new2',                  [ _ptr ], _ptr;
-attach_function 'archive_entry_pathname',              [ _ptr ], _str;
-attach_function 'archive_entry_set_pathname',          [ _ptr, _str ], _void;
-attach_function 'archive_entry_set_size',              [ _ptr, _int ], _void; # FIXME: arg is really 64bit
-attach_function 'archive_entry_set_perm',              [ _ptr, _int ], _void;
-attach_function 'archive_entry_set_filetype',          [ _ptr, _int ], _void;
-attach_function 'archive_entry_set_mtime',             [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
+attach_function 'archive_filter_code',                    [ _ptr, _int ], _int;
+attach_function 'archive_filter_count',                   [ _ptr ], _int;
+attach_function 'archive_filter_name',                    [ _ptr, _int ], _str;
+
+attach_function 'archive_write_new',                      undef, _ptr;
+attach_function 'archive_write_free',                     [ _ptr ], _int;
+attach_function 'archive_write_add_filter',               [ _ptr, _int ], _int;
+attach_function 'archive_write_add_filter_by_name',       [ _ptr, _str ], _int;
+attach_function 'archive_write_add_filter_program',       [ _ptr, _str ], _int;
+attach_function 'archive_write_set_format',               [ _ptr, _int ], _int;
+attach_function 'archive_write_set_format_by_name',       [ _ptr, _str ], _int;
+attach_function 'archive_write_open_filename',            [ _ptr, _str ], _int;
+attach_function 'archive_write_header',                   [ _ptr, _ptr ], _int;
+attach_function 'archive_write_close',                    [ _ptr ], _int;
+attach_function 'archive_write_disk_new',                 undef, _ptr;
+attach_function 'archive_write_disk_set_options',         [ _ptr, _int ], _int;
+attach_function 'archive_write_finish_entry',             [ _ptr ], _int;
+attach_function 'archive_write_disk_set_standard_lookup', [ _ptr ], _int;
+
+attach_function 'archive_entry_clear',                    [ _ptr ], _void;
+attach_function 'archive_entry_clone',                    [ _ptr ], _ptr;
+attach_function 'archive_entry_free',                     [ _ptr ], _void;
+attach_function 'archive_entry_new',                      undef, _ptr;
+attach_function 'archive_entry_new2',                     [ _ptr ], _ptr;
+attach_function 'archive_entry_size',                     [ _ptr ], _int64;
+attach_function 'archive_entry_pathname',                 [ _ptr ], _str;
+attach_function 'archive_entry_set_pathname',             [ _ptr, _str ], _void;
+attach_function 'archive_entry_set_size',                 [ _ptr, _int64 ], _void;
+attach_function 'archive_entry_set_perm',                 [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_filetype',             [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_mtime',                [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
 
 eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } 
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
@@ -89,6 +98,8 @@ push @{ $EXPORT_TAGS{func} }, qw(
   archive_write_data
   archive_read_open_stdin
   archive_write_open_stdout
+  archive_write_data_block
+  archive_read_data_block
 );
 
 sub archive_read_open_stdin
@@ -126,12 +137,26 @@ sub archive_read_data
   $ret;
 }
 
+sub archive_read_data_block
+{
+  # 0 archive 1 buffer 2 offset
+  die 'unimplemented';
+}
+
 sub archive_write_data
 {
   my($archive, $buffer) = @_;
   my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
   my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
   Archive::Libarchive::FFI::functions::archive_write_data($archive, $ptr, $length);
+}
+
+sub archive_write_data_block
+{
+  my($archive, $buffer, $offset) = @_;
+  my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
+  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
+  Archive::Libarchive::FFI::functions::archive_write_data_block($archive, $ptr, $length, $offset);
 }
 
 sub archive_error_string
@@ -298,6 +323,10 @@ Sets the size of the file in the archive.
 
 Does not return anything.
 
+=head2 archive_entry_size($entry)
+
+Returns the size of the entry in bytes.
+
 =head2 archive_errno($archive)
 
 Returns a numeric error code indicating the reason for the most
@@ -357,6 +386,10 @@ codes.
 
 A textual description of the format of the current entry.
 
+=head2 archive_read_close($archive)
+
+Complete the archive and invoke the close callback.
+
 =head2 archive_read_data($archive, $buffer, $max_size)
 
 Read data associated with the header just read.  Internally, this is a
@@ -364,6 +397,16 @@ convenience function that calls C<archive_read_data_block> and fills
 any gaps with nulls so that callers see a single continuous stream of
 data.  Returns the actual number of bytes read, 0 on end of data and
 a negative value on error.
+
+=head2 archive_read_data_block($archive, $buff, $offset)
+
+Return the next available block of data for this entry.  Unlike
+C<archive_read_data>, this function allows you to correctly
+handle sparse files, as supported by some archive formats.  The
+library guarantees that offsets will increase and that blocks
+will not overlap.  Note that the blocks returned from this
+function can be much larger than the block size read from disk,
+due to compression and internal buffer optimizations.
 
 =head2 archive_read_data_skip($archive)
 
@@ -611,6 +654,11 @@ Write data corresponding to the header just written.
 
 This function returns the number of bytes actually written, or -1 on error.
 
+=head2 archive_write_data_block($archive, $buff, $offset)
+
+Writes the buffer to the current entry in the given archive
+starting at the given offset.
+
 =head2 archive_write_disk_new
 
 Allocates and initializes a struct archive object suitable for
@@ -650,6 +698,15 @@ following values:
 =item ARCHIVE_EXTRACT_SPARSE
 
 =back
+
+=head2 archive_write_disk_set_standard_lookup($archive)
+
+This convenience function installs a standard set of user and
+group lookup functions.  These functions use C<getpwnam> and
+C<getgrnam> to convert names to ids, defaulting to the ids
+if the names cannot be looked up.  These functions also implement
+a simple memory cache to reduce the number of calls to 
+C<getpwnam> and C<getgrnam>.
 
 =head2 archive_write_finish_entry($archive)
 
@@ -1091,7 +1148,7 @@ TODO
 
 =head2 A complete extractor
 
-TODO
+# EXAMPLE: example/complete_extractor.pl
 
 =head1 CAVEATS
 
