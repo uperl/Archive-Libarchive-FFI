@@ -1,9 +1,12 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 3;
+use Test::More;
 use FindBin ();
 use File::Spec;
+
+plan skip_all => 'archive_read_support_format_raw missing from your libarchive' unless Archive::Libarchive::FFI->can('archive_read_support_format_raw');
+plan tests => 3;
 
 my $filename = File::Spec->catfile($FindBin::Bin, "foo.txt.gz.uu");
 

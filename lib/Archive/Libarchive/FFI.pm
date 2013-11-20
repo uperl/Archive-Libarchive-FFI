@@ -25,70 +25,71 @@ sub attach_function ($$$)
 {
   my ( $name, $arg, $rv ) = @_;
   push @{ $EXPORT_TAGS{func} }, $name;
-  FFI::Sweet::attach_function($name, $arg, $rv);
+  eval { FFI::Sweet::attach_function($name, $arg, $rv) };
 }
 
-attach_function 'archive_version_number',                 undef, _int;
-attach_function 'archive_version_string',                 undef, _str;
-attach_function 'archive_clear_error',                    [ _ptr ], _void;
-attach_function 'archive_copy_error',                     [ _ptr ], _int;
-attach_function 'archive_errno',                          [ _ptr ], _int;
-attach_function 'archive_file_count',                     [ _ptr ], _int;
-attach_function 'archive_format',                         [ _ptr ], _int;
-attach_function 'archive_format_name',                    [ _ptr ], _str;
+attach_function 'archive_version_number',                        undef, _int;
+attach_function 'archive_version_string',                        undef, _str;
+attach_function 'archive_clear_error',                           [ _ptr ], _void;
+attach_function 'archive_copy_error',                            [ _ptr ], _int;
+attach_function 'archive_errno',                                 [ _ptr ], _int;
+attach_function 'archive_file_count',                            [ _ptr ], _int;
+attach_function 'archive_format',                                [ _ptr ], _int;
+attach_function 'archive_format_name',                           [ _ptr ], _str;
 
-attach_function 'archive_read_new',                       undef, _ptr;
-attach_function 'archive_read_support_filter_all',        [ _ptr ], _int;
-attach_function 'archive_read_support_format_all',        [ _ptr ], _int;
-attach_function 'archive_read_open_filename',             [ _ptr, _str, _int ], _int;
-attach_function 'archive_read_free',                      [ _ptr ], _int;
-attach_function 'archive_read_data_skip',                 [ _ptr ], _int;
-attach_function 'archive_read_close',                     [ _ptr ], _int;
-attach_function 'archive_read_support_filter_program',    [ _ptr, _str ], _int;
-attach_function 'archive_read_support_format_by_code',    [ _ptr, _int ], _int;
+attach_function 'archive_read_new',                              undef, _ptr;
+attach_function 'archive_read_support_filter_all',               [ _ptr ], _int;
+attach_function 'archive_read_support_format_all',               [ _ptr ], _int;
+attach_function 'archive_read_open_filename',                    [ _ptr, _str, _int ], _int;
+attach_function 'archive_read_free',                             [ _ptr ], _int;
+attach_function 'archive_read_data_skip',                        [ _ptr ], _int;
+attach_function 'archive_read_close',                            [ _ptr ], _int;
+attach_function 'archive_read_support_filter_program',           [ _ptr, _str ], _int;
+attach_function 'archive_read_support_format_by_code',           [ _ptr, _int ], _int;
 
-attach_function 'archive_filter_code',                    [ _ptr, _int ], _int;
-attach_function 'archive_filter_count',                   [ _ptr ], _int;
-attach_function 'archive_filter_name',                    [ _ptr, _int ], _str;
+attach_function 'archive_filter_code',                           [ _ptr, _int ], _int;
+attach_function 'archive_filter_count',                          [ _ptr ], _int;
+attach_function 'archive_filter_name',                           [ _ptr, _int ], _str;
 
-attach_function 'archive_write_new',                      undef, _ptr;
-attach_function 'archive_write_free',                     [ _ptr ], _int;
-attach_function 'archive_write_add_filter',               [ _ptr, _int ], _int;
-attach_function 'archive_write_add_filter_by_name',       [ _ptr, _str ], _int;
-attach_function 'archive_write_add_filter_program',       [ _ptr, _str ], _int;
-attach_function 'archive_write_set_format',               [ _ptr, _int ], _int;
-attach_function 'archive_write_set_format_by_name',       [ _ptr, _str ], _int;
-attach_function 'archive_write_open_filename',            [ _ptr, _str ], _int;
-attach_function 'archive_write_header',                   [ _ptr, _ptr ], _int;
-attach_function 'archive_write_close',                    [ _ptr ], _int;
-attach_function 'archive_write_disk_new',                 undef, _ptr;
-attach_function 'archive_write_disk_set_options',         [ _ptr, _int ], _int;
-attach_function 'archive_write_finish_entry',             [ _ptr ], _int;
-attach_function 'archive_write_disk_set_standard_lookup', [ _ptr ], _int;
+attach_function 'archive_write_new',                             undef, _ptr;
+attach_function 'archive_write_free',                            [ _ptr ], _int;
+attach_function 'archive_write_add_filter',                      [ _ptr, _int ], _int;
+attach_function 'archive_write_add_filter_by_name',              [ _ptr, _str ], _int;
+attach_function 'archive_write_add_filter_program',              [ _ptr, _str ], _int;
+attach_function 'archive_write_set_format',                      [ _ptr, _int ], _int;
+attach_function 'archive_write_set_format_by_name',              [ _ptr, _str ], _int;
+attach_function 'archive_write_open_filename',                   [ _ptr, _str ], _int;
+attach_function 'archive_write_header',                          [ _ptr, _ptr ], _int;
+attach_function 'archive_write_close',                           [ _ptr ], _int;
+attach_function 'archive_write_disk_new',                        undef, _ptr;
+attach_function 'archive_write_disk_set_options',                [ _ptr, _int ], _int;
+attach_function 'archive_write_finish_entry',                    [ _ptr ], _int;
+attach_function 'archive_write_disk_set_standard_lookup',        [ _ptr ], _int;
+attach_function 'archive_write_zip_set_compression_deflate',     [ _ptr ], _int;
+attach_function 'archive_write_zip_set_compression_store',       [ _ptr ], _int;
 
-attach_function 'archive_entry_clear',                    [ _ptr ], _void;
-attach_function 'archive_entry_clone',                    [ _ptr ], _ptr;
-attach_function 'archive_entry_free',                     [ _ptr ], _void;
-attach_function 'archive_entry_new',                      undef, _ptr;
-attach_function 'archive_entry_new2',                     [ _ptr ], _ptr;
-attach_function 'archive_entry_size',                     [ _ptr ], _int64;
-attach_function 'archive_entry_pathname',                 [ _ptr ], _str;
-attach_function 'archive_entry_set_pathname',             [ _ptr, _str ], _void;
-attach_function 'archive_entry_set_size',                 [ _ptr, _int64 ], _void;
-attach_function 'archive_entry_set_perm',                 [ _ptr, _int ], _void;
-attach_function 'archive_entry_set_filetype',             [ _ptr, _int ], _void;
-attach_function 'archive_entry_set_mtime',                [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
+attach_function 'archive_entry_clear',                           [ _ptr ], _void;
+attach_function 'archive_entry_clone',                           [ _ptr ], _ptr;
+attach_function 'archive_entry_free',                            [ _ptr ], _void;
+attach_function 'archive_entry_new',                             undef, _ptr;
+attach_function 'archive_entry_new2',                            [ _ptr ], _ptr;
+attach_function 'archive_entry_size',                            [ _ptr ], _int64;
+attach_function 'archive_entry_pathname',                        [ _ptr ], _str;
+attach_function 'archive_entry_set_pathname',                    [ _ptr, _str ], _void;
+attach_function 'archive_entry_set_size',                        [ _ptr, _int64 ], _void;
+attach_function 'archive_entry_set_perm',                        [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_filetype',                    [ _ptr, _int ], _void;
+attach_function 'archive_entry_set_mtime',                       [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
 
-eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } 
+attach_function "archive_read_support_filter_$_",  [ _ptr ], _int
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
-eval { attach_function "archive_read_support_format_$_",  [ _ptr ], _int } 
+attach_function "archive_read_support_format_$_",  [ _ptr ], _int
   for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
-eval { attach_function "archive_write_add_filter_$_", [ _ptr ], _int }
+attach_function "archive_write_add_filter_$_", [ _ptr ], _int
   for qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz );
-eval { attach_function "archive_write_set_format_$_", [ _ptr ], _int }
+attach_function "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
-
 
 push @{ $EXPORT_TAGS{func} }, qw(
   archive_read_next_header
@@ -849,6 +850,14 @@ Set the archive format to xar
 =head2 archive_write_set_format_zip($archive)
 
 Set the archive format to zip
+
+=head2 archive_write_zip_set_compression_deflate($archive)
+
+Set the compression method for the zip archive to deflate.
+
+=head2 archive_write_zip_set_compression_store($archive)
+
+Set the compression method for the zip archive to store.
 
 =head1 CONSTANTS
 

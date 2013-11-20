@@ -638,6 +638,14 @@ Set the archive format to xar
 
 Set the archive format to zip
 
+## archive\_write\_zip\_set\_compression\_deflate($archive)
+
+Set the compression method for the zip archive to deflate.
+
+## archive\_write\_zip\_set\_compression\_store($archive)
+
+Set the compression method for the zip archive to store.
+
 # CONSTANTS
 
 If provided by your libarchive library, these constants will be available and
