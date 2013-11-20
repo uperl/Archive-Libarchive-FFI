@@ -32,6 +32,8 @@ pod_spelling_system:
     - ustar
     - uuencode
     - xz
+    - optimizations
+    - uu
 
 
 pod_coverage:

@@ -80,7 +80,7 @@ attach_function 'archive_entry_set_filetype',             [ _ptr, _int ], _void;
 attach_function 'archive_entry_set_mtime',                [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
 
 eval { attach_function "archive_read_support_filter_$_",  [ _ptr ], _int } 
-  for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none );
+  for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
 eval { attach_function "archive_read_support_format_$_",  [ _ptr ], _int } 
   for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 eval { attach_function "archive_write_add_filter_$_", [ _ptr ], _int }
@@ -140,7 +140,17 @@ sub archive_read_data
 sub archive_read_data_block
 {
   # 0 archive 1 buffer 2 offset
-  die 'unimplemented';
+  require Config;
+  my $buffer = FFI::Raw::PtrPtr->new;
+  my $size   = FFI::Raw::MemPtr->new($Config::Config{sizesize});  # size_t
+  my $offset = FFI::Raw::MemPtr->new(8);                          # uint64_t
+  my $ret    = Archive::Libarchive::FFI::functions::archive_read_data_block($_[0], $buffer, $size, $offset);
+  my $pattern = $Config::Config{sizesize} == 8 ? "Q1" : "L1";
+  $size   = unpack $pattern, $size->tostr($Config::Config{sizesize});
+  $offset = unpack "q1", $offset->tostr(8);
+  $buffer->copy_to_buffer($_[1], $size);
+  $_[2]   = $offset;
+  $ret;
 }
 
 sub archive_write_data
@@ -507,6 +517,18 @@ Data is feed through the specified external program before being
 dearchived.  Note that this disables automatic detection of the
 compression format, so it makes no sense to specify this in
 conjunction with any other decompression option.
+
+=head2 archive_read_support_filter_rpm($archive)
+
+Enable rpm decompression filter.
+
+=head2 archive_read_support_filter_uu($archive)
+
+Enable uu decompression filter.
+
+=head2 archive_read_support_filter_xz($archive)
+
+Enable xz decompression filter.
 
 =head2 archive_read_support_format_7zip($archive)
 

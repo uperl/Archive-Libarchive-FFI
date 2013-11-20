@@ -320,6 +320,18 @@ dearchived.  Note that this disables automatic detection of the
 compression format, so it makes no sense to specify this in
 conjunction with any other decompression option.
 
+## archive\_read\_support\_filter\_rpm($archive)
+
+Enable rpm decompression filter.
+
+## archive\_read\_support\_filter\_uu($archive)
+
+Enable uu decompression filter.
+
+## archive\_read\_support\_filter\_xz($archive)
+
+Enable xz decompression filter.
+
 ## archive\_read\_support\_format\_7zip($archive)
 
 Enable 7zip archive format.
