@@ -52,11 +52,6 @@ a function or constant is available, for example:
       # grzip filter is available.
     }
 
-You can use this one-liner to determine which functions and constants
-are unavailable:
-
-    % perl -MArchive::Libarchive::FFI    -E 'for(@Archive::Libarchive::FFI::EXPORT_OK) { say $_ unless Archive::Libarchive::FFI->can($_) }'
-
 ## archive\_clear\_error($archive)
 
 Clears any error information left over from a previous call Not
@@ -660,6 +655,9 @@ constants using the `:const` export tag).
 - AE\_IFMT
 - AE\_IFREG
 - AE\_IFSOCK
+- ARCHIVE\_API\_FEATURE
+- ARCHIVE\_API\_VERSION
+- ARCHIVE\_BYTES\_PER\_RECORD
 - ARCHIVE\_COMPRESSION\_BZIP2
 - ARCHIVE\_COMPRESSION\_COMPRESS
 - ARCHIVE\_COMPRESSION\_GZIP
@@ -671,6 +669,7 @@ constants using the `:const` export tag).
 - ARCHIVE\_COMPRESSION\_RPM
 - ARCHIVE\_COMPRESSION\_UU
 - ARCHIVE\_COMPRESSION\_XZ
+- ARCHIVE\_DEFAULT\_BYTES\_PER\_BLOCK
 - ARCHIVE\_ENTRY\_ACL\_ADD\_FILE
 - ARCHIVE\_ENTRY\_ACL\_ADD\_SUBDIRECTORY
 - ARCHIVE\_ENTRY\_ACL\_APPEND\_DATA
@@ -778,6 +777,7 @@ constants using the `:const` export tag).
 - ARCHIVE\_FORMAT\_TAR\_USTAR
 - ARCHIVE\_FORMAT\_XAR
 - ARCHIVE\_FORMAT\_ZIP
+- ARCHIVE\_LIBRARY\_VERSION
 - ARCHIVE\_MATCH\_CTIME
 - ARCHIVE\_MATCH\_EQUAL
 - ARCHIVE\_MATCH\_MTIME
@@ -790,6 +790,7 @@ constants using the `:const` export tag).
 - ARCHIVE\_READDISK\_RESTORE\_ATIME
 - ARCHIVE\_RETRY
 - ARCHIVE\_VERSION\_NUMBER
+- ARCHIVE\_VERSION\_STAMP
 - ARCHIVE\_WARN
 
 # EXAMPLES

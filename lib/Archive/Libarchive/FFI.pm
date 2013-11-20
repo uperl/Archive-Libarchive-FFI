@@ -240,11 +240,6 @@ a function or constant is available, for example:
    # grzip filter is available.
  }
 
-You can use this one-liner to determine which functions and constants
-are unavailable:
-
- % perl -MArchive::Libarchive::FFI    -E 'for(@Archive::Libarchive::FFI::EXPORT_OK) { say $_ unless Archive::Libarchive::FFI->can($_) }'
-
 =head2 archive_clear_error($archive)
 
 Clears any error information left over from a previous call Not
@@ -883,6 +878,12 @@ constants using the C<:const> export tag).
 
 =item AE_IFSOCK
 
+=item ARCHIVE_API_FEATURE
+
+=item ARCHIVE_API_VERSION
+
+=item ARCHIVE_BYTES_PER_RECORD
+
 =item ARCHIVE_COMPRESSION_BZIP2
 
 =item ARCHIVE_COMPRESSION_COMPRESS
@@ -904,6 +905,8 @@ constants using the C<:const> export tag).
 =item ARCHIVE_COMPRESSION_UU
 
 =item ARCHIVE_COMPRESSION_XZ
+
+=item ARCHIVE_DEFAULT_BYTES_PER_BLOCK
 
 =item ARCHIVE_ENTRY_ACL_ADD_FILE
 
@@ -1119,6 +1122,8 @@ constants using the C<:const> export tag).
 
 =item ARCHIVE_FORMAT_ZIP
 
+=item ARCHIVE_LIBRARY_VERSION
+
 =item ARCHIVE_MATCH_CTIME
 
 =item ARCHIVE_MATCH_EQUAL
@@ -1142,6 +1147,8 @@ constants using the C<:const> export tag).
 =item ARCHIVE_RETRY
 
 =item ARCHIVE_VERSION_NUMBER
+
+=item ARCHIVE_VERSION_STAMP
 
 =item ARCHIVE_WARN
 

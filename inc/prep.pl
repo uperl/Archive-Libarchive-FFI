@@ -46,11 +46,14 @@ do { # constants.pm
   warn "WARNING: did not regenerate constants.pm because there are missing constatns: $@";
 };
 
-do { # import SEE ALSO
-  my $source = file(__FILE__)->parent->parent->parent->file('Archive-Libarchive-XS', 'inc', 'SeeAlso.pm');
-  my $dest   = file(__FILE__)->parent->file('SeeAlso.pm');
-  say $source->absolute;
-  $dest->spew(scalar $source->slurp);
+do { # import from inc
+  foreach my $basename (qw( SeeAlso.pm constants.txt functions.txt ))
+  {
+    my $source = file(__FILE__)->parent->parent->parent->file('Archive-Libarchive-XS', 'inc', $basename);
+    my $dest   = file(__FILE__)->parent->file($basename);
+    say $source->absolute;
+    $dest->spew(scalar $source->slurp);
+  }
 };
 
 do { # import examples from XS version
