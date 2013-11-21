@@ -7,6 +7,11 @@ use Archive::Libarchive::FFI qw( :all );
 
 my $filename = shift @ARGV;
 
+unless(defined $filename)
+{
+  warn "reading archive from standard in";
+}
+
 my $r;
 
 my $flags = ARCHIVE_EXTRACT_TIME

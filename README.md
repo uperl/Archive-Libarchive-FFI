@@ -247,6 +247,9 @@ Like `archive_read_open`, except that it accepts a simple filename
 and a block size.  This function is safe for use with tape drives
 or other blocked devices.
 
+If you pass in `undef` as the `$filename`, libarchive will use
+standard in as the input archive.
+
 ## archive\_read\_open\_memory($archive, $buffer)
 
 Like `archive_read_open`, except that it uses a Perl scalar that holds the 
@@ -257,16 +260,6 @@ archive using `archive_read_free`.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until `archive_read_free` is called.
-
-## archive\_read\_open\_stdin($archive, $block\_size)
-
-This is just like `archive_read_open_filename` except, read from
-standard input instead of a file.
-
-Note: this function does not exist in the C API, it is offered here
-instead this C call, which does the same thing:
-
-    archive_read_open_filename(archive, NULL, block_size);
 
 ## archive\_read\_support\_filter\_all($archive)
 
@@ -552,16 +545,28 @@ manually invoking `archive_write_set_bytes_in_last_block` before `calling
 archive_write_open`.  The `archive_write_open_filename` function is safe for use 
 with tape drives or other block-oriented devices.
 
-## archive\_write\_open\_stdout($archive, $filename)
-
-This is the same as `archive_write_open_filename`, except a C NULL pointer is passed
-in for the filename, which indicates stdout.
+If you pass in `undef` as the `$filename`, libarchive will write the
+archive to standard out.
 
 ## archive\_write\_set\_filter\_option($archive, $module, $option, $value)
 
 Specifies an option that will be passed to currently-registered filters (including decompression filters).
 
-TODO: translate undefs to NULL for $module, $option and $value
+If option and value are both `undef`, these functions will do nothing 
+and `ARCHIVE_OK` will be returned.  If option is `undef` but value
+is not, these functions will do nothing and `ARCHIVE_FAILED` will
+be returned.
+
+If module is not `undef`, option and value will be provided to the
+filter or reader named module.  The return value will be that of
+the module.  If there is no such module, `ARCHIVE_FAILED` will be
+returned.
+
+If module is `undef`, option and value will be provided to every
+registered module.  If any module returns `ARCHIVE_FATAL`, this
+value will be returned immediately.  Otherwise, `ARCHIVE_OK` will
+be returned if any module accepts the option, and `ARCHIVE_FAILED`
+in all other cases.
 
 ## archive\_write\_set\_format($archive, $code)
 
@@ -609,9 +614,24 @@ Set the archive format to mtree\_classic
 
 ## archive\_write\_set\_format\_option($archive, $module, $option, $value)
 
-Specifies an option that will be passed to currently-registered format readers.
+Specifies an option that will be passed to currently-registered format 
+readers.
 
-TODO: translate undefs to NULL for $module, $option and $value
+If option and value are both `undef`, these functions will do nothing 
+and `ARCHIVE_OK` will be returned.  If option is `undef` but value
+is not, these functions will do nothing and `ARCHIVE_FAILED` will
+be returned.
+
+If module is not `undef`, option and value will be provided to the
+filter or reader named module.  The return value will be that of
+the module.  If there is no such module, `ARCHIVE_FAILED` will be
+returned.
+
+If module is `undef`, option and value will be provided to every
+registered module.  If any module returns `ARCHIVE_FATAL`, this
+value will be returned immediately.  Otherwise, `ARCHIVE_OK` will
+be returned if any module accepts the option, and `ARCHIVE_FAILED`
+in all other cases.
 
 ## archive\_write\_set\_format\_pax($archive)
 
@@ -647,21 +667,22 @@ Set the archive format to zip
 
 ## archive\_write\_set\_option($archive, $module, $option, $value)
 
-Calls `archive_write_set_format_option`, then `archive_write_set_filter_option`.
-If either function returns `ARCHIVE_FATAL`, `ARCHIVE_FATAL` will be returned
-immediately.  Otherwise, greater of the two values will be returned.
-
-TODO: translate undefs to NULL for $module, $option and $value
+Calls `archive_write_set_format_option`, then 
+`archive_write_set_filter_option`. If either function returns 
+`ARCHIVE_FATAL`, `ARCHIVE_FATAL` will be returned immediately.  
+Otherwise, greater of the two values will be returned.
 
 ## archive\_write\_set\_options($archive, $opts)
 
-options is a comma-separated list of options.  If options is NULL or empty, ARCHIVE\_OK will be returned immediately.
+options is a comma-separated list of options.  If options is `undef` or 
+empty, `ARCHIVE_OK` will be returned immediately.
 
 Individual options have one of the following forms:
 
 - option=value
 
-    The option/value pair will be provided to every module.  Modules that do not accept an option with this name will ignore it.
+    The option/value pair will be provided to every module.  Modules that do 
+    not accept an option with this name will ignore it.
 
 - option
 
@@ -673,7 +694,8 @@ Individual options have one of the following forms:
 
 - module:option=value, module:option, module:!option
 
-    As above, but the corresponding option and value will be provided only to modules whose name matches module.
+    As above, but the corresponding option and value will be provided only 
+    to modules whose name matches module.
 
 ## archive\_write\_set\_skip\_file($archive, $dev, $ino)
 
@@ -1052,6 +1074,11 @@ TODO
     #  https://github.com/libarchive/libarchive/wiki/Examples#wiki-A_Complete_Extractor
     
     my $filename = shift @ARGV;
+    
+    unless(defined $filename)
+    {
+      warn "reading archive from standard in";
+    }
     
     my $r;
     
