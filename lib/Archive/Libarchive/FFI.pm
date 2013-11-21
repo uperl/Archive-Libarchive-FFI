@@ -5,8 +5,8 @@ use warnings;
 use Alien::Libarchive;
 use FFI::Raw ();
 use FFI::Raw::PtrPtr;
-use FFI::Sweet qw( ffi_lib :types );
-use base qw( Exporter );
+use FFI::Sweet qw( ffi_lib attach_function :types );
+use Exporter::Tidy ();
 
 sub _int64  { FFI::Raw::int64() }
 sub _uint64 { FFI::Raw::uint64() }
@@ -16,17 +16,8 @@ sub _uint64 { FFI::Raw::uint64() }
 
 ffi_lib \$_ for DynaLoader::dl_findfile(split /\s+/, Alien::Libarchive->new->libs);
 
-our %EXPORT_TAGS = ( all => [], const => [], func => [] );
-
 require Archive::Libarchive::FFI::constants;
 require Archive::Libarchive::FFI::functions;
-
-sub attach_function ($$$)
-{
-  my ( $name, $arg, $rv ) = @_;
-  push @{ $EXPORT_TAGS{func} }, $name;
-  eval { FFI::Sweet::attach_function($name, $arg, $rv) };
-}
 
 attach_function 'archive_version_number',                        undef, _int;
 attach_function 'archive_version_string',                        undef, _str;
@@ -96,16 +87,6 @@ attach_function "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
 
-push @{ $EXPORT_TAGS{func} }, qw(
-  archive_read_next_header
-  archive_read_open_memory
-  archive_read_data
-  archive_error_string
-  archive_write_data
-  archive_write_data_block
-  archive_read_data_block
-);
-
 sub archive_read_next_header
 {
   my $entry = FFI::Raw::PtrPtr->new;  
@@ -170,10 +151,11 @@ sub archive_error_string
   $str;
 }
 
-@{ $EXPORT_TAGS{func} } = sort @{ $EXPORT_TAGS{func} };
-
-our @EXPORT_OK = (map { @{ $EXPORT_TAGS{$_} } } qw( const func ));
-$EXPORT_TAGS{all} = \@EXPORT_OK;
+eval q{
+  use Exporter::Tidy
+    func  => [grep /^archive_/,       keys %Archive::Libarchive::FFI::],
+    const => [grep /^(AE_|ARCHIVE_)/, keys %Archive::Libarchive::FFI::];
+}; die $@ if $@;
 
 1;
 
