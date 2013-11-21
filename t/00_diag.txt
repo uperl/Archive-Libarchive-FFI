@@ -1,5 +1,5 @@
 Alien::Libarchive
-Exporter
+Exporter::Tidy
 FFI::Raw
 FFI::Raw::PtrPtr
 FFI::Sweet
