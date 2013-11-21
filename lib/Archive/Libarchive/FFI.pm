@@ -770,6 +770,12 @@ with tape drives or other block-oriented devices.
 This is the same as C<archive_write_open_filename>, except a C NULL pointer is passed
 in for the filename, which indicates stdout.
 
+=head2 archive_write_set_filter_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered filters (including decompression filters).
+
+TODO: translate undefs to NULL for $module, $option and $value
+
 =head2 archive_write_set_format($archive, $code)
 
 A convenience function to set the format based on the code.
@@ -814,6 +820,12 @@ Set the archive format to mtree
 
 Set the archive format to mtree_classic
 
+=head2 archive_write_set_format_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered format readers.
+
+TODO: translate undefs to NULL for $module, $option and $value
+
 =head2 archive_write_set_format_pax($archive)
 
 Set the archive format to pax
@@ -845,6 +857,45 @@ Set the archive format to xar
 =head2 archive_write_set_format_zip($archive)
 
 Set the archive format to zip
+
+=head2 archive_write_set_option($archive, $module, $option, $value)
+
+Calls C<archive_write_set_format_option>, then C<archive_write_set_filter_option>.
+If either function returns C<ARCHIVE_FATAL>, C<ARCHIVE_FATAL> will be returned
+immediately.  Otherwise, greater of the two values will be returned.
+
+TODO: translate undefs to NULL for $module, $option and $value
+
+=head2 archive_write_set_options($archive, $opts)
+
+options is a comma-separated list of options.  If options is NULL or empty, ARCHIVE_OK will be returned immediately.
+
+Individual options have one of the following forms:
+
+=over 4
+
+=item option=value
+
+The option/value pair will be provided to every module.  Modules that do not accept an option with this name will ignore it.
+
+=item option
+
+The option will be provided to every module with a value of "1".
+
+=item !option
+
+The option will be provided to every module with a NULL value.
+
+=item module:option=value, module:option, module:!option
+
+As above, but the corresponding option and value will be provided only to modules whose name matches module.
+
+=back
+
+=head2 archive_write_set_skip_file($archive, $dev, $ino)
+
+The dev/ino of a file that won't be archived.  This is used
+to avoid recursively adding an archive to itself.
 
 =head2 archive_write_zip_set_compression_deflate($archive)
 

@@ -13,6 +13,9 @@ BEGIN {
 
 plan tests => 2;
 
-eq_or_diff(Dump($Archive::Libarchive::FFI::EXPORT_TAGS{const}), Dump($Archive::Libarchive::XS::EXPORT_TAGS{const}), "same constants");
-eq_or_diff(Dump($Archive::Libarchive::FFI::EXPORT_TAGS{func}),  Dump($Archive::Libarchive::XS::EXPORT_TAGS{func}),  "same functions");
+my @const = sort grep /^(ARCHIVE_|AE_)/, keys %Archive::Libarchive::XS::;
+my @func  = sort grep /^archive_/, keys %Archive::Libarchive::XS::;
+
+eq_or_diff(Dump($Archive::Libarchive::FFI::EXPORT_TAGS{const}), Dump(\@const), "same constants");
+eq_or_diff(Dump($Archive::Libarchive::FFI::EXPORT_TAGS{func}),  Dump(\@func),  "same functions");
 

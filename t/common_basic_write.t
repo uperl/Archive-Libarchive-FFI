@@ -20,8 +20,11 @@ my $fn  = File::Spec->catfile($dir, "foo.tar.gz");
 my $a = eval { archive_write_new() };
 ok $a, 'archive_write_new';
 
-$r = eval { archive_write_add_filter_gzip($a) };
-is $r, ARCHIVE_OK, 'archive_write_add_filter_gzip';
+SKIP: {
+  skip 'archive_write_add_filter_gzip function not available', 1 unless Archive::Libarchive::FFI->can('archive_write_add_filter_gzip');
+  $r = eval { archive_write_add_filter_gzip($a) };
+  is $r, ARCHIVE_OK, 'archive_write_add_filter_gzip';
+};
 
 $r = eval { archive_write_set_format_pax_restricted($a) };
 is $r, ARCHIVE_OK, 'archive_write_set_format_pax_restricted';

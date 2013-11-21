@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 7;
+use Test::More tests => 6;
 use FindBin ();
 use File::Spec;
 
@@ -12,6 +12,8 @@ my $entry;
 note "filename = $filename";
 
 my $a = archive_read_new();
+
+is archive_errno($a), 0, 'archive_errno($a) = 0';
 
 $r = archive_read_support_filter_all($a);
 is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_support_filter_all)";
@@ -26,7 +28,7 @@ is $r, ARCHIVE_FATAL, "r = ARCHIVE_FATAL (archive_read_open_filename)";
 ok archive_errno($a), 'archive_errno($a) = ' . archive_errno($a);
 ok archive_error_string($a), 'archive_error_string($a) = ' . archive_error_string($a);
 
-archive_clear_error($a);
+#archive_clear_error($a);
+archive_read_free($a);
+$a = archive_read_new();
 
-is archive_errno($a), 0, 'archive_errno($a) = 0';
-ok !archive_error_string($a), 'archive_error_string($a) = ' . archive_error_string($a);
