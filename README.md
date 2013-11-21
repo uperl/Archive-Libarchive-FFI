@@ -225,6 +225,11 @@ all of the data for this archive entry.
 Invokes `archive_read_close` if it was not invoked manually, then
 release all resources.
 
+## archive\_read\_header\_position($archive)
+
+Retrieve the byte offset in UNCOMPRESSED data where last-read
+header started.
+
 ## archive\_read\_new
 
 Allocates and initializes a archive object suitable for reading from an archive.
@@ -238,8 +243,6 @@ Read the header for the next entry and return an entry object
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the functions documented here with an <$entry> argument.
-
-TODO: maybe use archive\_read\_next\_header2
 
 ## archive\_read\_open\_filename($archive, $filename, $block\_size)
 
@@ -260,6 +263,82 @@ archive using `archive_read_free`.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until `archive_read_free` is called.
+
+## archive\_read\_set\_filter\_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered filters 
+(including decompression filters).
+
+If option and value are both `undef`, these functions will do nothing 
+and `ARCHIVE_OK` will be returned.  If option is `undef` but value is 
+not, these functions will do nothing and `ARCHIVE_FAILED` will be 
+returned.
+
+If module is not `undef`, option and value will be provided to the filter 
+or reader named module.  The return value will be that of the module.  
+If there is no such module, `ARCHIVE_FAILED` will be returned.
+
+If module is `NULL`, option and value will be provided to every registered 
+module.  If any module returns `ARCHIVE_FATAL`, this value will be 
+returned immediately.  Otherwise, `ARCHIVE_OK` will be returned if any 
+module accepts the option, and `ARCHIVE_FAILED` in all other cases.
+
+## archive\_read\_set\_format($archive, $format)
+
+Undocumented libarchive function.
+
+## archive\_read\_set\_format\_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered format 
+readers.
+
+If option and value are both `undef`, these functions will do nothing 
+and `ARCHIVE_OK` will be returned.  If option is `undef` but value is 
+not, these functions will do nothing and `ARCHIVE_FAILED` will be 
+returned.
+
+If module is not `undef`, option and value will be provided to the filter 
+or reader named module.  The return value will be that of the module.  
+If there is no such module, `ARCHIVE_FAILED` will be returned.
+
+If module is `NULL`, option and value will be provided to every registered 
+module.  If any module returns `ARCHIVE_FATAL`, this value will be 
+returned immediately.  Otherwise, `ARCHIVE_OK` will be returned if any 
+module accepts the option, and `ARCHIVE_FAILED` in all other cases.
+
+## archive\_read\_set\_option($archive, $module, $option, $value)
+
+Calls `archive_read_set_format_option` then 
+`archive_read_set_filter_option`.  If either function returns 
+`ARCHIVE_FATAL`, `ARCHIVE_FATAL` will be returned immediately.  
+Otherwise, greater of the two values will be returned.
+
+## archive\_read\_set\_options($archive, $opts)
+
+options is a comma-separated list of options.  If options is `undef` or 
+empty, `ARCHIVE_OK` will be returned immediately.
+
+Calls `archive_read_set_option` with each option in turn.  If any 
+`archive_read_set_option` call returns `ARCHIVE_FATAL`, 
+`ARCHIVE_FATAL` will be returned immediately.
+
+- option=value
+
+    The option/value pair will be provided to every module.  Modules that do 
+    not accept an option with this name will ignore it.
+
+- option
+
+    The option will be provided to every module with a value of "1".
+
+- !option
+
+    The option will be provided to every module with an `undef` value.
+
+- module:option=value, module:option, module:!option
+
+    As above, but the corresponding option and value will be provided only 
+    to modules whose name matches module.
 
 ## archive\_read\_support\_filter\_all($archive)
 
@@ -384,6 +463,10 @@ Enable xar archive format.
 
 Enable zip archive format.
 
+## archive\_seek\_data($archive, $offset, $whence)
+
+Seek within the body of an entry.  Similar to `lseek`.
+
 ## archive\_version\_number
 
 Return the libarchive version as an integer.
@@ -471,6 +554,10 @@ This function returns the number of bytes actually written, or -1 on error.
 Writes the buffer to the current entry in the given archive
 starting at the given offset.
 
+## archive\_write\_disk\_gid($archive, $string, $int64)
+
+Undocumented libarchive function.
+
 ## archive\_write\_disk\_new
 
 Allocates and initializes a struct archive object suitable for
@@ -497,6 +584,14 @@ following values:
 - ARCHIVE\_EXTRACT\_SECURE\_NODOTDOT
 - ARCHIVE\_EXTRACT\_SPARSE
 
+## archive\_write\_disk\_set\_skip\_file($archive, $device, $inode)
+
+Records the device and inode numbers of a file that should not be 
+overwritten.  This is typically used to ensure that an extraction 
+process does not overwrite the archive from which objects are being 
+read.  This capability is technically unnecessary but can be a 
+significant performance optimization in practice.
+
 ## archive\_write\_disk\_set\_standard\_lookup($archive)
 
 This convenience function installs a standard set of user and
@@ -505,6 +600,16 @@ group lookup functions.  These functions use `getpwnam` and
 if the names cannot be looked up.  These functions also implement
 a simple memory cache to reduce the number of calls to 
 `getpwnam` and `getgrnam`.
+
+## archive\_write\_disk\_uid($archive, $string, $int64)
+
+Undocumented libarchive function.
+
+## archive\_write\_fail($archive)
+
+Marks the archive as FATAL so that a subsequent `free` operation
+won't try to `close` cleanly.  Provides a fast abort capability
+when the client discovers that things have gone wrong.
 
 ## archive\_write\_finish\_entry($archive)
 
@@ -520,6 +625,17 @@ if you need to work with the file on disk right away.
 
 Invokes `archive_write_close` if it was not invoked manually, then
 release all resources.
+
+## archive\_write\_get\_bytes\_in\_last\_block($archive)
+
+Retrieve the currently-set value for last block size.  A value of -1 
+here indicates that the library should use default values.
+
+## archive\_write\_get\_bytes\_per\_block($archive)
+
+Retrieve the block size to be used for writing.  A value of -1 here 
+indicates that the library should use default values.  A value of zero 
+indicates that internal blocking is suppressed.
 
 ## archive\_write\_header($archive, $entry)
 
@@ -547,6 +663,28 @@ with tape drives or other block-oriented devices.
 
 If you pass in `undef` as the `$filename`, libarchive will write the
 archive to standard out.
+
+## archive\_write\_set\_bytes\_in\_last\_block($archive, $bytes\_in\_last\_block)
+
+Sets the block size used for writing the last block.  If this value is 
+zero, the last block will be padded to the same size as the other 
+blocks.  Otherwise, the final block will be padded to a multiple of this 
+size.  In particular, setting it to 1 will cause the final block to not 
+be padded.  For compressed output, any padding generated by this option 
+is applied only after the compression.  The uncompressed data is always 
+unpadded.  The default is to pad the last block to the full block size 
+(note that `archive_write_open_filename` will set this based on the file 
+type).  Unlike the other "set" functions, this function can be called 
+after the archive is opened.
+
+## archive\_write\_set\_bytes\_per\_block($archive, $bytes\_per\_block)
+
+Sets the block size used for writing the archive data.  Every call to 
+the write callback function, except possibly the last one, will use this 
+value for the length.  The default is to use a block size of 10240 
+bytes.  Note that a block size of zero will suppress internal blocking 
+and cause writes to be sent directly to the write callback as they 
+occur.
 
 ## archive\_write\_set\_filter\_option($archive, $module, $option, $value)
 

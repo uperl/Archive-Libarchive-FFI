@@ -27,6 +27,7 @@ attach_function 'archive_errno',                                 [ _ptr ], _int;
 attach_function 'archive_file_count',                            [ _ptr ], _int;
 attach_function 'archive_format',                                [ _ptr ], _int;
 attach_function 'archive_format_name',                           [ _ptr ], _str;
+attach_function 'archive_seek_data',                             [ _ptr, _int64, _int ], _int64;
 
 attach_function 'archive_read_new',                              undef, _ptr;
 attach_function 'archive_read_support_filter_all',               [ _ptr ], _int;
@@ -37,6 +38,12 @@ attach_function 'archive_read_data_skip',                        [ _ptr ], _int;
 attach_function 'archive_read_close',                            [ _ptr ], _int;
 attach_function 'archive_read_support_filter_program',           [ _ptr, _str ], _int;
 attach_function 'archive_read_support_format_by_code',           [ _ptr, _int ], _int;
+attach_function 'archive_read_header_position',                  [ _ptr ], _int64;
+attach_function 'archive_read_set_filter_option',                [ _ptr, _str, _str, _str ], _int;
+attach_function 'archive_read_set_format_option',                [ _ptr, _str, _str, _str ], _int;
+attach_function 'archive_read_set_option',                       [ _ptr, _str, _str, _str ], _int;
+attach_function 'archive_read_set_options',                      [ _ptr, _str ], _int;
+attach_function 'archive_read_set_format',                       [ _ptr, _str, _str, _str ], _int;
 
 attach_function 'archive_filter_code',                           [ _ptr, _int ], _int;
 attach_function 'archive_filter_count',                          [ _ptr ], _int;
@@ -63,6 +70,14 @@ attach_function 'archive_write_set_format_option',               [ _ptr, _str, _
 attach_function 'archive_write_set_option',                      [ _ptr, _str, _str, _str ], _int;
 attach_function 'archive_write_set_options',                     [ _ptr, _str ], _int;
 attach_function 'archive_write_set_skip_file',                   [ _ptr, _int64, _int64 ], _int;
+attach_function 'archive_write_disk_gid',                        [ _ptr, _str, _int64 ], _int64;
+attach_function 'archive_write_disk_set_skip_file',              [ _ptr, _int64, _int64 ], _int;
+attach_function 'archive_write_disk_uid',                        [ _ptr, _str, _int64 ], _int64;
+attach_function 'archive_write_fail',                            [ _ptr ], _int;
+attach_function 'archive_write_get_bytes_in_last_block',         [ _ptr ], _int;
+attach_function 'archive_write_get_bytes_per_block',             [ _ptr ], _int;
+attach_function 'archive_write_set_bytes_in_last_block',         [ _ptr, _int ], _int;
+attach_function 'archive_write_set_bytes_per_block',             [ _ptr, _int ], _int;
 
 attach_function 'archive_entry_clear',                           [ _ptr ], _void;
 attach_function 'archive_entry_clone',                           [ _ptr ], _ptr;
@@ -399,6 +414,11 @@ all of the data for this archive entry.
 Invokes C<archive_read_close> if it was not invoked manually, then
 release all resources.
 
+=head2 archive_read_header_position($archive)
+
+Retrieve the byte offset in UNCOMPRESSED data where last-read
+header started.
+
 =head2 archive_read_new
 
 Allocates and initializes a archive object suitable for reading from an archive.
@@ -412,8 +432,6 @@ Read the header for the next entry and return an entry object
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the functions documented here with an <$entry> argument.
-
-TODO: maybe use archive_read_next_header2
 
 =head2 archive_read_open_filename($archive, $filename, $block_size)
 
@@ -434,6 +452,86 @@ archive using C<archive_read_free>.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until C<archive_read_free> is called.
+
+=head2 archive_read_set_filter_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered filters 
+(including decompression filters).
+
+If option and value are both C<undef>, these functions will do nothing 
+and C<ARCHIVE_OK> will be returned.  If option is C<undef> but value is 
+not, these functions will do nothing and C<ARCHIVE_FAILED> will be 
+returned.
+
+If module is not C<undef>, option and value will be provided to the filter 
+or reader named module.  The return value will be that of the module.  
+If there is no such module, C<ARCHIVE_FAILED> will be returned.
+
+If module is C<NULL>, option and value will be provided to every registered 
+module.  If any module returns C<ARCHIVE_FATAL>, this value will be 
+returned immediately.  Otherwise, C<ARCHIVE_OK> will be returned if any 
+module accepts the option, and C<ARCHIVE_FAILED> in all other cases.
+
+=head2 archive_read_set_format($archive, $format)
+
+Undocumented libarchive function.
+
+=head2 archive_read_set_format_option($archive, $module, $option, $value)
+
+Specifies an option that will be passed to currently-registered format 
+readers.
+
+If option and value are both C<undef>, these functions will do nothing 
+and C<ARCHIVE_OK> will be returned.  If option is C<undef> but value is 
+not, these functions will do nothing and C<ARCHIVE_FAILED> will be 
+returned.
+
+If module is not C<undef>, option and value will be provided to the filter 
+or reader named module.  The return value will be that of the module.  
+If there is no such module, C<ARCHIVE_FAILED> will be returned.
+
+If module is C<NULL>, option and value will be provided to every registered 
+module.  If any module returns C<ARCHIVE_FATAL>, this value will be 
+returned immediately.  Otherwise, C<ARCHIVE_OK> will be returned if any 
+module accepts the option, and C<ARCHIVE_FAILED> in all other cases.
+
+=head2 archive_read_set_option($archive, $module, $option, $value)
+
+Calls C<archive_read_set_format_option> then 
+C<archive_read_set_filter_option>.  If either function returns 
+C<ARCHIVE_FATAL>, C<ARCHIVE_FATAL> will be returned immediately.  
+Otherwise, greater of the two values will be returned.
+
+=head2 archive_read_set_options($archive, $opts)
+
+options is a comma-separated list of options.  If options is C<undef> or 
+empty, C<ARCHIVE_OK> will be returned immediately.
+
+Calls C<archive_read_set_option> with each option in turn.  If any 
+C<archive_read_set_option> call returns C<ARCHIVE_FATAL>, 
+C<ARCHIVE_FATAL> will be returned immediately.
+
+=over 4
+
+=item option=value
+
+The option/value pair will be provided to every module.  Modules that do 
+not accept an option with this name will ignore it.
+
+=item option
+
+The option will be provided to every module with a value of "1".
+
+=item !option
+
+The option will be provided to every module with an C<undef> value.
+
+=item module:option=value, module:option, module:!option
+
+As above, but the corresponding option and value will be provided only 
+to modules whose name matches module.
+
+=back
 
 =head2 archive_read_support_filter_all($archive)
 
@@ -558,6 +656,10 @@ Enable xar archive format.
 
 Enable zip archive format.
 
+=head2 archive_seek_data($archive, $offset, $whence)
+
+Seek within the body of an entry.  Similar to C<lseek>.
+
 =head2 archive_version_number
 
 Return the libarchive version as an integer.
@@ -645,6 +747,10 @@ This function returns the number of bytes actually written, or -1 on error.
 Writes the buffer to the current entry in the given archive
 starting at the given offset.
 
+=head2 archive_write_disk_gid($archive, $string, $int64)
+
+Undocumented libarchive function.
+
 =head2 archive_write_disk_new
 
 Allocates and initializes a struct archive object suitable for
@@ -685,6 +791,14 @@ following values:
 
 =back
 
+=head2 archive_write_disk_set_skip_file($archive, $device, $inode)
+
+Records the device and inode numbers of a file that should not be 
+overwritten.  This is typically used to ensure that an extraction 
+process does not overwrite the archive from which objects are being 
+read.  This capability is technically unnecessary but can be a 
+significant performance optimization in practice.
+
 =head2 archive_write_disk_set_standard_lookup($archive)
 
 This convenience function installs a standard set of user and
@@ -693,6 +807,16 @@ C<getgrnam> to convert names to ids, defaulting to the ids
 if the names cannot be looked up.  These functions also implement
 a simple memory cache to reduce the number of calls to 
 C<getpwnam> and C<getgrnam>.
+
+=head2 archive_write_disk_uid($archive, $string, $int64)
+
+Undocumented libarchive function.
+
+=head2 archive_write_fail($archive)
+
+Marks the archive as FATAL so that a subsequent C<free> operation
+won't try to C<close> cleanly.  Provides a fast abort capability
+when the client discovers that things have gone wrong.
 
 =head2 archive_write_finish_entry($archive)
 
@@ -708,6 +832,17 @@ if you need to work with the file on disk right away.
 
 Invokes C<archive_write_close> if it was not invoked manually, then
 release all resources.
+
+=head2 archive_write_get_bytes_in_last_block($archive)
+
+Retrieve the currently-set value for last block size.  A value of -1 
+here indicates that the library should use default values.
+
+=head2 archive_write_get_bytes_per_block($archive)
+
+Retrieve the block size to be used for writing.  A value of -1 here 
+indicates that the library should use default values.  A value of zero 
+indicates that internal blocking is suppressed.
 
 =head2 archive_write_header($archive, $entry)
 
@@ -735,6 +870,28 @@ with tape drives or other block-oriented devices.
 
 If you pass in C<undef> as the C<$filename>, libarchive will write the
 archive to standard out.
+
+=head2 archive_write_set_bytes_in_last_block($archive, $bytes_in_last_block)
+
+Sets the block size used for writing the last block.  If this value is 
+zero, the last block will be padded to the same size as the other 
+blocks.  Otherwise, the final block will be padded to a multiple of this 
+size.  In particular, setting it to 1 will cause the final block to not 
+be padded.  For compressed output, any padding generated by this option 
+is applied only after the compression.  The uncompressed data is always 
+unpadded.  The default is to pad the last block to the full block size 
+(note that C<archive_write_open_filename> will set this based on the file 
+type).  Unlike the other "set" functions, this function can be called 
+after the archive is opened.
+
+=head2 archive_write_set_bytes_per_block($archive, $bytes_per_block)
+
+Sets the block size used for writing the archive data.  Every call to 
+the write callback function, except possibly the last one, will use this 
+value for the length.  The default is to use a block size of 10240 
+bytes.  Note that a block size of zero will suppress internal blocking 
+and cause writes to be sent directly to the write callback as they 
+occur.
 
 =head2 archive_write_set_filter_option($archive, $module, $option, $value)
 
