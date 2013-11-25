@@ -5,19 +5,15 @@ use warnings;
 use Alien::Libarchive;
 use FFI::Raw ();
 use FFI::Raw::PtrPtr;
-use FFI::Sweet qw( ffi_lib attach_function :types );
+use FFI::Sweet;
 use Exporter::Tidy ();
-
-sub _int64  { FFI::Raw::int64() }
-sub _uint64 { FFI::Raw::uint64() }
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
-ffi_lib \$_ for DynaLoader::dl_findfile(split /\s+/, Alien::Libarchive->new->libs);
+ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::constants;
-require Archive::Libarchive::FFI::functions;
 
 attach_function 'archive_version_number',                        undef, _int;
 attach_function 'archive_version_string',                        undef, _str;
@@ -102,69 +98,69 @@ attach_function "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
 
-sub archive_read_next_header
+attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
 {
-  my $entry = FFI::Raw::PtrPtr->new;  
-  my $ret = Archive::Libarchive::FFI::functions::archive_read_next_header($_[0], $entry);
-  $_[1] = $entry->dereference;
+  my $entry = FFI::Raw::PtrPtr->new;
+  my $ret = $_[0]->($_[1], $entry);
+  $_[2] = $entry->dereference;
   $ret;
-}
+};
 
-sub archive_read_open_memory
+attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
-  my($archive, $buffer) = @_;
-  my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
+  my($cb, $archive, $buffer) = @_;
+  my $length = length $buffer;
   my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
-  Archive::Libarchive::FFI::functions::archive_read_open_memory($archive, $ptr, $length);
-}
+  $cb->($archive, $ptr, $length);
+};
 
-sub archive_read_data
+attach_function 'archive_read_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
-  # 0 archive 1 buffer 2 size
-  my $buffer = FFI::Raw::MemPtr->new($_[2]);
-  my $ret = Archive::Libarchive::FFI::functions::archive_read_data($_[0], $buffer, $_[2]);
-  $_[1] = $buffer->tostr($ret);
+  # 0 cb 1 archive 2 buffer 3 size
+  my $buffer = FFI::Raw::MemPtr->new($_[3]);
+  my $ret = $_[0]->($_[1], $buffer, $_[3]);
+  $_[2] = $buffer->tostr($ret);
   $ret;
-}
+};
 
-sub archive_read_data_block
+attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
-  # 0 archive 1 buffer 2 offset
+  # 0 cb 1 archive 2 buffer 3 offset
   require Config;
   my $buffer = FFI::Raw::PtrPtr->new;
   my $size   = FFI::Raw::MemPtr->new($Config::Config{sizesize});  # size_t
   my $offset = FFI::Raw::MemPtr->new(8);                          # uint64_t
-  my $ret    = Archive::Libarchive::FFI::functions::archive_read_data_block($_[0], $buffer, $size, $offset);
+  my $ret    = $_[0]->($_[1], $buffer, $size, $offset);
   my $pattern = $Config::Config{sizesize} == 8 ? "Q1" : "L1";
   $size   = unpack $pattern, $size->tostr($Config::Config{sizesize});
   $offset = unpack "q1", $offset->tostr(8);
-  $buffer->copy_to_buffer($_[1], $size);
-  $_[2]   = $offset;
+  $buffer->copy_to_buffer($_[2], $size);
+  $_[3]   = $offset;
   $ret;
-}
+};
 
-sub archive_write_data
+attach_function 'archive_write_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
-  my($archive, $buffer) = @_;
+  my($cb, $archive, $buffer) = @_;
   my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
   my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
-  Archive::Libarchive::FFI::functions::archive_write_data($archive, $ptr, $length);
-}
+  $cb->($archive, $ptr, $length);
+};
 
-sub archive_write_data_block
+attach_function 'archive_write_data_block', [ _ptr, _ptr, _int, _int64 ], _int, sub # FIXME: third argument is actually a size_t
 {
-  my($archive, $buffer, $offset) = @_;
+  my($cb, $archive, $buffer, $offset) = @_;
   my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
   my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
-  Archive::Libarchive::FFI::functions::archive_write_data_block($archive, $ptr, $length, $offset);
-}
+  $cb->($archive, $ptr, $length, $offset);
+};
 
-sub archive_error_string
+attach_function 'archive_error_string', [ _ptr ], _str, sub
 {
-  my $str = Archive::Libarchive::FFI::functions::archive_error_string($_[0]);
+  my $str = $_[0]->($_[1]);
   return '' unless defined $str;
   $str;
-}
+};
 
 eval q{
   use Exporter::Tidy
@@ -239,6 +235,30 @@ generally used in client code.  Does not return a value.
 
 Copies error information from one archive to another.
 
+=head2 archive_entry_atime($entry)
+
+Returns the access time for the archive entry.
+
+=head2 archive_entry_atime_is_set($entry)
+
+Returns true if the access time property has been set on the archive entry.
+
+=head2 archive_entry_atime_nsec($entry)
+
+Returns the access time (nanoseconds).
+
+=head2 archive_entry_birthtime($entry)
+
+Returns the birthtime (creation time) for the archive entry.
+
+=head2 archive_entry_birthtime_is_set($entry)
+
+Returns true if the birthtime (creation time) property has been set on the archive entry.
+
+=head2 archive_entry_birthtime_nsec($entry)
+
+Returns the birthtime (creation time) for the archive entry.
+
 =head2 archive_entry_clear
 
 Erases the object, resetting all internal fields to the same state as a newly-created object.  This is provided
@@ -248,9 +268,56 @@ to allow you to quickly recycle objects without thrashing the heap.
 
 A deep copy operation; all text fields are duplicated.
 
+=head2 archive_entry_ctime($entry)
+
+Returns the ctime (last time an inode property was changed) property for the archive entry.
+
+=head2 archive_entry_ctime_is_set($entry)
+
+Returns true if the ctime (last time an inode property was changed) property has been set
+on the archive entry.
+
+=head2 archive_entry_ctime_nsec($entry)
+
+Returns the ctime (last time an inode property was changed) property (nanoseconds).
+
+=head2 archive_entry_dev($entry)
+
+Returns the device property for the archive entry.
+
+The device property is an integer identifying the device, and is used by
+C<archive_entry_linkify> (along with the ino64 property) to find hardlinks.
+
+=head2 archive_entry_dev_is_set($entry)
+
+Returns true if the device property on the archive entry is set.
+
+The device property is an integer identifying the device, and is used by
+C<archive_entry_linkify> (along with the ino64 property) to find hardlinks.
+
+=head2 archive_entry_devmajor
+
+Returns the device major property for the archive entry.
+
+=head2 archive_entry_devminor
+
+Returns the device minor property for the archive entry.
+
+=head2 archive_entry_fflags($entry, $set, $clear)
+
+Returns the file flags property for the archive entry.
+
+=head2 archive_entry_fflags_text($entry)
+
+Returns the file flags property as a string.
+
 =head2 archive_entry_free
 
 Releases the struct archive_entry object.
+
+=head2 archive_entry_gid($entry)
+
+Returns the group id property for the archive entry.
 
 =head2 archive_entry_new
 
@@ -433,6 +500,26 @@ Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the functions documented here with an <$entry> argument.
 
+=head2 archive_read_next_header2($archive, $entry)
+
+Read the header for the next entry and populate the provided entry object.
+
+=head2 archive_read_open($archive, $data, $open_cb, $read_cb, $close_cb)
+
+The same as C<archive_read_open2>, except that the skip callback is assumed to be C<undef>.
+
+=head2 archive_read_open1($archive)
+
+Opening freezes the callbacks.
+
+=head2 archive_read_open2($archive, $data, $open_cb, $read_cb, $skip_cb, $close_cb)
+
+Freeze the settings, open the archive, and prepare for reading entries.  This is the most
+generic version of this call, which accepts four callback functions.  Most clients will
+want to use C<archive_read_open_filename>, C<archive_read_open_FILE>, C<archive_read_open_fd>,
+or C<archive_read_open_memory> instead.  The library invokes the client-provided functions to 
+obtain raw bytes from the archive.
+
 =head2 archive_read_open_filename($archive, $filename, $block_size)
 
 Like C<archive_read_open>, except that it accepts a simple filename
@@ -452,6 +539,14 @@ archive using C<archive_read_free>.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until C<archive_read_free> is called.
+
+=head2 archive_read_set_callback_data($archive, $data)
+
+Set the client data for callbacks.
+
+=head2 archive_read_set_close_callback($archive, $callback)
+
+Set the close callback for the archive object.
 
 =head2 archive_read_set_filter_option($archive, $module, $option, $value)
 
@@ -495,6 +590,10 @@ module.  If any module returns C<ARCHIVE_FATAL>, this value will be
 returned immediately.  Otherwise, C<ARCHIVE_OK> will be returned if any 
 module accepts the option, and C<ARCHIVE_FAILED> in all other cases.
 
+=head2 archive_read_set_open_callback($archive, $callback)
+
+Set the open callback for the archive object.
+
 =head2 archive_read_set_option($archive, $module, $option, $value)
 
 Calls C<archive_read_set_format_option> then 
@@ -532,6 +631,18 @@ As above, but the corresponding option and value will be provided only
 to modules whose name matches module.
 
 =back
+
+=head2 archive_read_set_read_callback($archive, $callback)
+
+Set the read callback for the archive object.
+
+=head2 archive_read_set_seek_callback($archive, $callback)
+
+Set the seek callback for the archive object.
+
+=head2 archive_read_set_skip_callback($archive, $callback)
+
+Set the skip callback for the archive object.
 
 =head2 archive_read_support_filter_all($archive)
 
@@ -856,6 +967,12 @@ Allocates and initializes a archive object suitable for writing an new archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the write functions documented here with an C<$archive> argument.
+
+=head2 archive_write_open($archive, $data, $open_cb, $read_cb, $close_cb)
+
+Freeze the settings, open the archive, and prepare for writing entries.  This is the most
+generic form of this function, which accepts pointers to three callback functions which will
+be invoked by the compression layer to write the constructed archive.
 
 =head2 archive_write_open_filename($archive, $filename)
 
@@ -1375,7 +1492,7 @@ These examples are also included with the distribution.
 
 =head2 List contents of archive with custom read functions
 
-TODO
+# EXAMPLE: example/list_contents_of_archive_with_custom_read_functions.pl
 
 =head2 A universal decompressor
 
@@ -1400,7 +1517,13 @@ and need to be freed using one of C<archive_read_free>, C<archive_write_free>
 or C<archive_entry_free>, in order to free the resources associated
 with those objects.
 
-The documentation that comes with libarchive is not that great, but
-is serviceable.  The documentation for this library is copied largely
-from libarchive, with adjustments for Perl.
+The documentation that comes with libarchive is not that great (by its own
+admission), being somewhat incomplete, and containing a few subtle errors.
+In writing the documentation for this distribution, I borrowed heavily (read:
+stole wholesale) from the libarchive documentation, making changes where 
+appropriate for use under Perl (changing C<NULL> to C<undef> for example, along 
+with the interface change to make that work).  I may and probably have introduced 
+additional subtle errors.  Patches to the documentation that match the
+implementation, or fixes to the implementation so that it matches the
+documentation (which ever is appropriate) would greatly appreciated.
 

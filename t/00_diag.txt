@@ -11,3 +11,4 @@ Module::Build
 Test::More
 bytes
 constant
+utf8

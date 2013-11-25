@@ -35,6 +35,9 @@ pod_spelling_system:
     - optimizations
     - uu
     - unpadded
+    - birthtime
+    - hardlinks
+    - ino
 
 
 pod_coverage:

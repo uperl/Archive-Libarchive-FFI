@@ -1,19 +1,22 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 8;
+use Test::More tests => 4 * 3;
 use FindBin ();
 use File::Spec;
 
 my %failures;
 
-foreach my $mode (qw( memory filename ))
+foreach my $mode (qw( memory filename callback ))
 {
   # TODO: add xar back in if we can figure it out.
   foreach my $format (qw( tar tar.gz tar.bz2 zip ))
   {
     my $testname = "$format $mode";
     my $ok = subtest $testname=> sub {
+      plan skip_all => 'requires archive_read_open'
+        unless Archive::Libarchive::FFI->can('archive_read_open');
+    
       plan tests => 17;
     
       my $filename = File::Spec->catfile($FindBin::Bin, "foo.$format");
@@ -36,6 +39,11 @@ foreach my $mode (qw( memory filename ))
         my $buffer = do { local $/; <$fh> };
         close $fh;
         $r = archive_read_open_memory($a, $buffer);
+      }
+      elsif($mode eq 'callback')
+      {
+        my %data = ( filename => $filename );
+        archive_read_open($a, \%data, \&myopen, \&myread, \&myclose);
       }
       else
       {
@@ -66,6 +74,19 @@ foreach my $mode (qw( memory filename ))
 
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 2)";
+
+      if(Archive::Libarchive::FFI->can('archive_entry_atime_is_set'))
+      {
+        if(archive_entry_atime_is_set($entry))
+        {
+          note '+ atime      = ', archive_entry_atime($entry);
+          note '+ atime_nsec = ', archive_entry_atime($entry);
+        }
+        else
+        {
+          note '+ no atime';
+        }
+      }
 
       is archive_file_count($a), 2, "archive_file_count = 2";
 
@@ -98,4 +119,30 @@ if(%failures)
 {
   diag "failure summary:";
   diag "  $_" for keys %failures;
+}
+
+sub myopen
+{
+  my($a, $d) = @_;
+  open my $fh, '<', $d->{filename};
+  $d->{fh} = $fh;
+  note "callback: open ", $d->{filename};
+  ARCHIVE_OK;
+}
+
+sub myread
+{
+  my($a, $d) = @_;
+  my $br = read $d->{fh}, my $buffer, 100;
+  note "callback: read ", $br;
+  (ARCHIVE_OK, $buffer);
+}
+
+sub myclose
+{
+  my($a, $d) = @_;
+  my $fh = $d->{fh};
+  close $fh;
+  note "callback: close";
+  ARCHIVE_OK;
 }

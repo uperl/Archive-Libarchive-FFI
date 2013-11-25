@@ -61,6 +61,30 @@ generally used in client code.  Does not return a value.
 
 Copies error information from one archive to another.
 
+## archive\_entry\_atime($entry)
+
+Returns the access time for the archive entry.
+
+## archive\_entry\_atime\_is\_set($entry)
+
+Returns true if the access time property has been set on the archive entry.
+
+## archive\_entry\_atime\_nsec($entry)
+
+Returns the access time (nanoseconds).
+
+## archive\_entry\_birthtime($entry)
+
+Returns the birthtime (creation time) for the archive entry.
+
+## archive\_entry\_birthtime\_is\_set($entry)
+
+Returns true if the birthtime (creation time) property has been set on the archive entry.
+
+## archive\_entry\_birthtime\_nsec($entry)
+
+Returns the birthtime (creation time) for the archive entry.
+
 ## archive\_entry\_clear
 
 Erases the object, resetting all internal fields to the same state as a newly-created object.  This is provided
@@ -70,9 +94,56 @@ to allow you to quickly recycle objects without thrashing the heap.
 
 A deep copy operation; all text fields are duplicated.
 
+## archive\_entry\_ctime($entry)
+
+Returns the ctime (last time an inode property was changed) property for the archive entry.
+
+## archive\_entry\_ctime\_is\_set($entry)
+
+Returns true if the ctime (last time an inode property was changed) property has been set
+on the archive entry.
+
+## archive\_entry\_ctime\_nsec($entry)
+
+Returns the ctime (last time an inode property was changed) property (nanoseconds).
+
+## archive\_entry\_dev($entry)
+
+Returns the device property for the archive entry.
+
+The device property is an integer identifying the device, and is used by
+`archive_entry_linkify` (along with the ino64 property) to find hardlinks.
+
+## archive\_entry\_dev\_is\_set($entry)
+
+Returns true if the device property on the archive entry is set.
+
+The device property is an integer identifying the device, and is used by
+`archive_entry_linkify` (along with the ino64 property) to find hardlinks.
+
+## archive\_entry\_devmajor
+
+Returns the device major property for the archive entry.
+
+## archive\_entry\_devminor
+
+Returns the device minor property for the archive entry.
+
+## archive\_entry\_fflags($entry, $set, $clear)
+
+Returns the file flags property for the archive entry.
+
+## archive\_entry\_fflags\_text($entry)
+
+Returns the file flags property as a string.
+
 ## archive\_entry\_free
 
 Releases the struct archive\_entry object.
+
+## archive\_entry\_gid($entry)
+
+Returns the group id property for the archive entry.
 
 ## archive\_entry\_new
 
@@ -244,6 +315,26 @@ Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the functions documented here with an <$entry> argument.
 
+## archive\_read\_next\_header2($archive, $entry)
+
+Read the header for the next entry and populate the provided entry object.
+
+## archive\_read\_open($archive, $data, $open\_cb, $read\_cb, $close\_cb)
+
+The same as `archive_read_open2`, except that the skip callback is assumed to be `undef`.
+
+## archive\_read\_open1($archive)
+
+Opening freezes the callbacks.
+
+## archive\_read\_open2($archive, $data, $open\_cb, $read\_cb, $skip\_cb, $close\_cb)
+
+Freeze the settings, open the archive, and prepare for reading entries.  This is the most
+generic version of this call, which accepts four callback functions.  Most clients will
+want to use `archive_read_open_filename`, `archive_read_open_FILE`, `archive_read_open_fd`,
+or `archive_read_open_memory` instead.  The library invokes the client-provided functions to 
+obtain raw bytes from the archive.
+
 ## archive\_read\_open\_filename($archive, $filename, $block\_size)
 
 Like `archive_read_open`, except that it accepts a simple filename
@@ -263,6 +354,14 @@ archive using `archive_read_free`.
 Bad things will happen if the buffer falls out of scope and is deallocated
 before you free the archive, so make sure that there is a reference to the
 buffer somewhere in your programmer until `archive_read_free` is called.
+
+## archive\_read\_set\_callback\_data($archive, $data)
+
+Set the client data for callbacks.
+
+## archive\_read\_set\_close\_callback($archive, $callback)
+
+Set the close callback for the archive object.
 
 ## archive\_read\_set\_filter\_option($archive, $module, $option, $value)
 
@@ -306,6 +405,10 @@ module.  If any module returns `ARCHIVE_FATAL`, this value will be
 returned immediately.  Otherwise, `ARCHIVE_OK` will be returned if any 
 module accepts the option, and `ARCHIVE_FAILED` in all other cases.
 
+## archive\_read\_set\_open\_callback($archive, $callback)
+
+Set the open callback for the archive object.
+
 ## archive\_read\_set\_option($archive, $module, $option, $value)
 
 Calls `archive_read_set_format_option` then 
@@ -339,6 +442,18 @@ Calls `archive_read_set_option` with each option in turn.  If any
 
     As above, but the corresponding option and value will be provided only 
     to modules whose name matches module.
+
+## archive\_read\_set\_read\_callback($archive, $callback)
+
+Set the read callback for the archive object.
+
+## archive\_read\_set\_seek\_callback($archive, $callback)
+
+Set the seek callback for the archive object.
+
+## archive\_read\_set\_skip\_callback($archive, $callback)
+
+Set the skip callback for the archive object.
 
 ## archive\_read\_support\_filter\_all($archive)
 
@@ -649,6 +764,12 @@ Allocates and initializes a archive object suitable for writing an new archive.
 Returns an opaque archive which may be a perl style object, or a C pointer
 (depending on the implementation), either way, it can be passed into
 any of the write functions documented here with an `$archive` argument.
+
+## archive\_write\_open($archive, $data, $open\_cb, $read\_cb, $close\_cb)
+
+Freeze the settings, open the archive, and prepare for writing entries.  This is the most
+generic form of this function, which accepts pointers to three callback functions which will
+be invoked by the compression layer to write the constructed archive.
 
 ## archive\_write\_open\_filename($archive, $filename)
 
@@ -1075,7 +1196,43 @@ These examples are also included with the distribution.
 
 ## List contents of archive with custom read functions
 
-TODO
+    use strict;
+    use warnings;
+    use Archive::Libarchive::FFI qw( :all );
+    
+    list_archive(shift @ARGV);
+    
+    sub list_archive
+    {
+      my $name = shift;
+      my %mydata;
+      my $a = archive_read_new();
+      $mydata{name} = $name;
+      open $mydata{fh}, '<', $name;
+      archive_read_support_filter_all($a);
+      archive_read_support_format_all($a);
+      archive_read_open($a, \%mydata, undef, \&myread, \&myclose);
+      while(archive_read_next_header($a, my $entry) == ARCHIVE_OK)
+      {
+        print archive_entry_pathname($entry), "\n";
+      }
+      archive_read_free($a);
+    }
+    
+    sub myread
+    {
+      my($archive, $mydata) = @_;
+      my $br = read $mydata->{fh}, my $buffer, 10240;
+      return (ARCHIVE_OK, $buffer);
+    }
+    
+    sub myclose
+    {
+      my($archive, $mydata) = @_;
+      close $mydata->{fh};
+      %$mydata = ();
+      return ARCHIVE_OK;
+    }
 
 ## A universal decompressor
 
@@ -1299,9 +1456,15 @@ and need to be freed using one of `archive_read_free`, `archive_write_free`
 or `archive_entry_free`, in order to free the resources associated
 with those objects.
 
-The documentation that comes with libarchive is not that great, but
-is serviceable.  The documentation for this library is copied largely
-from libarchive, with adjustments for Perl.
+The documentation that comes with libarchive is not that great (by its own
+admission), being somewhat incomplete, and containing a few subtle errors.
+In writing the documentation for this distribution, I borrowed heavily (read:
+stole wholesale) from the libarchive documentation, making changes where 
+appropriate for use under Perl (changing `NULL` to `undef` for example, along 
+with the interface change to make that work).  I may and probably have introduced 
+additional subtle errors.  Patches to the documentation that match the
+implementation, or fixes to the implementation so that it matches the
+documentation (which ever is appropriate) would greatly appreciated.
 
 # SEE ALSO
 
