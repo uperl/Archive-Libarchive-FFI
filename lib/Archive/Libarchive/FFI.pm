@@ -5,9 +5,8 @@ use warnings;
 use Alien::Libarchive;
 use FFI::Raw ();
 use FFI::Sweet;
-use FFI::Util qw( deref_to_ptr deref_to_uint64 deref_to_uint );
+use FFI::Util qw( deref_to_ptr deref_to_uint64 deref_to_uint buffer_to_scalar scalar_to_buffer );
 use Exporter::Tidy ();
-use Data::Structure::Util qw( unbless );
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
@@ -146,9 +145,7 @@ attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
   my $ret    = $_[0]->($_[1], $buffer, $size, $offset);
   $size   = do { require Config; $Config::Config{sizesize} == 8 } ? deref_to_uint64($size) : deref_to_uint($size);  # FIXME: size_t
   $offset = deref_to_uint64($offset);
-  my $tmp = bless \deref_to_ptr($$buffer), 'FFI::Raw::MemPtr';  # FIXME
-  $_[2]   = $tmp->tostr($size);                                 # FIXME
-  unbless $tmp;                                                 # FIXME
+  $_[2]   = buffer_to_scalar(deref_to_ptr($$buffer), $size);
   $_[3]   = $offset;
   $ret;
 };

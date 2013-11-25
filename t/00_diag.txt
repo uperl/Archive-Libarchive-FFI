@@ -1,8 +1,8 @@
 Alien::Libarchive
 Exporter::Tidy
 FFI::Raw
-FFI::Raw::PtrPtr
 FFI::Sweet
+FFI::Util
 File::Basename
 File::Spec
 File::Temp
