@@ -6,6 +6,7 @@ use Alien::Libarchive;
 use FFI::Raw ();
 use FFI::Raw::PtrPtr;
 use FFI::Sweet;
+use FFI::Util qw( deref_to_ptr );
 use Exporter::Tidy ();
 
 # ABSTRACT: Perl bindings to libarchive via FFI
@@ -14,6 +15,20 @@ use Exporter::Tidy ();
 ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::constants;
+
+use constant {
+  CB_DATA        => 0,
+  CB_READ        => 1,
+  CB_CLOSE       => 2,
+  CB_OPEN        => 3,
+  CB_SKIP        => 4,
+  CB_SEEK        => 5,
+  CB_WRITE       => 6,
+  CB_SWITCH      => 7,
+  CB_BUFFER      => 8,
+};
+
+my %callbacks;
 
 attach_function 'archive_version_number',                        undef, _int;
 attach_function 'archive_version_string',                        undef, _str;
@@ -29,7 +44,6 @@ attach_function 'archive_read_new',                              undef, _ptr;
 attach_function 'archive_read_support_filter_all',               [ _ptr ], _int;
 attach_function 'archive_read_support_format_all',               [ _ptr ], _int;
 attach_function 'archive_read_open_filename',                    [ _ptr, _str, _int ], _int;
-attach_function 'archive_read_free',                             [ _ptr ], _int;
 attach_function 'archive_read_data_skip',                        [ _ptr ], _int;
 attach_function 'archive_read_close',                            [ _ptr ], _int;
 attach_function 'archive_read_support_filter_program',           [ _ptr, _str ], _int;
@@ -46,7 +60,6 @@ attach_function 'archive_filter_count',                          [ _ptr ], _int;
 attach_function 'archive_filter_name',                           [ _ptr, _int ], _str;
 
 attach_function 'archive_write_new',                             undef, _ptr;
-attach_function 'archive_write_free',                            [ _ptr ], _int;
 attach_function 'archive_write_add_filter',                      [ _ptr, _int ], _int;
 attach_function 'archive_write_add_filter_by_name',              [ _ptr, _str ], _int;
 attach_function 'archive_write_add_filter_program',              [ _ptr, _str ], _int;
@@ -100,17 +113,18 @@ attach_function "archive_write_set_format_$_", [ _ptr ], _int
 
 attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
 {
-  my $entry = FFI::Raw::PtrPtr->new;
+  my $entry = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ret = $_[0]->($_[1], $entry);
-  $_[2] = $entry->dereference;
+  $_[2] = deref_to_ptr($$entry);
   $ret;
 };
 
 attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
   my($cb, $archive, $buffer) = @_;
-  my $length = length $buffer;
-  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
+  my $length = do { use bytes; length $buffer };
+  my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
+  $callbacks{$archive}->[CB_BUFFER] = $ptr;  # TODO: CB_BUFFER or CB_DATA (or something else?)
   $cb->($archive, $ptr, $length);
 };
 
@@ -160,6 +174,22 @@ attach_function 'archive_error_string', [ _ptr ], _str, sub
   my $str = $_[0]->($_[1]);
   return '' unless defined $str;
   $str;
+};
+
+attach_function 'archive_read_free', [ _ptr ], _int, sub
+{
+  my($cb, $archive) = @_;
+  my $ret = $cb->($archive);
+  delete $callbacks{$archive};
+  $ret;
+};
+
+attach_function 'archive_write_free', [ _ptr ], _int, sub
+{
+  my($cb, $archive) = @_;
+  my $ret = $cb->($archive);
+  delete $callbacks{$archive};
+  $ret;
 };
 
 eval q{
