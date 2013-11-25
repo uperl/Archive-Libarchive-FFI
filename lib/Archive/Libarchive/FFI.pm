@@ -4,10 +4,10 @@ use strict;
 use warnings;
 use Alien::Libarchive;
 use FFI::Raw ();
-use FFI::Raw::PtrPtr;
 use FFI::Sweet;
-use FFI::Util qw( deref_to_ptr );
+use FFI::Util qw( deref_to_ptr deref_to_uint64 deref_to_uint );
 use Exporter::Tidy ();
+use Data::Structure::Util qw( unbless );
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
@@ -140,15 +140,15 @@ attach_function 'archive_read_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: th
 attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   # 0 cb 1 archive 2 buffer 3 offset
-  require Config;
-  my $buffer = FFI::Raw::PtrPtr->new;
-  my $size   = FFI::Raw::MemPtr->new($Config::Config{sizesize});  # size_t
-  my $offset = FFI::Raw::MemPtr->new(8);                          # uint64_t
+  my $buffer = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $size   = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $offset = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ret    = $_[0]->($_[1], $buffer, $size, $offset);
-  my $pattern = $Config::Config{sizesize} == 8 ? "Q1" : "L1";
-  $size   = unpack $pattern, $size->tostr($Config::Config{sizesize});
-  $offset = unpack "q1", $offset->tostr(8);
-  $buffer->copy_to_buffer($_[2], $size);
+  $size   = do { require Config; $Config::Config{sizesize} == 8 } ? deref_to_uint64($size) : deref_to_uint($size);  # FIXME: size_t
+  $offset = deref_to_uint64($offset);
+  my $tmp = bless \deref_to_ptr($$buffer), 'FFI::Raw::MemPtr';  # FIXME
+  $_[2]   = $tmp->tostr($size);                                 # FIXME
+  unbless $tmp;                                                 # FIXME
   $_[3]   = $offset;
   $ret;
 };
@@ -156,17 +156,17 @@ attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 attach_function 'archive_write_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
   my($cb, $archive, $buffer) = @_;
-  my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
-  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
-  $cb->($archive, $ptr, $length);
+  my $size = do { use bytes; length($buffer) };
+  my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $size);
+  $cb->($archive, $ptr, $size);
 };
 
 attach_function 'archive_write_data_block', [ _ptr, _ptr, _int, _int64 ], _int, sub # FIXME: third argument is actually a size_t
 {
   my($cb, $archive, $buffer, $offset) = @_;
-  my $length = do { use bytes; length($buffer) }; # TODO: what is the "right" way to do this?
-  my $ptr = FFI::Raw::PtrPtr->scalar_to_pointer($buffer);
-  $cb->($archive, $ptr, $length, $offset);
+  my $size = do { use bytes; length($buffer) };
+  my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $size);
+  $cb->($archive, $ptr, $size, $offset);
 };
 
 attach_function 'archive_error_string', [ _ptr ], _str, sub
