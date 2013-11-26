@@ -191,8 +191,7 @@ attach_function 'archive_write_free', [ _ptr ], _int, sub
 
 sub ARCHIVE_FATAL ();
 
-sub _myopen
-{
+my $myopen = FFI::Raw::Callback->new(sub {
   my($archive) = @_;
   my $status = eval {
     $callbacks{$archive}->[CB_OPEN]->($archive, $callbacks{$archive}->[CB_DATA]);
@@ -203,10 +202,9 @@ sub _myopen
     return ARCHIVE_FATAL;
   }
   $status;
-}
-my $myopen = FFI::Raw::Callback->new(\&_myopen, _int, _ptr, _ptr);
+}, _int, _ptr, _ptr);
 
-sub _mywrite
+my $mywrite = FFI::Raw::Callback->new(sub 
 {
   my($archive, $null, $ptr, $size) = @_;
   my $buffer = buffer_to_scalar($ptr, $size);
@@ -219,10 +217,9 @@ sub _mywrite
     return ARCHIVE_FATAL;
   }
   $status;
-}
-my $mywrite = FFI::Raw::Callback->new(\&_mywrite, _int, _ptr, _ptr, _ptr, _int64);
+}, _int, _ptr, _ptr, _ptr, _int64);
 
-sub _myclose
+my $myclose = FFI::Raw::Callback->new(sub
 {
   my($archive) = @_;
   my $status = eval {
@@ -234,8 +231,7 @@ sub _myclose
     return ARCHIVE_FATAL;
   }
   $status;
-}
-my $myclose = FFI::Raw::Callback->new(\&_myclose, _int, _ptr, _ptr);
+}, _int, _ptr, _ptr);
 
 my $null = FFI::Raw::MemPtr->new_from_ptr(0);
 
