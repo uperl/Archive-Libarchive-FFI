@@ -53,6 +53,21 @@ my $mywrite = FFI::Raw::Callback->new(sub
   $status;
 }, _int, _ptr, _ptr, _ptr, _int64);
 
+my $myread = FFI::Raw::Callback->new(sub
+{
+  my($archive, $null, $ptr) = @_;
+  my($status, $buffer) = eval {
+    $callbacks{$archive}->[CB_READ]->($archive, $callbacks{$archive}->[CB_DATA]);
+  };
+  my($ignore, $size) = scalar_to_buffer($buffer, $ptr);
+  $size;
+}, _uint64, _ptr, _ptr, _ptr);
+
+my $myskip = FFI::Raw::Callback->new(sub
+{
+  die 'FIXME';
+}, _uint64, _ptr, _ptr, _uint64);
+
 my $myclose = FFI::Raw::Callback->new(sub
 {
   my($archive) = @_;
@@ -66,8 +81,6 @@ my $myclose = FFI::Raw::Callback->new(sub
   }
   $status;
 }, _int, _ptr, _ptr);
-
-my $null = FFI::Raw::MemPtr->new_from_ptr(0);
 
 attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
@@ -88,9 +101,40 @@ attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, su
     $callbacks{$archive}->[CB_CLOSE] = $close;
     $close = $myclose;
   }
-  my $ret = $cb->($archive, $null, $open||$null, $write||$null, $close||$null);
-  print "ret = $ret\n";
-  $ret;
+  $cb->($archive, 0, $open||0, $write||0, $close||0);
+};
+
+sub archive_read_open ($$$$$)
+{
+  my($archive, $data, $open, $read, $close) = @_;
+  archive_read_open2($archive, $data, $open, $read, undef, $close);
+}
+
+attach_function 'archive_read_open2', [ _ptr, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $cd, $open, $read, $skip, $close) = @_;
+  $callbacks{$archive}->[CB_DATA] = $cd;
+  if(defined $open)
+  {
+    $callbacks{$archive}->[CB_OPEN] = $open;
+    $open = $myopen;
+  }
+  if(defined $read)
+  {
+    $callbacks{$archive}->[CB_READ] = $read;
+    $read = $myread;
+  }
+  if(defined $skip)
+  {
+    $callbacks{$archive}->[CB_SKIP] = $skip;
+    $skip = $myskip;
+  }
+  if(defined $close)
+  {
+    $callbacks{$archive}->[CB_CLOSE] = $close;
+    $close = $myclose;
+  }
+  $cb->($archive, 0, $open||0, $read||0, $skip||0, $close||0);
 };
 
 attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
