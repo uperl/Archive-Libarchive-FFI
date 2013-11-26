@@ -26,15 +26,16 @@ ok $a, 'archive_write_new';
 
 SKIP: {
   skip 'archive_write_add_filter_gzip function not available', 1 unless Archive::Libarchive::FFI->can('archive_write_add_filter_gzip');
-  $r = eval { archive_write_add_filter_gzip($a) };
+  $r = archive_write_add_filter_gzip($a);
   is $r, ARCHIVE_OK, 'archive_write_add_filter_gzip';
 };
 
-$r = eval { archive_write_set_format_pax_restricted($a) };
+$r = archive_write_set_format_pax_restricted($a);
 is $r, ARCHIVE_OK, 'archive_write_set_format_pax_restricted';
 
-$r = eval { archive_write_open($a, { filename => $fn }, \&myopen, \&mywrite, \&myclose) };
+$r = archive_write_open($a, { filename => $fn }, \&myopen, \&mywrite, \&myclose);
 is $r, ARCHIVE_OK, 'archive_write_open';
+diag archive_error_string($a) if $r != ARCHIVE_OK;
 
 foreach my $name (qw( foo bar baz ))
 {
@@ -58,22 +59,22 @@ foreach my $name (qw( foo bar baz ))
     eval { archive_entry_set_perm($entry, 0644) };
     is $@, '', 'archive_entry_set_perm';
 
-    $r = eval { archive_write_header($a, $entry) };
+    $r = archive_write_header($a, $entry);
     is $r, ARCHIVE_OK, 'archive_write_header';
 
-    my $len = eval { archive_write_data($a, $data{$name}) };
+    my $len = archive_write_data($a, $data{$name});
     is $len, length($data{$name}), 'archive_write_data';;
   
-    $r = eval { archive_entry_free($entry); };
+    eval { archive_entry_free($entry); };
     is $@, '', 'archive_entry_free';
   };
 }
 
-$r = eval { archive_write_close($a) };
+$r = archive_write_close($a);
 is $r, ARCHIVE_OK, 'archive_write_close';
-diag 'archive_error_string = ', archive_error_string($a) unless ARCHIVE_OK;
+diag 'archive_error_string = ', archive_error_string($a) unless $r == ARCHIVE_OK;
 
-$r = eval { archive_write_free($a) };
+$r = archive_write_free($a);
 is $r, ARCHIVE_OK, 'archive_write_free';
 
 do {
@@ -95,7 +96,6 @@ do {
 sub myopen
 {
   my($archive, $data) = @_;
-  $DB::single = 1;
   note "myopen: ", $data->{filename};
   open my $fh, '>', $data->{filename};
   $data->{fh} = $fh;
@@ -105,7 +105,6 @@ sub myopen
 sub mywrite
 {
   my($archive, $data, $buffer) = @_;
-  $DB::single = 1;
   note "mywrite: ", length $buffer;
   my $fh = $data->{fh};
   print $fh $buffer;
@@ -115,7 +114,6 @@ sub mywrite
 sub myclose
 {
   my($archive, $data) = @_;
-  $DB::single = 1;
   note "myclose: ()";
   my $fh = $data->{fh};
   close $fh;
