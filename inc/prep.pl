@@ -6,13 +6,13 @@ use Path::Class qw( file dir );
 
 do { # constants.pm
 
-  my $file = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI constants.pm ));
+  my $file = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
   
   $file->parent->mkpath(0,0755);
   
   eval {
     my $buffer = '';
-    $buffer .= "package Archive::Libarchive::FFI::constants;\n\n";
+    $buffer .= "package Archive::Libarchive::FFI::Constant;\n\n";
     $buffer .= "use strict;\n";
     $buffer .= "use warnings;\n\n";
   
@@ -21,29 +21,20 @@ do { # constants.pm
     $buffer .= "package\n  Archive::Libarchive::FFI;\n\n";
 
     $buffer .= "use constant {\n";
-    foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
+    foreach my $const (sort grep /^(AE|ARCHIVE_)/, keys %Archive::Libarchive::XS::)
     {
       my $value = eval qq{ Archive::Libarchive::XS::$const() };
-      die $@ if $@;
+      die "no $const $@" if $@;
       $buffer .= "  $const => $value,\n";
     }
     $buffer .= "};\n\n";
-  
-    $buffer .= "push \@{ \$Archive::Libarchive::FFI::EXPORT_TAGS{const} }, qw(\n";
-  
-    foreach my $const (sort @{ $Archive::Libarchive::XS::EXPORT_TAGS{const} })
-    {
-      $buffer .= "  $const\n";
-    }
-  
-    $buffer .= ");\n\n";
   
     $buffer .= "1;\n";
     
     $file->spew($buffer);
   };
   
-  warn "WARNING: did not regenerate constants.pm because there are missing constatns: $@";
+  warn "WARNING: did not regenerate constants.pm because there are missing constants: $@" if $@;
 };
 
 do { # import from inc
