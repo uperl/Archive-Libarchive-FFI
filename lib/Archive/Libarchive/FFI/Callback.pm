@@ -59,13 +59,27 @@ my $myread = FFI::Raw::Callback->new(sub
   my($status, $buffer) = eval {
     $callbacks{$archive}->[CB_READ]->($archive, $callbacks{$archive}->[CB_DATA]);
   };
+  if($@)
+  {
+    warn $@;
+    return ARCHIVE_FATAL();
+  }
   my($ignore, $size) = scalar_to_buffer($buffer, $ptr);
   $size;
 }, _uint64, _ptr, _ptr, _ptr);
 
 my $myskip = FFI::Raw::Callback->new(sub
 {
-  die 'FIXME';
+  my($archive, $null, $request) = @_;
+  my $status = eval {
+    $callbacks{$archive}->[CB_SKIP]->($archive, $callbacks{$archive}->[CB_DATA], $request);
+  };
+  if($@)
+  {
+    warn $@;
+    return ARCHIVE_FATAL();
+  }
+  $status;
 }, _uint64, _ptr, _ptr, _uint64);
 
 my $myclose = FFI::Raw::Callback->new(sub
