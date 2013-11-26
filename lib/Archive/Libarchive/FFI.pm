@@ -29,6 +29,7 @@ attach_function 'archive_seek_data',                             [ _ptr, _int64,
 attach_function 'archive_read_new',                              undef, _ptr;
 attach_function 'archive_read_support_filter_all',               [ _ptr ], _int;
 attach_function 'archive_read_support_format_all',               [ _ptr ], _int;
+attach_function 'archive_read_open1',                            [ _ptr ], _int;
 attach_function 'archive_read_open_filename',                    [ _ptr, _str, _int ], _int;
 attach_function 'archive_read_data_skip',                        [ _ptr ], _int;
 attach_function 'archive_read_close',                            [ _ptr ], _int;
@@ -40,6 +41,7 @@ attach_function 'archive_read_set_format_option',                [ _ptr, _str, _
 attach_function 'archive_read_set_option',                       [ _ptr, _str, _str, _str ], _int;
 attach_function 'archive_read_set_options',                      [ _ptr, _str ], _int;
 attach_function 'archive_read_set_format',                       [ _ptr, _str, _str, _str ], _int;
+attach_function 'archive_read_next_header2',                     [ _ptr, _ptr ], _int;
 
 attach_function 'archive_filter_code',                           [ _ptr, _int ], _int;
 attach_function 'archive_filter_count',                          [ _ptr ], _int;
@@ -86,6 +88,21 @@ attach_function 'archive_entry_set_size',                        [ _ptr, _int64 
 attach_function 'archive_entry_set_perm',                        [ _ptr, _int ], _void;
 attach_function 'archive_entry_set_filetype',                    [ _ptr, _int ], _void;
 attach_function 'archive_entry_set_mtime',                       [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
+attach_function 'archive_entry_atime_is_set',                    [ _ptr ], _int;
+attach_function 'archive_entry_atime',                           [ _ptr ], _int64; # FIXME actually a time_t
+attach_function 'archive_entry_atime_nsec',                      [ _ptr ], _long;
+attach_function 'archive_entry_birthtime_is_set',                [ _ptr ], _int;
+attach_function 'archive_entry_birthtime',                       [ _ptr ], _int64; # FIXME actually a time_t
+attach_function 'archive_entry_birthtime_nsec',                  [ _ptr ], _long;
+attach_function 'archive_entry_ctime_is_set',                    [ _ptr ], _int;
+attach_function 'archive_entry_ctime',                           [ _ptr ], _int64; # FIXME actually a time_t
+attach_function 'archive_entry_ctime_nsec',                      [ _ptr ], _long;
+attach_function 'archive_entry_dev_is_set',                      [ _ptr ], _int;
+attach_function 'archive_entry_dev',                             [ _ptr ], _int64; # FIXME actaully a dev_t
+attach_function 'archive_entry_devmajor',                        [ _ptr ], _int64; # FIXME actaully a dev_t
+attach_function 'archive_entry_devminor',                        [ _ptr ], _int64; # FIXME actaully a dev_t
+attach_function 'archive_entry_fflags_text',                     [ _ptr ], _str;
+attach_function 'archive_entry_gid',                             [ _ptr ], _int64;
 
 attach_function "archive_read_support_filter_$_",  [ _ptr ], _int
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
@@ -96,6 +113,16 @@ attach_function "archive_write_add_filter_$_", [ _ptr ], _int
 attach_function "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
+
+attach_function 'archive_entry_fflags', [ _int64, _int64 ], _void, sub
+{
+  my $set   = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $clear = FFI::Raw::MemPtr->new_from_ptr(0);
+  $_[0]->($_[1], $set, $clear);
+  $_[2] = deref_to_int64($$set);
+  $_[3] = deref_to_int64($$clear);
+  return;
+};
 
 attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
 {

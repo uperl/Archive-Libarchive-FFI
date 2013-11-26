@@ -82,6 +82,20 @@ my $myskip = FFI::Raw::Callback->new(sub
   $status;
 }, _uint64, _ptr, _ptr, _uint64);
 
+my $myseek = FFI::Raw::Callback->new(sub
+{
+  my($archive, $null, $offset, $whence) = @_;
+  my $status = eval {
+    $callbacks{$archive}->[CB_SEEK]->($archive, $callbacks{$archive}->[CB_DATA], $offset, $whence);
+  };
+  if($@)
+  {
+    warn $@;
+    return ARCHIVE_FATAL();
+  }
+  $status;
+}, _uint64, _ptr, _ptr, _uint64, _int);
+
 my $myclose = FFI::Raw::Callback->new(sub
 {
   my($archive) = @_;
@@ -150,6 +164,28 @@ attach_function 'archive_read_open2', [ _ptr, _ptr, _ptr, _ptr, _ptr, _ptr ], _i
   }
   $cb->($archive, 0, $open||0, $read||0, $skip||0, $close||0);
 };
+
+sub archive_read_set_callback_data ($$)
+{
+  my($archive, $data) = @_;
+  $callbacks{$archive}->[CB_DATA] = $data;
+  ARCHIVE_OK();
+}
+
+foreach my $name (qw( open read skip close seek ))
+{
+  my $const = 'CB_' . uc $name;
+  my $wrapper = eval '# line '. __LINE__ . ' "' . __FILE__ . "\n" . qq{
+    sub
+    {
+      my(\$cb, \$archive, \$callback) = \@_;
+      \$callbacks{\$archive}->[$const] = \$callback;
+      \$cb->(\$archive, \$my$name);
+    }
+  };die $@ if $@;
+  
+  attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
+}
 
 attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
