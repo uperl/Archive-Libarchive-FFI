@@ -29,7 +29,7 @@ do { # constants.pm
     }
     $buffer .= "};\n\n";
   
-    $buffer .= "1;\n";
+    $buffer .= "1;\n\n__END__\n\n";
     
     $file->spew($buffer);
   };
@@ -102,12 +102,33 @@ do { # import documentation
 
   my $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS.pm ));
   my $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI.pm ));
+  doco($source, $dest);
+
+  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Constant.pod ));
+  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
+  doco($source, $dest);
+
+  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Callback.pm ));
+  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Callback.pm ));
+  doco($source, $dest);
+  
+  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Function.pod ));
+  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Function.pod ));
+  
+  my $doc = $source->slurp;
+  $doc =~ s/XS/FFI/g;
+  $dest->spew($doc);
+};
+
+sub doco
+{
+  my($source, $dest) = @_;
 
   say $source->absolute;
 
   my @content = $dest->slurp;
-  
-  pop @content while $content[-1] ne "__END__\n";
+
+  pop @content while @content > 0 && $content[-1] ne "__END__\n";
   
   unless(@content > 0)
   {
@@ -121,6 +142,6 @@ do { # import documentation
   $doc =~ s/XS/FFI/g;
 
   my $fh = $dest->openw;
-  print $fh @content, "\n", $doc;  
-
-};
+  print $fh @content, "\n", $doc, "=cut\n";
+  close $fh;
+}

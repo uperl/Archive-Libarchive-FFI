@@ -261,3 +261,156 @@ sub _archive_write_open_fh_write
 1;
 
 __END__
+
+=head1 SYNOPSIS
+
+ use Archive::Libarchive::FFI qw( :all );
+ 
+ # read
+ my $archive = archive_read_new();
+ archive_read_open($archive, $data, \&myopen, \&myread, \&myclose);
+ 
+ # write
+ my $archive = archive_write_new();
+ archive_write_open($archive, $data, \&myopen, \&mywrite, \&myclose);
+
+=head1 DESCRIPTION
+
+This document provides information of callback routines for writing
+custom input/output interfaces to the libarchive perl bindings.  The
+first two arguments passed into all callbacks are:
+
+=over 4
+
+=item $archive
+
+The archive object (actually a pointer to the C structure that managed
+the archive object).
+
+=item $data
+
+The callback data object (any legal Perl data structure).
+
+=back
+
+For the variable name / types conventions used in this document, see
+L<Archive::Libarchive::FFI::Function>.
+
+The expected return value for all callbacks EXCEPT the read callback
+is a standard integer libarchive status value (example: C<ARCHIVE_OK>
+or C<ARCHIVE_FATAL>).
+
+If your callback dies (throws an exception), it will be caught at the
+Perl level.  The error will be sent to standard error via L<warn|perlfunc#warn>
+and C<ARCHIVE_FATAL> will be passed back to libarchive.
+
+=head2 data
+
+There is a data field for callbacks associated with each $archive object.
+It can be any native Perl type (example: scalar, hashref, coderef, etc).
+You can set this by calling 
+L<archive_read_set_callback_data|Archive::Libarchive::FFI::Function#archive_read_set_callback_data>,
+or by passing the data argument when you "open" the archive using
+L<archive_read_open|Archive::Libarchive::FFI::Function#archive_read_open>,
+L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2> or
+L<archive_write_open|Archive::Libarchive::FFI::Function#archive_write_open>.
+
+The data field will be passed into each callback as its second argument.
+
+=head2 open
+
+ my $status1 = archive_read_set_open_callback($archive, sub {
+   my($archive, $data) = @_;
+   ...
+   return $status2;
+ });
+
+According to the libarchive, this is never needed, but you can register
+a callback to happen when you open.
+
+Can also be set when you call 
+L<archive_read_open|Archive::Libarchive::FFI::Function#archive_read_open>,
+L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2> or
+L<archive_write_open|Archive::Libarchive::FFI::Function#archive_write_open>.
+
+=head2 read
+
+ my $status1 = archive_read_set_read_callback($archive, sub {
+   my($archive, $data) = @_;
+   ...
+   return ($status2, $buffer)
+ });
+
+This callback is called whenever libarchive is ready for more data to
+process.  It doesn't take in any additional arguments, but it expects
+two return values, a status and a buffer containing the data.
+
+Can also be set when you call 
+L<archive_read_open|Archive::Libarchive::FFI::Function#archive_read_open> or
+L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2>.
+
+=head2 write
+
+ my $mywrite = sub {
+   my($archive, $data, $buffer) = @_;
+   ...
+   return $status1;
+ };
+ my $status2 = archive_write_open($archive, undef, $mywrite, undef);
+
+This callback is called whenever libarchive has data it wants to send
+to output.  The callback itself takes one additional argument, a 
+buffer containing the data to write.
+
+=head2 skip
+
+ my $status1 = archive_read_set_skip_callback($archive, sub {
+   my($archive, $data, $request) = @_;
+   ...
+   return $status2;
+ });
+
+The skip callback takes one additional argument, $request.
+
+Can also be set when you call 
+L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2>.
+
+=head2 seek
+
+ my $status1 = archive_read_set_seek_callback($archive, sub {
+   my($archive, $data, $offset, $whence) = @_;
+   ...
+   return $status2;
+ });
+
+The seek callback should implement an interface identical to the UNIX
+C<fseek> function.
+
+=head2 close
+
+ my $status1 = archive_read_set_close_callback($archive, sub {
+   my($archive, $data) = @_;
+   ...
+   return $status2;
+ });
+
+Called when the archive (either input or output) should be closed.
+
+Can also be set when you call 
+L<archive_read_open|Archive::Libarchive::FFI::Function#archive_read_open>,
+L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2> or
+L<archive_write_open|Archive::Libarchive::FFI::Function#archive_write_open>.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Archive::Libarchive::FFI>
+
+=item L<Archive::Libarchive::FFI::Constant>
+
+=item L<Archive::Libarchive::FFI::Function>
+
+=back
+
+=cut

@@ -382,3 +382,4 @@ additional subtle errors.  Patches to the documentation that match the
 implementation, or fixes to the implementation so that it matches the
 documentation (which ever is appropriate) would greatly appreciated.
 
+=cut
