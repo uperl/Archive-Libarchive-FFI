@@ -121,6 +121,29 @@ _attach 'archive_entry_devminor',                        [ _ptr ], _int64; # FIX
 _attach 'archive_entry_fflags_text',                     [ _ptr ], _str;
 _attach 'archive_entry_gid',                             [ _ptr ], _int64;
 
+_attach 'archive_read_disk_descend',                     [ _ptr ], _int;
+_attach 'archive_read_disk_can_descend',                 [ _ptr ], _int;
+_attach 'archive_read_disk_current_filesystem',          [ _ptr ], _int;
+_attach 'archive_read_disk_current_filesystem_is_synthetic', [ _ptr ], _int;
+_attach 'archive_read_disk_current_filesystem_is_remote', [ _ptr ], _int;
+_attach 'archive_read_disk_set_atime_restored',          [ _ptr ], _int;
+_attach 'archive_read_disk_open',                        [ _ptr, _str ], _int;
+_attach 'archive_read_disk_gname',                       [ _ptr, _int64 ], _str;
+_attach 'archive_read_disk_uname',                       [ _ptr, _int64 ], _str;
+_attach 'archive_read_disk_new',                         undef, _ptr;
+_attach 'archive_read_disk_set_behavior',                [ _ptr, _int ], _int;
+_attach 'archive_read_disk_set_standard_lookup',         [ _ptr ], _int;
+_attach 'archive_read_disk_set_symlink_hybrid',          [ _ptr ], _int;
+_attach 'archive_read_disk_set_symlink_logical',         [ _ptr ], _int;
+_attach 'archive_read_disk_set_symlink_physical',        [ _ptr ], _int;
+
+_attach 'archive_match_new',                             undef, _ptr;
+_attach 'archive_match_free',                            [ _ptr ], _int;
+_attach 'archive_match_excluded',                        [ _ptr, _ptr ], _int;
+_attach 'archive_match_path_excluded',                   [ _ptr, _ptr ], _int;
+_attach 'archive_match_time_excluded',                   [ _ptr, _ptr ], _int;
+_attach 'archive_match_owner_excluded',                  [ _ptr, _ptr ], _int;
+
 _attach "archive_read_support_filter_$_",  [ _ptr ], _int
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
 _attach "archive_read_support_format_$_",  [ _ptr ], _int

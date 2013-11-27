@@ -401,6 +401,44 @@ codes.
 
 A textual description of the format of the current entry.
 
+=head2 archive_match_excluded
+
+ my $bool = archive_match_excluded($archive, $entry);
+
+Test if archive_entry is excluded. This is a convenience function. This is the
+same as calling all L<#archive_match_path_excluded>, L<#archive_match_time_excluded>
+and L<#archive_match_owner_excluded>.
+
+=head2 archive_match_free
+
+ my $status = archive_match_free($archive);
+
+Free the resources previously allocated with L<#archive_match_new>.
+
+=head2 archive_match_new
+
+ my $archive = archive_match_new();
+
+Allocates and initializes a archive object suitable for reading and matching with an archive.
+
+=head2 archive_match_owner_excluded
+
+ my $bool = archive_match_owner_excluded($archive, $entry);
+
+Test if a file is excluded by its uid, gid, user name or group name.
+
+=head2 archive_match_path_excluded
+
+ my $bool = archive_match_path_excluded($archive, $entry);
+
+Test if pathname is excluded.
+
+=head2 archive_match_time_excluded
+
+ my $bool = archive_match_time_excluded($archive, $entry);
+
+Test if a file is excluded by its time stamp.
+
 =head2 archive_read_close
 
  my $status = archive_read_close($archive);
@@ -435,6 +473,109 @@ due to compression and internal buffer optimizations.
 
 A convenience function that repeatedly calls C<archive_read_data> to skip
 all of the data for this archive entry.
+
+=head2 archive_read_disk_can_descend
+
+ my $bool = archive_read_disk_can_descend($archive);
+
+Undocumented libarchive function.
+
+=head2 archive_read_disk_current_filesystem
+
+ my $status = archive_read_disk_current_filesystem($archive);
+
+Undocumented libarchive function.
+
+=head2 archive_read_disk_current_filesystem_is_remote
+
+ my $status = archive_read_disk_current_filesystem_is_remote($archive);
+
+Undocumented libarchive function.
+
+=head2 archive_read_disk_current_filesystem_is_synthetic
+
+ my $status = archive_read_disk_current_filesystem_is_synthetic($archive);
+
+Undocumented libarchive function.
+
+=head2 archive_read_disk_descend
+
+ my $status = archive_read_disk_descend($archive);
+
+Request that current entry be visited.  If you invoke it on every
+directory, you'll get a physical traversal.  This is ignored if the
+current entry isn't a directory or a link to a directory.  So, if
+you invoke this on every returned path, you'll get a full logical
+traversal.
+
+=head2 archive_read_disk_gname
+
+ my $string = archive_read_disk_gname($archive, $gid);
+
+Returns a group name given a gid value.  By default always
+returns C<undef>.
+
+=head2 archive_read_disk_new
+
+ my $archive = archive_read_disk_new();
+
+Allocates and initializes an archive object suitable for reading object information
+from disk.
+
+=head2 archive_read_disk_open
+
+ my $status = archive_read_disk_open($archive, $string)
+
+Allocates and initializes an archive object suitable for reading objects from disk.
+
+=head2 archive_read_disk_set_atime_restored
+
+ my $status = archive_read_disk_set_atime_restored($archive);
+
+Request that the access time of the entry visited by traversal be restored.
+
+=head2 archive_read_disk_set_behavior
+
+ my $status = archive_read_disk_set_behavior($archive, $flags);
+ 
+Undocumented libarchive function.
+
+=head2 archive_read_disk_set_standard_lookup
+
+ my $status = archive_read_disk_set_standard_lookup($archive);
+
+This convenience function installs a standard set of user and group name lookup functions.
+These functions use C<getpwuid> and C<getgrgid> to convert ids to names, defaulting to C<undef>.
+if the names cannot be looked up.  These functions also implement a simple memory cache to
+reduce the number of calls to C<getpwuid> and C<getgrgid>.
+
+=head2 archive_read_disk_set_symlink_hybrid
+
+ my $status = archive_read_disk_set_symlink_hybrid($archive);
+
+This sets the mode used for handling symbolic links.  The "hybrid" mode currently
+behaves identically to the "logical" mode.
+
+=head2 archive_read_disk_set_symlink_logical
+
+ my $status = archive_read_disk_set_symlink_logical($archive);
+
+This sets the mode used for handling symbolic links.  The "logical" mode follows
+all symbolic links.
+
+=head2 archive_read_disk_set_symlink_physical
+
+ my $status = archive_read_disk_set_symlink_physical($archive);
+
+This sets the mode used for handling symbolic links.  The "physical" mode does not
+follow any symbolic links.
+
+=head2 archive_read_disk_uname
+
+ my $string = archive_read_disk_uname($archive, $gid);
+
+Returns a user name given a uid value.  By default always
+returns C<undef>.
 
 =head2 archive_read_free
 
