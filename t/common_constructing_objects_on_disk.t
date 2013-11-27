@@ -19,20 +19,20 @@ is $r, ARCHIVE_OK, 'archive_write_disk_set_options';
 my $entry = archive_entry_new();
 ok $entry, 'archive_entry_new';
 
-eval { archive_entry_set_pathname($entry, $filename) };
-is $@, '', 'archive_entry_set_pathname';
+$r = archive_entry_set_pathname($entry, $filename);
+is $r, ARCHIVE_OK, 'archive_entry_set_pathname';
 
-eval { archive_entry_set_filetype($entry, AE_IFREG) };
-is $@, '', 'archive_entry_set_filetype';
+$r = archive_entry_set_filetype($entry, AE_IFREG);
+is $r, ARCHIVE_OK, 'archive_entry_set_filetype';
 
-eval { archive_entry_set_size($entry, 5) };
-is $@, '', 'archive_entry_set_size';
+$r = archive_entry_set_size($entry, 5);
+is $r, ARCHIVE_OK, 'archive_entry_set_size';
 
-eval { archive_entry_set_mtime($entry, 123456789, 0) };
-is $@, '', 'archive_entry_set_mtime';
+$r = archive_entry_set_mtime($entry, 123456789, 0);
+is $r, ARCHIVE_OK, 'archive_entry_set_mtime';
 
-eval { archive_entry_set_perm($entry, 0644) };
-is $@, '', 'archive_entry_set_perm';
+$r = archive_entry_set_perm($entry, 0644);
+is $r, ARCHIVE_OK, 'archive_entry_set_perm';
 
 $r = archive_write_header($a, $entry);
 is $r, ARCHIVE_OK, 'archive_write_header';
@@ -46,8 +46,8 @@ is $r, ARCHIVE_OK, 'archive_write_finish_entry';
 $r = archive_write_free($a);
 is $r, ARCHIVE_OK, 'archive_write_free';
 
-eval { archive_entry_free($entry) };
-is $@, '', 'archive_entry_free';
+$r = archive_entry_free($entry);
+is $r, ARCHIVE_OK, 'archive_entry_free';
 
 open my $fh, '<', $filename;
 my $data = do { local $/; <$fh> };

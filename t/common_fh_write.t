@@ -1,13 +1,9 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests => 10;
 use File::Temp qw( tempdir );
 use File::Spec;
 use Archive::Libarchive::FFI qw( :all );
-
-plan skip_all => 'requires archive_write_open'
-  unless Archive::Libarchive::FFI->can('archive_write_open');
-plan tests => 10;
 
 my %data = (
   foo => 'one',
@@ -26,16 +22,17 @@ ok $a, 'archive_write_new';
 
 SKIP: {
   skip 'archive_write_add_filter_gzip function not available', 1 unless Archive::Libarchive::FFI->can('archive_write_add_filter_gzip');
-  $r = archive_write_add_filter_gzip($a);
+  $r = eval { archive_write_add_filter_gzip($a) };
   is $r, ARCHIVE_OK, 'archive_write_add_filter_gzip';
 };
 
-$r = archive_write_set_format_pax_restricted($a);
+$r = eval { archive_write_set_format_pax_restricted($a) };
 is $r, ARCHIVE_OK, 'archive_write_set_format_pax_restricted';
 
-$r = archive_write_open($a, { filename => $fn }, \&myopen, \&mywrite, \&myclose);
-is $r, ARCHIVE_OK, 'archive_write_open';
-diag archive_error_string($a) if $r != ARCHIVE_OK;
+my $fh;
+open $fh, '>', $fn;
+$r = archive_write_open_fh($a, $fh);
+is $r, ARCHIVE_OK, 'archive_write_open_filename';
 
 foreach my $name (qw( foo bar baz ))
 {
@@ -59,10 +56,10 @@ foreach my $name (qw( foo bar baz ))
     $r = archive_entry_set_perm($entry, 0644);
     is $r, ARCHIVE_OK, 'archive_entry_set_perm';
 
-    $r = archive_write_header($a, $entry);
+    $r = eval { archive_write_header($a, $entry) };
     is $r, ARCHIVE_OK, 'archive_write_header';
 
-    my $len = archive_write_data($a, $data{$name});
+    my $len = eval { archive_write_data($a, $data{$name}) };
     is $len, length($data{$name}), 'archive_write_data';;
   
     $r = archive_entry_free($entry);
@@ -70,12 +67,13 @@ foreach my $name (qw( foo bar baz ))
   };
 }
 
-$r = archive_write_close($a);
+$r = eval { archive_write_close($a) };
 is $r, ARCHIVE_OK, 'archive_write_close';
-diag 'archive_error_string = ', archive_error_string($a) unless $r == ARCHIVE_OK;
 
-$r = archive_write_free($a);
+$r = eval { archive_write_free($a) };
 is $r, ARCHIVE_OK, 'archive_write_free';
+
+close $fh;
 
 do {
   my $actual = '';
@@ -93,29 +91,3 @@ do {
   is $actual, $expected, "output matches";
 };
 
-sub myopen
-{
-  my($archive, $data) = @_;
-  note "myopen: ", $data->{filename};
-  open my $fh, '>', $data->{filename};
-  $data->{fh} = $fh;
-  ARCHIVE_OK;
-}
-
-sub mywrite
-{
-  my($archive, $data, $buffer) = @_;
-  note "mywrite: ", length $buffer;
-  my $fh = $data->{fh};
-  print $fh $buffer;
-  length($buffer);
-}
-
-sub myclose
-{
-  my($archive, $data) = @_;
-  note "myclose: ()";
-  my $fh = $data->{fh};
-  close $fh;
-  ARCHIVE_OK;
-}

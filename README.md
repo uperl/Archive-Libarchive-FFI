@@ -4,7 +4,86 @@ Perl bindings to libarchive via FFI
 
 # SYNOPSIS
 
-    use Archive::Libarchive::FFI;
+list archive filenames
+
+    use Archive::Libarchive::FFI qw( :all );
+    
+    my $archive = archive_read_new();
+    archive_read_support_filter_all($archive);
+    archive_read_support_format_all($archive);
+    # example is a tar file, but any supported format should work
+    # (zip, iso9660, etc.)
+    archive_read_open_filename($archive, 'archive.tar', 10240);
+    
+    while(archive_read_next_header($archive, my $entry) == ARCHIVE_OK)
+    {
+      print archive_entry_pathname($entry), "\n";
+      archive_read_data_skip($archive);
+    }
+    
+    archive_read_free($archive);
+
+extract archive
+
+    use Archive::Libarchive::FFI qw( :all );
+    
+    my $archive = archive_read_new();
+    archive_read_support_filter_all($archive);
+    archive_read_support_format_all($archive);
+    my $disk = archive_write_disk_new();
+    archive_write_disk_set_options($disk, 
+      ARCHIVE_EXTRACT_TIME   |
+      ARCHIVE_EXTRACT_PERM   |
+      ARCHIVE_EXTRACT_ACL    |
+      ARCHIVE_EXTRACT_FFLAGS
+    );
+    archive_write_disk_set_standard_lookup($disk);
+    archive_read_open_filename($archive, 'archive.tar', 10240);
+    
+    while(1)
+    {
+      my $r = archive_read_next_header($archive, my $entry);
+      last if $r == ARCHIVE_EOF;
+      
+    archive_write_header($disk, $entry);
+    
+      while(1)
+      {
+        my $r = archive_read_data_block($archive, my $buffer, my $offset);
+        last if $r == ARCHIVE_EOF;
+        archive_write_data_block($disk, $buffer, $offset);
+      }
+    }
+    
+    archive_read_close($archive);
+    archive_read_free($archive);
+    archive_write_close($disk);
+    archive_write_free($disk);
+
+write archive
+
+    use File::stat;
+    use File::Slurp qw( read_file );
+    use Archive::Libarchive::FFI qw( :all );
+    
+    my $archive = archive_write_new();
+    # many other formats are supported ...
+    archive_write_set_format_pax_restricted($archive);
+    archive_write_open_filename($archive, 'archive.tar');
+    
+    foreach my $filename (@filenames)
+    {
+      my $entry = archive_entry_new();
+      archive_entry_set_pathname($entry, $filename);
+      archive_entry_set_size($entry, stat($filename)->size);
+      archive_entry_set_filetype($entry, AE_IFREG);
+      archive_entry_set_perm($entry, 0644);
+      archive_write_header($archive, $entry);
+      archive_write_data($archive, scalar read_file($filename));
+      archive_entry_free($entry);
+    }
+    archive_write_close($archive);
+    archive_write_free($archive);
 
 # DESCRIPTION
 
@@ -12,1114 +91,38 @@ This module provides a functional interface to `libarchive`.  `libarchive` is a
 C library that can read and write archives in a variety of formats and with a 
 variety of compression filters, optimized in a stream oriented way.  A familiarity
 with the `libarchive` documentation would be helpful, but may not be necessary
-for simple tasks.
+for simple tasks.  The documentation for this module is split into four separate
+documents:
 
-# FUNCTIONS
+- [Archive::Libarchive::FFI](https://metacpan.org/pod/Archive::Libarchive::FFI)
 
-Unless otherwise specified, each function will return an integer return code,
-with one of the following values:
+    This document, contains an overview and some examples.
 
-- ARCHIVE\_OK
+- [Archive::Libarchive::FFI::Callback](https://metacpan.org/pod/Archive::Libarchive::FFI::Callback)
 
-    Operation was successful
+    Documents the callback interface, used for customizing input and output.
 
-- ARCHIVE\_EOF
+- [Archive::Libarchive::FFI::Constant](https://metacpan.org/pod/Archive::Libarchive::FFI::Constant)
 
-    Fond end of archive
+    Documents the constants provided by this module.
 
-- ARCHIVE\_RETRY
+- [Archive::Libarchive::FFI::Function](https://metacpan.org/pod/Archive::Libarchive::FFI::Function)
 
-    Retry might succeed
+    The function reference, includes a list of all functions provided by this module.
 
-- ARCHIVE\_WARN
-
-    Partial success
-
-- ARCHIVE\_FAILED
-
-    Current operation cannot complete
-
-- ARCHIVE\_FATAL
-
-    No more operations are possible
-
-If you are linking against an older version of libarchive, some of these 
-functions may not be available.  You can use the `can` method to test if
+If you are linking against an older version of libarchive, some functions
+and constants may not be available.  You can use the `can` method to test if
 a function or constant is available, for example:
 
     if(Archive::Libarchive::FFI->can('archive_read_support_filter_grzip')
     {
       # grzip filter is available.
     }
-
-## archive\_clear\_error($archive)
-
-Clears any error information left over from a previous call Not
-generally used in client code.  Does not return a value.
-
-## archive\_copy\_error($archive1, $archive2)
-
-Copies error information from one archive to another.
-
-## archive\_entry\_atime($entry)
-
-Returns the access time for the archive entry.
-
-## archive\_entry\_atime\_is\_set($entry)
-
-Returns true if the access time property has been set on the archive entry.
-
-## archive\_entry\_atime\_nsec($entry)
-
-Returns the access time (nanoseconds).
-
-## archive\_entry\_birthtime($entry)
-
-Returns the birthtime (creation time) for the archive entry.
-
-## archive\_entry\_birthtime\_is\_set($entry)
-
-Returns true if the birthtime (creation time) property has been set on the archive entry.
-
-## archive\_entry\_birthtime\_nsec($entry)
-
-Returns the birthtime (creation time) for the archive entry.
-
-## archive\_entry\_clear
-
-Erases the object, resetting all internal fields to the same state as a newly-created object.  This is provided
-to allow you to quickly recycle objects without thrashing the heap.
-
-## archive\_entry\_clone
-
-A deep copy operation; all text fields are duplicated.
-
-## archive\_entry\_ctime($entry)
-
-Returns the ctime (last time an inode property was changed) property for the archive entry.
-
-## archive\_entry\_ctime\_is\_set($entry)
-
-Returns true if the ctime (last time an inode property was changed) property has been set
-on the archive entry.
-
-## archive\_entry\_ctime\_nsec($entry)
-
-Returns the ctime (last time an inode property was changed) property (nanoseconds).
-
-## archive\_entry\_dev($entry)
-
-Returns the device property for the archive entry.
-
-The device property is an integer identifying the device, and is used by
-`archive_entry_linkify` (along with the ino64 property) to find hardlinks.
-
-## archive\_entry\_dev\_is\_set($entry)
-
-Returns true if the device property on the archive entry is set.
-
-The device property is an integer identifying the device, and is used by
-`archive_entry_linkify` (along with the ino64 property) to find hardlinks.
-
-## archive\_entry\_devmajor
-
-Returns the device major property for the archive entry.
-
-## archive\_entry\_devminor
-
-Returns the device minor property for the archive entry.
-
-## archive\_entry\_fflags($entry, $set, $clear)
-
-Returns the file flags property for the archive entry.
-
-## archive\_entry\_fflags\_text($entry)
-
-Returns the file flags property as a string.
-
-## archive\_entry\_free
-
-Releases the struct archive\_entry object.
-
-## archive\_entry\_gid($entry)
-
-Returns the group id property for the archive entry.
-
-## archive\_entry\_new
-
-Allocate and return a blank struct archive\_entry object.
-
-## archive\_entry\_new2($archive)
-
-This form of `archive_entry_new2` will pull character-set
-conversion information from the specified archive handle.  The
-older `archive_entry_new` form will result in the use of an internal
-default character-set conversion.
-
-## archive\_entry\_pathname($entry)
-
-Retrieve the pathname of the entry.
-
-Returns a string value.
-
-## archive\_entry\_set\_filetype($entry, $code)
-
-Sets the filetype in the archive.  Code should be one of
-
-- AE\_IFMT
-- AE\_IFREG
-- AE\_IFLNK
-- AE\_IFSOCK
-- AE\_IFCHR
-- AE\_IFBLK
-- AE\_IFDIR
-- AE\_IFIFO
-
-Does not return anything.
-
-## archive\_entry\_set\_mtime($entry, $sec, $nanosec)
-
-Set the mtime for the entry object.
-
-Does not return a value.
-
-## archive\_entry\_set\_pathname($entry, $name)
-
-Sets the path in the archive as a string.
-
-Does not return anything.
-
-## archive\_entry\_set\_perm
-
-Set the permission bits for the entry.  This is the usual UNIX octal permission thing.
-
-Does not return anything.
-
-## archive\_entry\_set\_size($entry, $size)
-
-Sets the size of the file in the archive.
-
-Does not return anything.
-
-## archive\_entry\_size($entry)
-
-Returns the size of the entry in bytes.
-
-## archive\_errno($archive)
-
-Returns a numeric error code indicating the reason for the most
-recent error return.
-
-Return type is an errno integer value.
-
-## archive\_error\_string($archive)
-
-Returns a textual error message suitable for display.  The error
-message here is usually more specific than that obtained from
-passing the result of `archive_errno` to `strerror`.
-
-Return type is a string.
-
-## archive\_file\_count($archive)
-
-Returns a count of the number of files processed by this archive object.  The count
-is incremented by calls to `archive_write_header` or `archive_read_next_header`.
-
-## archive\_filter\_code
-
-Returns a numeric code identifying the indicated filter.  See `archive_filter_count`
-for details of the numbering.
-
-## archive\_filter\_count
-
-Returns the number of filters in the current pipeline. For read archive handles, these 
-filters are added automatically by the automatic format detection. For write archive 
-handles, these filters are added by calls to the various `archive_write_add_filter_XXX`
-functions. Filters in the resulting pipeline are numbered so that filter 0 is the filter 
-closest to the format handler. As a convenience, functions that expect a filter number 
-will accept -1 as a synonym for the highest-numbered filter. For example, when reading 
-a uuencoded gzipped tar archive, there are three filters: filter 0 is the gunzip filter, 
-filter 1 is the uudecode filter, and filter 2 is the pseudo-filter that wraps the archive 
-read functions. In this case, requesting `archive_position(a,(-1))` would be a synonym
-for `archive_position(a,(2))` which would return the number of bytes currently read from 
-the archive, while `archive_position(a,(1))` would return the number of bytes after
-uudecoding, and `archive_position(a,(0))` would return the number of bytes after decompression.
-
-## archive\_filter\_name
-
-Returns a textual name identifying the indicated filter.  See [#archive_filter_count](https://metacpan.org/pod/#archive_filter_count) for
-details of the numbering.
-
-## archive\_format($archive)
-
-Returns a numeric code indicating the format of the current archive
-entry.  This value is set by a successful call to
-`archive_read_next_header`.  Note that it is common for this value
-to change from entry to entry.  For example, a tar archive might
-have several entries that utilize GNU tar extensions and several
-entries that do not.  These entries will have different format
-codes.
-
-## archive\_format\_name($archive)
-
-A textual description of the format of the current entry.
-
-## archive\_read\_close($archive)
-
-Complete the archive and invoke the close callback.
-
-## archive\_read\_data($archive, $buffer, $max\_size)
-
-Read data associated with the header just read.  Internally, this is a
-convenience function that calls `archive_read_data_block` and fills
-any gaps with nulls so that callers see a single continuous stream of
-data.  Returns the actual number of bytes read, 0 on end of data and
-a negative value on error.
-
-## archive\_read\_data\_block($archive, $buff, $offset)
-
-Return the next available block of data for this entry.  Unlike
-`archive_read_data`, this function allows you to correctly
-handle sparse files, as supported by some archive formats.  The
-library guarantees that offsets will increase and that blocks
-will not overlap.  Note that the blocks returned from this
-function can be much larger than the block size read from disk,
-due to compression and internal buffer optimizations.
-
-## archive\_read\_data\_skip($archive)
-
-A convenience function that repeatedly calls `archive_read_data` to skip
-all of the data for this archive entry.
-
-## archive\_read\_free($archive)
-
-Invokes `archive_read_close` if it was not invoked manually, then
-release all resources.
-
-## archive\_read\_header\_position($archive)
-
-Retrieve the byte offset in UNCOMPRESSED data where last-read
-header started.
-
-## archive\_read\_new
-
-Allocates and initializes a archive object suitable for reading from an archive.
-Returns an opaque archive which may be a perl style object, or a C pointer
-(depending on the implementation), either way, it can be passed into
-any of the read functions documented here with an <$archive> argument.
-
-## archive\_read\_next\_header($archive, $entry)
-
-Read the header for the next entry and return an entry object
-Returns an opaque archive which may be a perl style object, or a C pointer
-(depending on the implementation), either way, it can be passed into
-any of the functions documented here with an <$entry> argument.
-
-## archive\_read\_next\_header2($archive, $entry)
-
-Read the header for the next entry and populate the provided entry object.
-
-## archive\_read\_open($archive, $data, $open\_cb, $read\_cb, $close\_cb)
-
-The same as `archive_read_open2`, except that the skip callback is assumed to be `undef`.
-
-## archive\_read\_open1($archive)
-
-Opening freezes the callbacks.
-
-## archive\_read\_open2($archive, $data, $open\_cb, $read\_cb, $skip\_cb, $close\_cb)
-
-Freeze the settings, open the archive, and prepare for reading entries.  This is the most
-generic version of this call, which accepts four callback functions.  Most clients will
-want to use `archive_read_open_filename`, `archive_read_open_FILE`, `archive_read_open_fd`,
-or `archive_read_open_memory` instead.  The library invokes the client-provided functions to 
-obtain raw bytes from the archive.
-
-## archive\_read\_open\_filename($archive, $filename, $block\_size)
-
-Like `archive_read_open`, except that it accepts a simple filename
-and a block size.  This function is safe for use with tape drives
-or other blocked devices.
-
-If you pass in `undef` as the `$filename`, libarchive will use
-standard in as the input archive.
-
-## archive\_read\_open\_memory($archive, $buffer)
-
-Like `archive_read_open`, except that it uses a Perl scalar that holds the 
-content of the archive.  This function does not make a copy of the data stored 
-in `$buffer`, so you should not modify the buffer until you have free the 
-archive using `archive_read_free`.
-
-Bad things will happen if the buffer falls out of scope and is deallocated
-before you free the archive, so make sure that there is a reference to the
-buffer somewhere in your programmer until `archive_read_free` is called.
-
-## archive\_read\_set\_callback\_data($archive, $data)
-
-Set the client data for callbacks.
-
-## archive\_read\_set\_close\_callback($archive, $callback)
-
-Set the close callback for the archive object.
-
-## archive\_read\_set\_filter\_option($archive, $module, $option, $value)
-
-Specifies an option that will be passed to currently-registered filters 
-(including decompression filters).
-
-If option and value are both `undef`, these functions will do nothing 
-and `ARCHIVE_OK` will be returned.  If option is `undef` but value is 
-not, these functions will do nothing and `ARCHIVE_FAILED` will be 
-returned.
-
-If module is not `undef`, option and value will be provided to the filter 
-or reader named module.  The return value will be that of the module.  
-If there is no such module, `ARCHIVE_FAILED` will be returned.
-
-If module is `NULL`, option and value will be provided to every registered 
-module.  If any module returns `ARCHIVE_FATAL`, this value will be 
-returned immediately.  Otherwise, `ARCHIVE_OK` will be returned if any 
-module accepts the option, and `ARCHIVE_FAILED` in all other cases.
-
-## archive\_read\_set\_format($archive, $format)
-
-Undocumented libarchive function.
-
-## archive\_read\_set\_format\_option($archive, $module, $option, $value)
-
-Specifies an option that will be passed to currently-registered format 
-readers.
-
-If option and value are both `undef`, these functions will do nothing 
-and `ARCHIVE_OK` will be returned.  If option is `undef` but value is 
-not, these functions will do nothing and `ARCHIVE_FAILED` will be 
-returned.
-
-If module is not `undef`, option and value will be provided to the filter 
-or reader named module.  The return value will be that of the module.  
-If there is no such module, `ARCHIVE_FAILED` will be returned.
-
-If module is `NULL`, option and value will be provided to every registered 
-module.  If any module returns `ARCHIVE_FATAL`, this value will be 
-returned immediately.  Otherwise, `ARCHIVE_OK` will be returned if any 
-module accepts the option, and `ARCHIVE_FAILED` in all other cases.
-
-## archive\_read\_set\_open\_callback($archive, $callback)
-
-Set the open callback for the archive object.
-
-## archive\_read\_set\_option($archive, $module, $option, $value)
-
-Calls `archive_read_set_format_option` then 
-`archive_read_set_filter_option`.  If either function returns 
-`ARCHIVE_FATAL`, `ARCHIVE_FATAL` will be returned immediately.  
-Otherwise, greater of the two values will be returned.
-
-## archive\_read\_set\_options($archive, $opts)
-
-options is a comma-separated list of options.  If options is `undef` or 
-empty, `ARCHIVE_OK` will be returned immediately.
-
-Calls `archive_read_set_option` with each option in turn.  If any 
-`archive_read_set_option` call returns `ARCHIVE_FATAL`, 
-`ARCHIVE_FATAL` will be returned immediately.
-
-- option=value
-
-    The option/value pair will be provided to every module.  Modules that do 
-    not accept an option with this name will ignore it.
-
-- option
-
-    The option will be provided to every module with a value of "1".
-
-- !option
-
-    The option will be provided to every module with an `undef` value.
-
-- module:option=value, module:option, module:!option
-
-    As above, but the corresponding option and value will be provided only 
-    to modules whose name matches module.
-
-## archive\_read\_set\_read\_callback($archive, $callback)
-
-Set the read callback for the archive object.
-
-## archive\_read\_set\_seek\_callback($archive, $callback)
-
-Set the seek callback for the archive object.
-
-## archive\_read\_set\_skip\_callback($archive, $callback)
-
-Set the skip callback for the archive object.
-
-## archive\_read\_support\_filter\_all($archive)
-
-Enable all available decompression filters.
-
-## archive\_read\_support\_filter\_bzip2($archive)
-
-Enable bzip2 decompression filter.
-
-## archive\_read\_support\_filter\_compress($archive)
-
-Enable compress decompression filter.
-
-## archive\_read\_support\_filter\_grzip($archive)
-
-Enable grzip decompression filter.
-
-## archive\_read\_support\_filter\_gzip($archive)
-
-Enable gzip decompression filter.
-
-## archive\_read\_support\_filter\_lrzip($archive)
-
-Enable lrzip decompression filter.
-
-## archive\_read\_support\_filter\_lzip($archive)
-
-Enable lzip decompression filter.
-
-## archive\_read\_support\_filter\_lzma($archive)
-
-Enable lzma decompression filter.
-
-## archive\_read\_support\_filter\_lzop($archive)
-
-Enable lzop decompression filter.
-
-## archive\_read\_support\_filter\_none($archive)
-
-Enable none decompression filter.
-
-## archive\_read\_support\_filter\_program(archive, command)
-
-Data is feed through the specified external program before being
-dearchived.  Note that this disables automatic detection of the
-compression format, so it makes no sense to specify this in
-conjunction with any other decompression option.
-
-## archive\_read\_support\_filter\_rpm($archive)
-
-Enable rpm decompression filter.
-
-## archive\_read\_support\_filter\_uu($archive)
-
-Enable uu decompression filter.
-
-## archive\_read\_support\_filter\_xz($archive)
-
-Enable xz decompression filter.
-
-## archive\_read\_support\_format\_7zip($archive)
-
-Enable 7zip archive format.
-
-## archive\_read\_support\_format\_all($archive)
-
-Enable all available archive formats.
-
-## archive\_read\_support\_format\_ar($archive)
-
-Enable ar archive format.
-
-## archive\_read\_support\_format\_by\_code($archive, $code)
-
-Enables a single format specified by the format code.
-
-## archive\_read\_support\_format\_cab($archive)
-
-Enable cab archive format.
-
-## archive\_read\_support\_format\_cpio($archive)
-
-Enable cpio archive format.
-
-## archive\_read\_support\_format\_empty($archive)
-
-Enable empty archive format.
-
-## archive\_read\_support\_format\_gnutar($archive)
-
-Enable gnutar archive format.
-
-## archive\_read\_support\_format\_iso9660($archive)
-
-Enable iso9660 archive format.
-
-## archive\_read\_support\_format\_lha($archive)
-
-Enable lha archive format.
-
-## archive\_read\_support\_format\_mtree($archive)
-
-Enable mtree archive format.
-
-## archive\_read\_support\_format\_rar($archive)
-
-Enable rar archive format.
-
-## archive\_read\_support\_format\_raw($archive)
-
-Enable raw archive format.
-
-## archive\_read\_support\_format\_tar($archive)
-
-Enable tar archive format.
-
-## archive\_read\_support\_format\_xar($archive)
-
-Enable xar archive format.
-
-## archive\_read\_support\_format\_zip($archive)
-
-Enable zip archive format.
-
-## archive\_seek\_data($archive, $offset, $whence)
-
-Seek within the body of an entry.  Similar to `lseek`.
-
-## archive\_version\_number
-
-Return the libarchive version as an integer.
-
-## archive\_version\_string
-
-Return the libarchive as a version.
-
-Returns a string value.
-
-## archive\_write\_add\_filter($archive, $code)
-
-A convenience function to set the filter based on the code.
-
-## archive\_write\_add\_filter\_b64encode($archive)
-
-Add b64encode filter
-
-## archive\_write\_add\_filter\_by\_name($archive, $name)
-
-A convenience function to set the filter based on the name.
-
-## archive\_write\_add\_filter\_bzip2($archive)
-
-Add bzip2 filter
-
-## archive\_write\_add\_filter\_compress($archive)
-
-Add compress filter
-
-## archive\_write\_add\_filter\_grzip($archive)
-
-Add grzip filter
-
-## archive\_write\_add\_filter\_gzip($archive)
-
-Add gzip filter
-
-## archive\_write\_add\_filter\_lrzip($archive)
-
-Add lrzip filter
-
-## archive\_write\_add\_filter\_lzip($archive)
-
-Add lzip filter
-
-## archive\_write\_add\_filter\_lzma($archive)
-
-Add lzma filter
-
-## archive\_write\_add\_filter\_lzop($archive)
-
-Add lzop filter
-
-## archive\_write\_add\_filter\_none($archive)
-
-Add none filter
-
-## archive\_write\_add\_filter\_program($archive, $cmd)
-
-The archive will be fed into the specified compression program. 
-The output of that program is blocked and written to the client
-write callbacks.
-
-## archive\_write\_add\_filter\_uuencode($archive)
-
-Add uuencode filter
-
-## archive\_write\_add\_filter\_xz($archive)
-
-Add xz filter
-
-## archive\_write\_close(archive)
-
-Complete the archive and invoke the close callback.
-
-## archive\_write\_data(archive, buffer)
-
-Write data corresponding to the header just written.
-
-This function returns the number of bytes actually written, or -1 on error.
-
-## archive\_write\_data\_block($archive, $buff, $offset)
-
-Writes the buffer to the current entry in the given archive
-starting at the given offset.
-
-## archive\_write\_disk\_gid($archive, $string, $int64)
-
-Undocumented libarchive function.
-
-## archive\_write\_disk\_new
-
-Allocates and initializes a struct archive object suitable for
-writing objects to disk.
-
-Returns an opaque archive which may be a perl style object, or a C pointer
-(Depending on the implementation), either way, it can be passed into
-any of the write functions documented here with an `$archive` argument.
-
-## archive\_write\_disk\_set\_options($archive, $flags)
-
-The options field consists of a bitwise OR of one or more of the 
-following values:
-
-- ARCHIVE\_EXTRACT\_OWNER
-- ARCHIVE\_EXTRACT\_PERM
-- ARCHIVE\_EXTRACT\_TIME
-- ARCHIVE\_EXTRACT\_NO\_OVERWRITE
-- ARCHIVE\_EXTRACT\_UNLINK
-- ARCHIVE\_EXTRACT\_ACL
-- ARCHIVE\_EXTRACT\_FFLAGS
-- ARCHIVE\_EXTRACT\_XATTR
-- ARCHIVE\_EXTRACT\_SECURE\_SYMLINKS
-- ARCHIVE\_EXTRACT\_SECURE\_NODOTDOT
-- ARCHIVE\_EXTRACT\_SPARSE
-
-## archive\_write\_disk\_set\_skip\_file($archive, $device, $inode)
-
-Records the device and inode numbers of a file that should not be 
-overwritten.  This is typically used to ensure that an extraction 
-process does not overwrite the archive from which objects are being 
-read.  This capability is technically unnecessary but can be a 
-significant performance optimization in practice.
-
-## archive\_write\_disk\_set\_standard\_lookup($archive)
-
-This convenience function installs a standard set of user and
-group lookup functions.  These functions use `getpwnam` and
-`getgrnam` to convert names to ids, defaulting to the ids
-if the names cannot be looked up.  These functions also implement
-a simple memory cache to reduce the number of calls to 
-`getpwnam` and `getgrnam`.
-
-## archive\_write\_disk\_uid($archive, $string, $int64)
-
-Undocumented libarchive function.
-
-## archive\_write\_fail($archive)
-
-Marks the archive as FATAL so that a subsequent `free` operation
-won't try to `close` cleanly.  Provides a fast abort capability
-when the client discovers that things have gone wrong.
-
-## archive\_write\_finish\_entry($archive)
-
-Close out the entry just written.  Ordinarily, 
-clients never need to call this, as it is called 
-automatically by `archive_write_next_header` and 
-`archive_write_close` as needed.  However, some
-file attributes are written to disk only after 
-the file is closed, so this can be necessary 
-if you need to work with the file on disk right away.
-
-## archive\_write\_free($archive)
-
-Invokes `archive_write_close` if it was not invoked manually, then
-release all resources.
-
-## archive\_write\_get\_bytes\_in\_last\_block($archive)
-
-Retrieve the currently-set value for last block size.  A value of -1 
-here indicates that the library should use default values.
-
-## archive\_write\_get\_bytes\_per\_block($archive)
-
-Retrieve the block size to be used for writing.  A value of -1 here 
-indicates that the library should use default values.  A value of zero 
-indicates that internal blocking is suppressed.
-
-## archive\_write\_header($archive, $entry)
-
-Build and write a header using the data in the provided struct archive\_entry structure.
-You can use `archive_entry_new` to create an `$entry` object and populate it with
-`archive_entry_set*` functions.
-
-## archive\_write\_new
-
-Allocates and initializes a archive object suitable for writing an new archive.
-Returns an opaque archive which may be a perl style object, or a C pointer
-(depending on the implementation), either way, it can be passed into
-any of the write functions documented here with an `$archive` argument.
-
-## archive\_write\_open($archive, $data, $open\_cb, $read\_cb, $close\_cb)
-
-Freeze the settings, open the archive, and prepare for writing entries.  This is the most
-generic form of this function, which accepts pointers to three callback functions which will
-be invoked by the compression layer to write the constructed archive.
-
-## archive\_write\_open\_filename($archive, $filename)
-
-A convenience form of `archive_write_open` that accepts a filename.  If you have 
-not invoked `archive_write_set_bytes_in_last_block`, then 
-`archive_write_open_filename` will adjust the last-block padding depending on the 
-file: it will enable padding when writing to standard output or to a character or 
-block device node, it will disable padding otherwise.  You can override this by 
-manually invoking `archive_write_set_bytes_in_last_block` before `calling 
-archive_write_open`.  The `archive_write_open_filename` function is safe for use 
-with tape drives or other block-oriented devices.
-
-If you pass in `undef` as the `$filename`, libarchive will write the
-archive to standard out.
-
-## archive\_write\_set\_bytes\_in\_last\_block($archive, $bytes\_in\_last\_block)
-
-Sets the block size used for writing the last block.  If this value is 
-zero, the last block will be padded to the same size as the other 
-blocks.  Otherwise, the final block will be padded to a multiple of this 
-size.  In particular, setting it to 1 will cause the final block to not 
-be padded.  For compressed output, any padding generated by this option 
-is applied only after the compression.  The uncompressed data is always 
-unpadded.  The default is to pad the last block to the full block size 
-(note that `archive_write_open_filename` will set this based on the file 
-type).  Unlike the other "set" functions, this function can be called 
-after the archive is opened.
-
-## archive\_write\_set\_bytes\_per\_block($archive, $bytes\_per\_block)
-
-Sets the block size used for writing the archive data.  Every call to 
-the write callback function, except possibly the last one, will use this 
-value for the length.  The default is to use a block size of 10240 
-bytes.  Note that a block size of zero will suppress internal blocking 
-and cause writes to be sent directly to the write callback as they 
-occur.
-
-## archive\_write\_set\_filter\_option($archive, $module, $option, $value)
-
-Specifies an option that will be passed to currently-registered filters (including decompression filters).
-
-If option and value are both `undef`, these functions will do nothing 
-and `ARCHIVE_OK` will be returned.  If option is `undef` but value
-is not, these functions will do nothing and `ARCHIVE_FAILED` will
-be returned.
-
-If module is not `undef`, option and value will be provided to the
-filter or reader named module.  The return value will be that of
-the module.  If there is no such module, `ARCHIVE_FAILED` will be
-returned.
-
-If module is `undef`, option and value will be provided to every
-registered module.  If any module returns `ARCHIVE_FATAL`, this
-value will be returned immediately.  Otherwise, `ARCHIVE_OK` will
-be returned if any module accepts the option, and `ARCHIVE_FAILED`
-in all other cases.
-
-## archive\_write\_set\_format($archive, $code)
-
-A convenience function to set the format based on the code.
-
-## archive\_write\_set\_format\_7zip($archive)
-
-Set the archive format to 7zip
-
-## archive\_write\_set\_format\_ar\_bsd($archive)
-
-Set the archive format to ar\_bsd
-
-## archive\_write\_set\_format\_ar\_svr4($archive)
-
-Set the archive format to ar\_svr4
-
-## archive\_write\_set\_format\_by\_name($archive, $name)
-
-A convenience function to set the format based on the name.
-
-## archive\_write\_set\_format\_cpio($archive)
-
-Set the archive format to cpio
-
-## archive\_write\_set\_format\_cpio\_newc($archive)
-
-Set the archive format to cpio\_newc
-
-## archive\_write\_set\_format\_gnutar($archive)
-
-Set the archive format to gnutar
-
-## archive\_write\_set\_format\_iso9660($archive)
-
-Set the archive format to iso9660
-
-## archive\_write\_set\_format\_mtree($archive)
-
-Set the archive format to mtree
-
-## archive\_write\_set\_format\_mtree\_classic($archive)
-
-Set the archive format to mtree\_classic
-
-## archive\_write\_set\_format\_option($archive, $module, $option, $value)
-
-Specifies an option that will be passed to currently-registered format 
-readers.
-
-If option and value are both `undef`, these functions will do nothing 
-and `ARCHIVE_OK` will be returned.  If option is `undef` but value
-is not, these functions will do nothing and `ARCHIVE_FAILED` will
-be returned.
-
-If module is not `undef`, option and value will be provided to the
-filter or reader named module.  The return value will be that of
-the module.  If there is no such module, `ARCHIVE_FAILED` will be
-returned.
-
-If module is `undef`, option and value will be provided to every
-registered module.  If any module returns `ARCHIVE_FATAL`, this
-value will be returned immediately.  Otherwise, `ARCHIVE_OK` will
-be returned if any module accepts the option, and `ARCHIVE_FAILED`
-in all other cases.
-
-## archive\_write\_set\_format\_pax($archive)
-
-Set the archive format to pax
-
-## archive\_write\_set\_format\_pax\_restricted($archive)
-
-Set the archive format to pax\_restricted
-
-## archive\_write\_set\_format\_shar($archive)
-
-Set the archive format to shar
-
-## archive\_write\_set\_format\_shar\_dump($archive)
-
-Set the archive format to shar\_dump
-
-## archive\_write\_set\_format\_ustar($archive)
-
-Set the archive format to ustar
-
-## archive\_write\_set\_format\_v7tar($archive)
-
-Set the archive format to v7tar
-
-## archive\_write\_set\_format\_xar($archive)
-
-Set the archive format to xar
-
-## archive\_write\_set\_format\_zip($archive)
-
-Set the archive format to zip
-
-## archive\_write\_set\_option($archive, $module, $option, $value)
-
-Calls `archive_write_set_format_option`, then 
-`archive_write_set_filter_option`. If either function returns 
-`ARCHIVE_FATAL`, `ARCHIVE_FATAL` will be returned immediately.  
-Otherwise, greater of the two values will be returned.
-
-## archive\_write\_set\_options($archive, $opts)
-
-options is a comma-separated list of options.  If options is `undef` or 
-empty, `ARCHIVE_OK` will be returned immediately.
-
-Individual options have one of the following forms:
-
-- option=value
-
-    The option/value pair will be provided to every module.  Modules that do 
-    not accept an option with this name will ignore it.
-
-- option
-
-    The option will be provided to every module with a value of "1".
-
-- !option
-
-    The option will be provided to every module with a NULL value.
-
-- module:option=value, module:option, module:!option
-
-    As above, but the corresponding option and value will be provided only 
-    to modules whose name matches module.
-
-## archive\_write\_set\_skip\_file($archive, $dev, $ino)
-
-The dev/ino of a file that won't be archived.  This is used
-to avoid recursively adding an archive to itself.
-
-## archive\_write\_zip\_set\_compression\_deflate($archive)
-
-Set the compression method for the zip archive to deflate.
-
-## archive\_write\_zip\_set\_compression\_store($archive)
-
-Set the compression method for the zip archive to store.
-
-# CONSTANTS
-
-If provided by your libarchive library, these constants will be available and
-exportable from the [Archive::Libarchive::FFI](https://metacpan.org/pod/Archive::Libarchive::FFI) (you may import all available
-constants using the `:const` export tag).
-
-- AE\_IFBLK
-- AE\_IFCHR
-- AE\_IFDIR
-- AE\_IFIFO
-- AE\_IFLNK
-- AE\_IFMT
-- AE\_IFREG
-- AE\_IFSOCK
-- ARCHIVE\_API\_FEATURE
-- ARCHIVE\_API\_VERSION
-- ARCHIVE\_BYTES\_PER\_RECORD
-- ARCHIVE\_COMPRESSION\_BZIP2
-- ARCHIVE\_COMPRESSION\_COMPRESS
-- ARCHIVE\_COMPRESSION\_GZIP
-- ARCHIVE\_COMPRESSION\_LRZIP
-- ARCHIVE\_COMPRESSION\_LZIP
-- ARCHIVE\_COMPRESSION\_LZMA
-- ARCHIVE\_COMPRESSION\_NONE
-- ARCHIVE\_COMPRESSION\_PROGRAM
-- ARCHIVE\_COMPRESSION\_RPM
-- ARCHIVE\_COMPRESSION\_UU
-- ARCHIVE\_COMPRESSION\_XZ
-- ARCHIVE\_DEFAULT\_BYTES\_PER\_BLOCK
-- ARCHIVE\_ENTRY\_ACL\_ADD\_FILE
-- ARCHIVE\_ENTRY\_ACL\_ADD\_SUBDIRECTORY
-- ARCHIVE\_ENTRY\_ACL\_APPEND\_DATA
-- ARCHIVE\_ENTRY\_ACL\_DELETE
-- ARCHIVE\_ENTRY\_ACL\_DELETE\_CHILD
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_DIRECTORY\_INHERIT
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_FAILED\_ACCESS
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_FILE\_INHERIT
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_INHERIT\_ONLY
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_NO\_PROPAGATE\_INHERIT
-- ARCHIVE\_ENTRY\_ACL\_ENTRY\_SUCCESSFUL\_ACCESS
-- ARCHIVE\_ENTRY\_ACL\_EVERYONE
-- ARCHIVE\_ENTRY\_ACL\_EXECUTE
-- ARCHIVE\_ENTRY\_ACL\_GROUP
-- ARCHIVE\_ENTRY\_ACL\_GROUP\_OBJ
-- ARCHIVE\_ENTRY\_ACL\_INHERITANCE\_NFS4
-- ARCHIVE\_ENTRY\_ACL\_LIST\_DIRECTORY
-- ARCHIVE\_ENTRY\_ACL\_MASK
-- ARCHIVE\_ENTRY\_ACL\_OTHER
-- ARCHIVE\_ENTRY\_ACL\_PERMS\_NFS4
-- ARCHIVE\_ENTRY\_ACL\_PERMS\_POSIX1E
-- ARCHIVE\_ENTRY\_ACL\_READ
-- ARCHIVE\_ENTRY\_ACL\_READ\_ACL
-- ARCHIVE\_ENTRY\_ACL\_READ\_ATTRIBUTES
-- ARCHIVE\_ENTRY\_ACL\_READ\_DATA
-- ARCHIVE\_ENTRY\_ACL\_READ\_NAMED\_ATTRS
-- ARCHIVE\_ENTRY\_ACL\_STYLE\_EXTRA\_ID
-- ARCHIVE\_ENTRY\_ACL\_STYLE\_MARK\_DEFAULT
-- ARCHIVE\_ENTRY\_ACL\_SYNCHRONIZE
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_ACCESS
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_ALARM
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_ALLOW
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_AUDIT
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_DEFAULT
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_DENY
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_NFS4
-- ARCHIVE\_ENTRY\_ACL\_TYPE\_POSIX1E
-- ARCHIVE\_ENTRY\_ACL\_USER
-- ARCHIVE\_ENTRY\_ACL\_USER\_OBJ
-- ARCHIVE\_ENTRY\_ACL\_WRITE
-- ARCHIVE\_ENTRY\_ACL\_WRITE\_ACL
-- ARCHIVE\_ENTRY\_ACL\_WRITE\_ATTRIBUTES
-- ARCHIVE\_ENTRY\_ACL\_WRITE\_DATA
-- ARCHIVE\_ENTRY\_ACL\_WRITE\_NAMED\_ATTRS
-- ARCHIVE\_ENTRY\_ACL\_WRITE\_OWNER
-- ARCHIVE\_EOF
-- ARCHIVE\_EXTRACT\_ACL
-- ARCHIVE\_EXTRACT\_FFLAGS
-- ARCHIVE\_EXTRACT\_HFS\_COMPRESSION\_FORCED
-- ARCHIVE\_EXTRACT\_MAC\_METADATA
-- ARCHIVE\_EXTRACT\_NO\_AUTODIR
-- ARCHIVE\_EXTRACT\_NO\_HFS\_COMPRESSION
-- ARCHIVE\_EXTRACT\_NO\_OVERWRITE
-- ARCHIVE\_EXTRACT\_NO\_OVERWRITE\_NEWER
-- ARCHIVE\_EXTRACT\_OWNER
-- ARCHIVE\_EXTRACT\_PERM
-- ARCHIVE\_EXTRACT\_SECURE\_NODOTDOT
-- ARCHIVE\_EXTRACT\_SECURE\_SYMLINKS
-- ARCHIVE\_EXTRACT\_SPARSE
-- ARCHIVE\_EXTRACT\_TIME
-- ARCHIVE\_EXTRACT\_UNLINK
-- ARCHIVE\_EXTRACT\_XATTR
-- ARCHIVE\_FAILED
-- ARCHIVE\_FATAL
-- ARCHIVE\_FILTER\_BZIP2
-- ARCHIVE\_FILTER\_COMPRESS
-- ARCHIVE\_FILTER\_GRZIP
-- ARCHIVE\_FILTER\_GZIP
-- ARCHIVE\_FILTER\_LRZIP
-- ARCHIVE\_FILTER\_LZIP
-- ARCHIVE\_FILTER\_LZMA
-- ARCHIVE\_FILTER\_LZOP
-- ARCHIVE\_FILTER\_NONE
-- ARCHIVE\_FILTER\_PROGRAM
-- ARCHIVE\_FILTER\_RPM
-- ARCHIVE\_FILTER\_UU
-- ARCHIVE\_FILTER\_XZ
-- ARCHIVE\_FORMAT\_7ZIP
-- ARCHIVE\_FORMAT\_AR
-- ARCHIVE\_FORMAT\_AR\_BSD
-- ARCHIVE\_FORMAT\_AR\_GNU
-- ARCHIVE\_FORMAT\_BASE\_MASK
-- ARCHIVE\_FORMAT\_CAB
-- ARCHIVE\_FORMAT\_CPIO
-- ARCHIVE\_FORMAT\_CPIO\_AFIO\_LARGE
-- ARCHIVE\_FORMAT\_CPIO\_BIN\_BE
-- ARCHIVE\_FORMAT\_CPIO\_BIN\_LE
-- ARCHIVE\_FORMAT\_CPIO\_POSIX
-- ARCHIVE\_FORMAT\_CPIO\_SVR4\_CRC
-- ARCHIVE\_FORMAT\_CPIO\_SVR4\_NOCRC
-- ARCHIVE\_FORMAT\_EMPTY
-- ARCHIVE\_FORMAT\_ISO9660
-- ARCHIVE\_FORMAT\_ISO9660\_ROCKRIDGE
-- ARCHIVE\_FORMAT\_LHA
-- ARCHIVE\_FORMAT\_MTREE
-- ARCHIVE\_FORMAT\_RAR
-- ARCHIVE\_FORMAT\_RAW
-- ARCHIVE\_FORMAT\_SHAR
-- ARCHIVE\_FORMAT\_SHAR\_BASE
-- ARCHIVE\_FORMAT\_SHAR\_DUMP
-- ARCHIVE\_FORMAT\_TAR
-- ARCHIVE\_FORMAT\_TAR\_GNUTAR
-- ARCHIVE\_FORMAT\_TAR\_PAX\_INTERCHANGE
-- ARCHIVE\_FORMAT\_TAR\_PAX\_RESTRICTED
-- ARCHIVE\_FORMAT\_TAR\_USTAR
-- ARCHIVE\_FORMAT\_XAR
-- ARCHIVE\_FORMAT\_ZIP
-- ARCHIVE\_LIBRARY\_VERSION
-- ARCHIVE\_MATCH\_CTIME
-- ARCHIVE\_MATCH\_EQUAL
-- ARCHIVE\_MATCH\_MTIME
-- ARCHIVE\_MATCH\_NEWER
-- ARCHIVE\_MATCH\_OLDER
-- ARCHIVE\_OK
-- ARCHIVE\_READDISK\_HONOR\_NODUMP
-- ARCHIVE\_READDISK\_MAC\_COPYFILE
-- ARCHIVE\_READDISK\_NO\_TRAVERSE\_MOUNTS
-- ARCHIVE\_READDISK\_RESTORE\_ATIME
-- ARCHIVE\_RETRY
-- ARCHIVE\_VERSION\_NUMBER
-- ARCHIVE\_VERSION\_STAMP
-- ARCHIVE\_WARN
+    
+    if(Archive::Libarchive::FFI->can('ARCHIVE_OK'))
+    {
+      # ... although ARCHIVE_OK should always be available.
+    }
 
 # EXAMPLES
 

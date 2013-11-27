@@ -1,13 +1,13 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 4 * 3;
+use Test::More tests => 4 * 4;
 use FindBin ();
 use File::Spec;
 
 my %failures;
 
-foreach my $mode (qw( memory filename callback ))
+foreach my $mode (qw( memory filename callback fh ))
 {
   # TODO: add xar back in if we can figure it out.
   foreach my $format (qw( tar tar.gz tar.bz2 zip ))
@@ -44,6 +44,11 @@ foreach my $mode (qw( memory filename callback ))
       {
         my %data = ( filename => $filename );
         archive_read_open($a, \%data, \&myopen, \&myread, \&myclose);
+      }
+      elsif($mode eq 'fh')
+      {
+        open my $fh, '<', $filename;
+        archive_read_open_fh($a, $fh);
       }
       else
       {
