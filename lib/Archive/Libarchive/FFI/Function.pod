@@ -483,8 +483,7 @@ Return type is an errno integer value.
 Returns a textual error message suitable for display.  The error
 message here is usually more specific than that obtained from
 passing the result of C<archive_errno> to C<strerror>.
-
-Return type is a string.
+Returns C<undef> if there is not error.
 
 =head2 archive_file_count
 

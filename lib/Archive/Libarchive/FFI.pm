@@ -52,6 +52,8 @@ _attach 'archive_file_count',                            [ _ptr ], _int;
 _attach 'archive_format',                                [ _ptr ], _int;
 _attach 'archive_format_name',                           [ _ptr ], _str;
 _attach 'archive_seek_data',                             [ _ptr, _int64, _int ], _int64;
+_attach 'archive_error_string',                          [ _ptr ], _str;
+
 
 _attach 'archive_read_new',                              undef, _ptr;
 _attach 'archive_read_support_filter_all',               [ _ptr ], _int;
@@ -246,13 +248,6 @@ attach_function 'archive_write_data_block', [ _ptr, _ptr, _int, _int64 ], _int, 
   my $size = do { use bytes; length($buffer) };
   my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $size);
   $cb->($archive, $ptr, $size, $offset);
-};
-
-attach_function 'archive_error_string', [ _ptr ], _str, sub
-{
-  my $str = $_[0]->($_[1]);
-  return '' unless defined $str;
-  $str;
 };
 
 foreach my $name (qw( gname hardlink pathname symlink uname ))
