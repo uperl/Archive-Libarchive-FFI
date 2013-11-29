@@ -278,7 +278,7 @@ sub archive_perl_codeset
 
 sub archive_perl_utf8_mode
 {
-  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET) eq 'UTF-8';
+  int(I18N::Langinfo::langinfo(I18N::Langinfo::CODESET) eq 'UTF-8');
 }
 
 eval q{
