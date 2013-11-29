@@ -3,6 +3,9 @@ package Archive::Libarchive::FFI;
 use strict;
 use warnings;
 use Alien::Libarchive;
+use I18N::Langinfo ();
+use Exporter::Tidy ();
+use Encode ();
 use FFI::Raw ();
 use FFI::Sweet;
 use FFI::Util qw(
@@ -14,7 +17,6 @@ use FFI::Util qw(
   deref_to_int
   deref_to_str
 );
-use Exporter::Tidy ();
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
@@ -255,23 +257,28 @@ attach_function 'archive_error_string', [ _ptr ], _str, sub
 
 foreach my $name (qw( gname hardlink pathname symlink uname ))
 {
-  attach_function "archive_entry_$name", [ _ptr ], _str;
-  attach_function [ "archive_entry_copy_$name" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
+  attach_function "archive_entry_$name", [ _ptr ], _str, sub
+  {
+    my($cb, $entry) = @_;
+    my $str = $cb->($entry);
+    Encode::decode(archive_perl_codeset(), $str);
+  };
+  attach_function [ "archive_entry_update_$name\_utf8" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
   {
     my($cb, $entry, $name) = @_;
-    $cb->($entry, $name);
+    $cb->($entry, Encode::encode('UTF-8', $name));
     ARCHIVE_OK();
   };
 }
 
 sub archive_perl_codeset
 {
-  'ANSI_X3.4-1968';
+  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET);
 }
 
 sub archive_perl_utf8_mode
 {
-  0;
+  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET) eq 'UTF-8';
 }
 
 eval q{

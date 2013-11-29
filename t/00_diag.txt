@@ -3,13 +3,5 @@ Exporter::Tidy
 FFI::Raw
 FFI::Sweet
 FFI::Util
-File::Basename
-File::Spec
-File::Temp
-FindBin
 Module::Build
 Test::More
-bytes
-constant
-open
-utf8
