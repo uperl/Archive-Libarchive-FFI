@@ -31,8 +31,11 @@ foreach my $const (do { open my $fh, '<', $fn; <$fh> })
   }
 }
 
-diag '';
-diag '';
+if($not_first)
+{
+  diag '';
+  diag '';
+}
 
 $fn = File::Spec->catfile(
   dirname( __FILE__ ),
@@ -52,6 +55,20 @@ foreach my $func (do { open my $fh, '<', $fn; <$fh> })
     diag " - $func";
   }
 }
+
+if($not_first)
+{
+  diag '';
+  diag '';
+}
+
+eval q{ use Archive::Libarchive::FFI };
+diag $@ if $@;
+
+diag 'archive_perl_codeset:   ' . eval q{ Archive::Libarchive::FFI::archive_perl_codeset() };
+diag $@ if $@;
+diag 'archive_perl_utf8_mode: ' . eval q{ Archive::Libarchive::FFI::archive_perl_utf8_mode() };
+diag $@ if $@;
 
 diag '';
 diag '';

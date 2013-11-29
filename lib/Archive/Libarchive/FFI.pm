@@ -5,7 +5,15 @@ use warnings;
 use Alien::Libarchive;
 use FFI::Raw ();
 use FFI::Sweet;
-use FFI::Util qw( deref_to_ptr deref_to_uint64 deref_to_uint buffer_to_scalar scalar_to_buffer );
+use FFI::Util qw(
+  deref_to_ptr
+  deref_to_uint64
+  deref_to_uint
+  buffer_to_scalar
+  scalar_to_buffer
+  deref_to_int
+  deref_to_str
+);
 use Exporter::Tidy ();
 
 # ABSTRACT: Perl bindings to libarchive via FFI
@@ -99,8 +107,6 @@ _attach 'archive_entry_free',                            [ _ptr ], _void;
 _attach 'archive_entry_new',                             undef, _ptr;
 _attach 'archive_entry_new2',                            [ _ptr ], _ptr;
 _attach 'archive_entry_size',                            [ _ptr ], _int64;
-_attach 'archive_entry_pathname',                        [ _ptr ], _str;
-_attach 'archive_entry_set_pathname',                    [ _ptr, _str ], _void;
 _attach 'archive_entry_set_size',                        [ _ptr, _int64 ], _void;
 _attach 'archive_entry_set_perm',                        [ _ptr, _int ], _void;
 _attach 'archive_entry_set_filetype',                    [ _ptr, _int ], _void;
@@ -120,6 +126,12 @@ _attach 'archive_entry_devmajor',                        [ _ptr ], _int64; # FIX
 _attach 'archive_entry_devminor',                        [ _ptr ], _int64; # FIXME actaully a dev_t
 _attach 'archive_entry_fflags_text',                     [ _ptr ], _str;
 _attach 'archive_entry_gid',                             [ _ptr ], _int64;
+_attach 'archive_entry_rdev',                            [ _ptr ], _int64;
+_attach 'archive_entry_rdevmajor',                       [ _ptr ], _int64;
+_attach 'archive_entry_rdevminor',                       [ _ptr ], _int64;
+_attach 'archive_entry_set_rdev',                        [ _ptr, _int64 ], _void;
+_attach 'archive_entry_set_rdevmajor',                   [ _ptr, _int64 ], _void;
+_attach 'archive_entry_set_rdevminor',                   [ _ptr, _int64 ], _void;
 
 _attach 'archive_read_disk_descend',                     [ _ptr ], _int;
 _attach 'archive_read_disk_can_descend',                 [ _ptr ], _int;
@@ -136,6 +148,12 @@ _attach 'archive_read_disk_set_standard_lookup',         [ _ptr ], _int;
 _attach 'archive_read_disk_set_symlink_hybrid',          [ _ptr ], _int;
 _attach 'archive_read_disk_set_symlink_logical',         [ _ptr ], _int;
 _attach 'archive_read_disk_set_symlink_physical',        [ _ptr ], _int;
+_attach 'archive_entry_acl',                             [ _ptr ], _ptr;
+_attach 'archive_entry_acl_clear',                       [ _ptr ], _int;
+_attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _int, _int, _str ], _int;
+_attach 'archive_entry_acl_reset',                       [ _ptr, _int ], _int;
+_attach 'archive_entry_acl_text',                        [ _ptr, _int ], _str;
+_attach 'archive_entry_acl_count',                       [ _ptr, _int ], _int;
 
 _attach 'archive_match_new',                             undef, _ptr;
 _attach 'archive_match_free',                            [ _ptr ], _int;
@@ -195,6 +213,23 @@ attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
   $ret;
 };
 
+attach_function 'archive_entry_acl_next', [ _ptr, _int, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  # 0 cb 1 entry 2 want_type
+  my $type    = FFI::Raw::MemPtr->new_from_ptr(0); # 3
+  my $permset = FFI::Raw::MemPtr->new_from_ptr(0); # 4
+  my $tag     = FFI::Raw::MemPtr->new_from_ptr(0); # 5
+  my $qual    = FFI::Raw::MemPtr->new_from_ptr(0); # 6
+  my $name    = FFI::Raw::MemPtr->new_from_ptr(0); # 7
+  my $ret = $_[0]->($_[1], $_[2], $type, $permset, $tag, $qual, $name);
+  $_[3] = deref_to_int($type);
+  $_[4] = deref_to_int($permset);
+  $_[5] = deref_to_int($tag);
+  $_[6] = deref_to_int($qual);
+  $_[7] = deref_to_str($name);
+  $ret;
+};
+
 attach_function 'archive_write_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
 {
   my($cb, $archive, $buffer) = @_;
@@ -217,6 +252,27 @@ attach_function 'archive_error_string', [ _ptr ], _str, sub
   return '' unless defined $str;
   $str;
 };
+
+foreach my $name (qw( gname hardlink pathname symlink uname ))
+{
+  attach_function "archive_entry_$name", [ _ptr ], _str;
+  attach_function [ "archive_entry_copy_$name" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
+  {
+    my($cb, $entry, $name) = @_;
+    $cb->($entry, $name);
+    ARCHIVE_OK();
+  };
+}
+
+sub archive_perl_codeset
+{
+  'ANSI_X3.4-1968';
+}
+
+sub archive_perl_utf8_mode
+{
+  0;
+}
 
 eval q{
   use Exporter::Tidy
@@ -313,10 +369,10 @@ write archive
 
 =head1 DESCRIPTION
 
-This module provides a functional interface to C<libarchive>.  C<libarchive> is a
+This module provides a functional interface to libarchive.  libarchive is a
 C library that can read and write archives in a variety of formats and with a 
 variety of compression filters, optimized in a stream oriented way.  A familiarity
-with the C<libarchive> documentation would be helpful, but may not be necessary
+with the libarchive documentation would be helpful, but may not be necessary
 for simple tasks.  The documentation for this module is split into four separate
 documents:
 
@@ -388,12 +444,116 @@ These examples are also included with the distribution.
 
 # EXAMPLE: example/complete_extractor.pl
 
+=head2 Unicode
+
+libarchive uses the character set and encoding defined by the currently
+selected locale for pathnames and other string data.  If you have non
+ASCII characters in your archives or filenames you need to use a UTF-8
+locale.
+
+ use strict;
+ use warnings;
+ use utf8;
+ use Archive::Libarchive::FFI qw( :all );
+ use POSIX qw( setlocale LC_ALL );
+ 
+ # substitute en_US.utf8 for the correct UTF-8 locale for your region.
+ setlocale(LC_ALL, "en_US.utf8"); # or 'export LANG=en_US.utf8' from your shell.
+ 
+ my $entry = archive_entry_new();
+ 
+ archive_entry_set_pathname($entry, "привет.txt");
+ my $string = archive_entry_pathname($entry); # "привет.txt"
+ 
+ archive_entry_free($entry);
+
+Unfortunately locale names are not portable across systems, so you should
+probably not hard code the locale as shown here unless you know the correct
+locale name for all the platforms that your script will run.
+
+If you are not using a UTF-8 locale then the set method for pathname style
+entry fields should work, but the retrieval methods will return the raw
+encoded values from libarchive (this is almost certainly not what you want
+if you have non ASCII filenames in your archive).
+
+These Perl bindings for libarchive provide a function
+L<archive_perl_utf8_mode|Archive::Libarchive::FFI::Function#archive_perl_utf8_mode>
+which will return true if you are using a UTF-8 locale.
+
+ use strict;
+ use warnings;
+ use utf8;
+ use Archive::Libarchive::FFI qw( :all );
+ 
+ my $entry = archive_entry_new();
+ 
+ if(archive_perl_utf8_mode())
+ {
+   archive_entry_set_pathname($entry, "привет.txt");
+   my $string = archive_entry_pathname($entry); # "привет.txt"
+ }
+ else
+ {
+   die "not using a UTF-8 locale";
+ }
+ 
+ archive_entry_free($entry);
+
+These Perl bindings for libarchive also provides a function
+L<archive_perl_codeset|Archive::Libarchive::FFI::Function#archive_perl_codeset>
+which can be used with L<Text::Iconv> to convert strings (if possible; not all
+encodings have legal mappings).
+
+ use strict;
+ use warnings;
+ use utf8;
+ use Archive::Libarchive::FFI qw( :all );
+ use Text::Iconv;
+ use Encoding qw( decode );
+ 
+ my $entry = archive_entry_new();
+ 
+ archive_entry_set_pathname($entry, "привет.txt");
+
+ my $string = archive_entry_pathname($entry); # value depends on locale
+ if(archive_perl_utf8_mode())
+ {
+   # $string = "привет.txt" (already)
+ }
+ else
+ {
+   my $iconv = Text::Iconv->new(archive_perl_codeset(), "UTF-8");
+   $iconv->raise_error(1);
+   $string = decode('UTF-8', $iconv->convert($string)); # $string = "привет.txt"
+ }
+ 
+ archive_entry_free($entry);
+
+Note that the L<Text::Iconv> method convert will throw an exception if the 
+conversion is not possible (if, for example, the destination encoding does
+not support the input characters).
+
 =head1 CAVEATS
 
 Archive and entry objects are really pointers to opaque C structures
-and need to be freed using one of C<archive_read_free>, C<archive_write_free>
-or C<archive_entry_free>, in order to free the resources associated
-with those objects.
+and need to be freed using one of 
+L<archive_read_free|Archive::Libarchive::FFI::Function#archive_read_free>, 
+L<archive_write_free|Archive::Libarchive::FFI::Function#archive_write_free> or 
+L<archive_entry_free|Archive::Libarchive::FFI::Function#archive_entry_free>, 
+in order to free the resources associated with those objects.
+
+Unicode pathnames in archives are only fully supported if you are using a
+UTF-8 locale.  If you aren't then the archive entry set pathname functions
+will convert Perl's internal representation to the current locale codeset
+using libarchive itself.  The get methods, unfortunately only return strings
+in the codeset for the current locale.  If you are using a UTF-8 locale,
+this module will mark the Perl strings it returns as UTF-8, but if you aren't
+then you need to convert the strings to do anything useful.  Two Perl only
+functions 
+L<archive_perl_utf8_mode|Archive::Libarchive::FFI::Function#archive_perl_utf8_mode> and
+L<archive_perl_codeset|Archive::Libarchive::FFI::Function#archive_perl_codeset>
+are provided to help, but there is probably a better way.  Patches to improve
+this situation would be happily considered.
 
 The documentation that comes with libarchive is not that great (by its own
 admission), being somewhat incomplete, and containing a few subtle errors.

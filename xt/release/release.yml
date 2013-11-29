@@ -38,6 +38,11 @@ pod_spelling_system:
     - birthtime
     - hardlinks
     - ino
+    - codeset
+    - ACL
+    - gname
+    - hardlink
+    - rdev
 
 
 pod_coverage:
