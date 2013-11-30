@@ -25,6 +25,7 @@ ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::Constant;
 require Archive::Libarchive::FFI::Callback;
+require Archive::Libarchive::FFI::Common;
 
 sub _attach ($$$)
 {
