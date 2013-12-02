@@ -229,6 +229,10 @@ to allow you to quickly recycle objects without thrashing the heap.
 
 A deep copy operation; all text fields are duplicated.
 
+=head2 archive_entry_copy_mac_metadata
+
+An Alias for L<#archive_entry_set_mac_metadata>.
+
 =head2 archive_entry_ctime
 
  my $ctime = archive_entry_ctime($entry);
@@ -314,6 +318,28 @@ Retrieve the gname for the archive entry object.
 
 Retrieve the hardlink for the archive entry object.
 
+=head2 archive_entry_mac_metadata
+
+ my $buffer = archive_entry_mac_metadata($entry);
+
+The mac_metadata property is Storage for Mac OS-specific
+AppleDouble metadata information.  Apple-format tar files
+store a separate binary blob containing encoded metadata
+with ACL, extended attributes, etc. This provides a place
+to store that blob.
+
+This method gets the blob.  The C name for this function is
+C<archive_entry_copy_mac_metadata>.
+
+=head2 archive_entry_mode
+
+ my $mode = archive_entry_mode($entry);
+
+Get a combination of file type and permission and provide the equivalent of st_mode.
+use of L<#archive_entry_filetype> and L<#archive_entry_perm> for getting and
+L<#archive_entry_set_filetype> and L<#archive_entry_set_perm> for setting is
+recommended.
+
 =head2 archive_entry_new
 
  my $entry = archive_entry_new();
@@ -390,6 +416,28 @@ Sets the gname for the archive entry object.
  my $status = archive_entry_set_hardlink
 
 Sets the hardlink for the archive entry object.
+
+=head2 archive_entry_set_mac_metadata
+
+ my $status = archive_entry_set_mac_metadata($entry, $buffer);
+
+The mac_metadata property is Storage for Mac OS-specific 
+AppleDouble metadata information.  Apple-format tar files 
+store a separate binary blob containing encoded metadata 
+with ACL, extended attributes, etc. This provides a place 
+to store that blob.
+
+This method sets the blob.  The C name for this function is
+C<archive_entry_copy_mac_metadata>.
+
+=head2 archive_entry_set_mode
+
+ my $status = archive_entry_set_mode($entry, $mode);
+
+Set a combination of file type and permission and provide the equivalent of st_mode.
+use of L<#archive_entry_filetype> and L<#archive_entry_perm> for getting and
+L<#archive_entry_set_filetype> and L<#archive_entry_set_perm> for setting is
+recommended.
 
 =head2 archive_entry_set_mtime
 
@@ -814,6 +862,12 @@ or other blocked devices.
 
 If you pass in C<undef> as the C<$filename>, libarchive will use
 standard in as the input archive.
+
+=head2 archive_read_open_filenames
+
+ my $status = archive_read_open_filenames($archive, \@filenames, $block_size);
+
+Use this for reading multivolume files by filenames.
 
 =head2 archive_read_open_memory
 

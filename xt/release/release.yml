@@ -43,6 +43,8 @@ pod_spelling_system:
     - gname
     - hardlink
     - rdev
+    - AppleDouble
+    - multivolume
 
 
 pod_coverage:

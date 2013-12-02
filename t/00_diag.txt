@@ -1,4 +1,5 @@
 Alien::Libarchive
+Carp
 Exporter::Tidy
 FFI::Raw
 FFI::Sweet

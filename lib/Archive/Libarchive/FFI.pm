@@ -6,6 +6,7 @@ use Alien::Libarchive;
 use I18N::Langinfo ();
 use Exporter::Tidy ();
 use Encode ();
+use Carp qw( croak );
 use FFI::Raw ();
 use FFI::Sweet;
 use FFI::Util qw(
@@ -158,6 +159,8 @@ _attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _in
 _attach 'archive_entry_acl_reset',                       [ _ptr, _int ], _int;
 _attach 'archive_entry_acl_text',                        [ _ptr, _int ], _str;
 _attach 'archive_entry_acl_count',                       [ _ptr, _int ], _int;
+_attach 'archive_entry_set_mode',                        [ _ptr, _int ], _void;
+_attach 'archive_entry_mode',                            [ _ptr ], _int;
 
 _attach 'archive_match_new',                             undef, _ptr;
 _attach 'archive_match_free',                            [ _ptr ], _int;
@@ -181,8 +184,8 @@ attach_function 'archive_entry_fflags', [ _int64, _int64 ], _void, sub
   my $set   = FFI::Raw::MemPtr->new_from_ptr(0);
   my $clear = FFI::Raw::MemPtr->new_from_ptr(0);
   $_[0]->($_[1], $set, $clear);
-  $_[2] = deref_to_int64($$set);
-  $_[3] = deref_to_int64($$clear);
+  $_[2] = deref_to_uint64($$set);
+  $_[3] = deref_to_uint64($$clear);
   return ARCHIVE_OK();
 };
 
@@ -265,6 +268,33 @@ foreach my $name (qw( gname hardlink pathname symlink uname ))
     ARCHIVE_OK();
   };
 }
+
+attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _int64 ], _int, sub # FIXME: third argument is actually size_t
+{
+  my($cb, $archive, $filenames, $bs) = @_;
+  croak 'archive_read_open_filename: third argument must be array reference' unless ref($filenames) eq 'ARRAY';
+  my @filenames = map { Encode::encode(archive_perl_codeset(), $_) } @$filenames;
+  my $ptr = FFI::Raw::MemPtr->new_from_buf(pack( ('P' x @filenames).'L!', @filenames, 0));
+  $cb->($archive, $ptr, $bs);
+};
+
+attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _int64 ], _void, sub # FIXME third argument is actually a size_t
+{
+  my($cb, $archive, $buffer) = @_;
+  my($ptr, $size) = scalar_to_buffer($buffer);
+  $cb->($archive, $ptr, $size);
+  ARCHIVE_OK();
+};
+
+do { no warnings 'once'; *archive_entry_copy_mac_metadata = \&archive_entry_set_mac_metadata };
+
+attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
+{
+  my($cb, $archive) = @_;
+  my $size = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $ptr = $cb->($archive, $size);
+  my $buffer = buffer_to_scalar($ptr, deref_to_uint64($$size));
+};
 
 sub archive_perl_codeset
 {
@@ -448,10 +478,20 @@ These examples are also included with the distribution.
 
 =head2 Unicode
 
-libarchive uses the character set and encoding defined by the currently
-selected locale for pathnames and other string data.  If you have non
-ASCII characters in your archives or filenames you need to use a UTF-8
-locale.
+Libarchive deals with two types of string like data.  Pathnames, user and
+group names are proper strings and are encoded in the codeset for the
+current POSIX locale.  Content data for files stored and retrieved from in
+raw bytes.
+
+The usual operational procedure in Perl is to convert everything on input
+into UTF-8, operate on the UTF-8 data and then convert (if necessary) 
+everything on output to the desired output format.
+
+In order to get useful string data out of libarchive, this module translates
+its input/output using the codeset for the current POSIX locale.  So you must
+be using a POSIX locale that supports the characters in the pathnames of
+the archives you are going to process, and it is highly recommend that you
+use a UTF-8 locale, which should cover everything.
 
  use strict;
  use warnings;
@@ -469,71 +509,65 @@ locale.
  
  archive_entry_free($entry);
 
+If you try to pass a string with characters unsupported by your
+current locale, the behavior is undefined.  If you try to retrieve
+strings with characters unsupported by your current locale you will
+get C<undef>.
+
 Unfortunately locale names are not portable across systems, so you should
 probably not hard code the locale as shown here unless you know the correct
 locale name for all the platforms that your script will run.
 
-If you are not using a UTF-8 locale then the set method for pathname style
-entry fields should work, but the retrieval methods will return the raw
-encoded values from libarchive (this is almost certainly not what you want
-if you have non ASCII filenames in your archive).
-
-These Perl bindings for libarchive provide a function
+There are two Perl only functions that give information about the
+current codeset as understood by libarchive.
 L<archive_perl_utf8_mode|Archive::Libarchive::FFI::Function#archive_perl_utf8_mode>
-which will return true if you are using a UTF-8 locale.
+if the currently selected codeset is UTF-8.
 
  use strict;
  use warnings;
- use utf8;
+ use Archive::Libarchive::FFI qw( :all );
+ 
+ die "must use UTF-8 locale" unless archive_perl_utf8_mode();
+
+L<archive_perl_codeset|Archive::Libarchive::FFI::Function#archive_perl_codeset>
+returns the currently selected codeset.
+
+ use strict;
+ use warnings;
  use Archive::Libarchive::FFI qw( :all );
  
  my $entry = archive_entry_new();
  
- if(archive_perl_utf8_mode())
+ if(archive_perl_codeset() =~ /^(ISO-8859-5|CP1251|KOI8-R|UTF-8)$/)
  {
    archive_entry_set_pathname($entry, "привет.txt");
    my $string = archive_entry_pathname($entry); # "привет.txt"
  }
  else
  {
-   die "not using a UTF-8 locale";
+   archive_entry_set_pathname($entry, "privet.txt");
+   my $string = archive_entry_pathname($entry); # "privet.txt"
  }
- 
- archive_entry_free($entry);
 
-These Perl bindings for libarchive also provides a function
-L<archive_perl_codeset|Archive::Libarchive::FFI::Function#archive_perl_codeset>
-which can be used with L<Text::Iconv> to convert strings (if possible; not all
-encodings have legal mappings).
+Because libarchive reads and writes file content within an archive using
+raw bytes, if your file content has non ASCII characters in it, then
+you need to encode them
 
- use strict;
- use warnings;
- use utf8;
- use Archive::Libarchive::FFI qw( :all );
- use Text::Iconv;
- use Encoding qw( decode );
+ use Encode qw( encode );
  
- my $entry = archive_entry_new();
- 
- archive_entry_set_pathname($entry, "привет.txt");
+ archive_write_data($archive, encode('UTF-8', "привет.txt");
+ # or
+ archive_write_data($archive, encode('KOI8-R', "привет.txt"); 
 
- my $string = archive_entry_pathname($entry); # value depends on locale
- if(archive_perl_utf8_mode())
- {
-   # $string = "привет.txt" (already)
- }
- else
- {
-   my $iconv = Text::Iconv->new(archive_perl_codeset(), "UTF-8");
-   $iconv->raise_error(1);
-   $string = decode('UTF-8', $iconv->convert($string)); # $string = "привет.txt"
- }
- 
- archive_entry_free($entry);
+read:
 
-Note that the L<Text::Iconv> method convert will throw an exception if the 
-conversion is not possible (if, for example, the destination encoding does
-not support the input characters).
+ use Encode qw( decode );
+ 
+ my $raw;
+ archive_read_data($archive, $raw, 10240);
+ my $decoded_content = decode('UTF-8', $raw);
+ # or
+ my $decoded_content = decode('KOI8-R', $raw);
 
 =head1 CAVEATS
 
@@ -544,18 +578,8 @@ L<archive_write_free|Archive::Libarchive::FFI::Function#archive_write_free> or
 L<archive_entry_free|Archive::Libarchive::FFI::Function#archive_entry_free>, 
 in order to free the resources associated with those objects.
 
-Unicode pathnames in archives are only fully supported if you are using a
-UTF-8 locale.  If you aren't then the archive entry set pathname functions
-will convert Perl's internal representation to the current locale codeset
-using libarchive itself.  The get methods, unfortunately only return strings
-in the codeset for the current locale.  If you are using a UTF-8 locale,
-this module will mark the Perl strings it returns as UTF-8, but if you aren't
-then you need to convert the strings to do anything useful.  Two Perl only
-functions 
-L<archive_perl_utf8_mode|Archive::Libarchive::FFI::Function#archive_perl_utf8_mode> and
-L<archive_perl_codeset|Archive::Libarchive::FFI::Function#archive_perl_codeset>
-are provided to help, but there is probably a better way.  Patches to improve
-this situation would be happily considered.
+Proper Unicode (or non-ASCII character support) depends on setting the
+correct POSIX locale, which is system dependent.
 
 The documentation that comes with libarchive is not that great (by its own
 admission), being somewhat incomplete, and containing a few subtle errors.
