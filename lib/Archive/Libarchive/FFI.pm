@@ -6,6 +6,7 @@ use Alien::Libarchive;
 use I18N::Langinfo ();
 use Exporter::Tidy ();
 use Encode ();
+use Carp qw( croak );
 use FFI::Raw ();
 use FFI::Sweet;
 use FFI::Util qw(
@@ -162,6 +163,8 @@ _attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _in
 _attach 'archive_entry_acl_reset',                       [ _ptr, _int ], _int;
 _attach 'archive_entry_acl_text',                        [ _ptr, _int ], _str;
 _attach 'archive_entry_acl_count',                       [ _ptr, _int ], _int;
+_attach 'archive_entry_set_mode',                        [ _ptr, _int ], _void;
+_attach 'archive_entry_mode',                            [ _ptr ], _int;
 
 _attach 'archive_match_new',                             undef, _ptr;
 _attach 'archive_match_free',                            [ _ptr ], _int;
@@ -185,8 +188,8 @@ attach_function 'archive_entry_fflags', [ _int64, _int64 ], _void, sub
   my $set   = FFI::Raw::MemPtr->new_from_ptr(0);
   my $clear = FFI::Raw::MemPtr->new_from_ptr(0);
   $_[0]->($_[1], $set, $clear);
-  $_[2] = deref_to_int64($$set);
-  $_[3] = deref_to_int64($$clear);
+  $_[2] = deref_to_uint64($$set);
+  $_[3] = deref_to_uint64($$clear);
   return ARCHIVE_OK();
 };
 
@@ -269,6 +272,33 @@ foreach my $name (qw( gname hardlink pathname symlink uname ))
     ARCHIVE_OK();
   };
 }
+
+attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _int64 ], _int, sub # FIXME: third argument is actually size_t
+{
+  my($cb, $archive, $filenames, $bs) = @_;
+  croak 'archive_read_open_filename: third argument must be array reference' unless ref($filenames) eq 'ARRAY';
+  my @filenames = map { Encode::encode(archive_perl_codeset(), $_) } @$filenames;
+  my $ptr = FFI::Raw::MemPtr->new_from_buf(pack( ('P' x @filenames).'L!', @filenames, 0));
+  $cb->($archive, $ptr, $bs);
+};
+
+attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _int64 ], _void, sub # FIXME third argument is actually a size_t
+{
+  my($cb, $archive, $buffer) = @_;
+  my($ptr, $size) = scalar_to_buffer($buffer);
+  $cb->($archive, $ptr, $size);
+  ARCHIVE_OK();
+};
+
+do { no warnings 'once'; *archive_entry_copy_mac_metadata = \&archive_entry_set_mac_metadata };
+
+attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
+{
+  my($cb, $archive) = @_;
+  my $size = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $ptr = $cb->($archive, $size);
+  my $buffer = buffer_to_scalar($ptr, deref_to_uint64($$size));
+};
 
 sub archive_perl_codeset
 {
