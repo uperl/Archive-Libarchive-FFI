@@ -26,10 +26,15 @@ ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::Constant;
 require Archive::Libarchive::FFI::Callback;
+require Archive::Libarchive::FFI::Common;
+
+$Archive::Libarchive::FFI::on_attach ||= sub {};
 
 sub _attach ($$$)
 {
+  $Archive::Libarchive::FFI::on_attach->(@_);
   my($name, $arg, $ret) = @_;
+  $name = [ $name => "_$name" ] if grep { $_ == FFI::Raw::str } ($ret, @$arg);
   if($ret == _void)
   {
     attach_function $name, $arg, $ret, sub {
@@ -54,7 +59,6 @@ _attach 'archive_format',                                [ _ptr ], _int;
 _attach 'archive_format_name',                           [ _ptr ], _str;
 _attach 'archive_seek_data',                             [ _ptr, _int64, _int ], _int64;
 _attach 'archive_error_string',                          [ _ptr ], _str;
-
 
 _attach 'archive_read_new',                              undef, _ptr;
 _attach 'archive_read_support_filter_all',               [ _ptr ], _int;
