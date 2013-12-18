@@ -10,6 +10,7 @@ package
   Archive::Libarchive::FFI;
 
 use FFI::Sweet;
+use FFI::Util qw( deref_ptr_set );
 
 use constant {
   CB_DATA        => 0,
@@ -55,7 +56,7 @@ my $mywrite = FFI::Raw::Callback->new(sub
 
 my $myread = FFI::Raw::Callback->new(sub
 {
-  my($archive, $null, $ptr) = @_;
+  my($archive, $null, $optr) = @_;
   my($status, $buffer) = eval {
     $callbacks{$archive}->[CB_READ]->($archive, $callbacks{$archive}->[CB_DATA]);
   };
@@ -64,7 +65,8 @@ my $myread = FFI::Raw::Callback->new(sub
     warn $@;
     return ARCHIVE_FATAL();
   }
-  my($ignore, $size) = scalar_to_buffer($buffer, $ptr);
+  my($ptr, $size) = scalar_to_buffer($buffer);
+  deref_ptr_set($optr, $ptr);
   $size;
 }, _uint64, _ptr, _ptr, _ptr);
 
@@ -354,6 +356,63 @@ Can also be set when you call
 L<archive_read_open|Archive::Libarchive::FFI::Function#archive_read_open>,
 L<archive_read_open2|Archive::Libarchive::FFI::Function#archive_read_open2> or
 L<archive_write_open|Archive::Libarchive::FFI::Function#archive_write_open>.
+
+=head2 user id lookup
+
+ my $status = archive_write_disk_set_user_lookup($archive, $data, sub {
+   my($data, $name, $uid) = @_;
+   ... # should return the UID for $name or $uid if it can't be found
+ }, undef);
+
+Called by archive_write_disk_uid to determine appropriate UID.
+
+=head2 group id lookup
+
+ my $status = archive_write_disk_set_group_lookup($archive, $data, sub {
+   my($data, $name, $gid) = @_;
+   ... # should return the GID for $name or $gid if it can't be found
+ }, undef);
+
+Called by archive_write_disk_gid to determine appropriate GID.
+
+=head2 user name lookup
+
+ my $status = archive_read_disk_set_uname_lookup($archive, $data, sub 
+   my($data, $uid) = @_;
+   ... # should return the name for $uid, or undef
+ }, undef);
+
+Called by archive_read_disk_uname to determine appropriate user name.
+
+=head2 group name lookup
+
+ my $status = archive_read_disk_set_gname_lookup($archive, $data, sub 
+   my($data, $gid) = @_;
+   ... # should return the name for $gid, or undef
+ }, undef);
+
+Called by archive_read_disk_gname to determine appropriate group name.
+
+=head2 lookup cleanup
+
+ sub mycleanup
+ {
+   my($data) = @_;
+   ... # any cleanup necessary
+ }
+ 
+ my $status = archive_write_disk_set_user_lookup($archive, $data, \&mylookup, \&mcleanup);
+ 
+ ...
+ 
+ archive_write_disk_set_user_lookup($archive, undef, undef, undef); # mycleanup will be called here
+
+Called when the lookup is registered (can also be passed into
+L<archive_write_disk_set_group_lookup|Archive::Libarchive::FFI::Function#archive_write_disk_set_group_lookup>,
+L<archive_read_disk_set_uname_lookup|Archive::Libarchive::FFI::Function#archive_read_disk_set_uname_lookup>,
+and
+L<archive_read_disk_set_gname_lookup|Archive::Libarchive::FFI::Function#archive_read_disk_set_gname_lookup>.
+
 
 =head1 SEE ALSO
 

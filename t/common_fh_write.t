@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 9;
 use File::Temp qw( tempdir );
 use File::Spec;
 use Archive::Libarchive::FFI qw( :all );
@@ -20,19 +20,13 @@ my $fn  = File::Spec->catfile($dir, "foo.tar.gz");
 my $a = eval { archive_write_new() };
 ok $a, 'archive_write_new';
 
-SKIP: {
-  skip 'archive_write_add_filter_gzip function not available', 1 unless Archive::Libarchive::FFI->can('archive_write_add_filter_gzip');
-  $r = eval { archive_write_add_filter_gzip($a) };
-  is $r, ARCHIVE_OK, 'archive_write_add_filter_gzip';
-};
-
 $r = eval { archive_write_set_format_pax_restricted($a) };
 is $r, ARCHIVE_OK, 'archive_write_set_format_pax_restricted';
 
 my $fh;
 open $fh, '>', $fn;
 $r = archive_write_open_fh($a, $fh);
-is $r, ARCHIVE_OK, 'archive_write_open_filename';
+is $r, ARCHIVE_OK, 'archive_write_open_fh';
 
 foreach my $name (qw( foo bar baz ))
 {

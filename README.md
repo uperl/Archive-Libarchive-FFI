@@ -420,7 +420,7 @@ These examples are also included with the distribution.
       }
       elsif(archive_entry_size($entry) > 0)
       {
-        $r = copy_data($a, $ext);
+        copy_data($a, $ext);
       }
     }
     
@@ -438,7 +438,7 @@ These examples are also included with the distribution.
         $r = archive_read_data_block($ar, my $buff, my $offset);
         if($r == ARCHIVE_EOF)
         {
-          return ARCHIVE_OK;
+          return;
         }
         if($r != ARCHIVE_OK)
         {

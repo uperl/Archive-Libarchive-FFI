@@ -8,15 +8,16 @@ use File::Spec;
 plan skip_all => 'archive_read_support_format_raw missing from your libarchive' unless Archive::Libarchive::FFI->can('archive_read_support_format_raw');
 plan tests => 3;
 
-my $filename = File::Spec->catfile($FindBin::Bin, "foo.txt.gz.uu");
+my $filename = File::Spec->catfile($FindBin::Bin, "foo.txt.Z.uu");
 
 my $r;
 
 my $a = archive_read_new();
-archive_read_support_filter_all($a);
-archive_read_support_format_raw($a);
+archive_read_support_filter_all($a) && diag archive_error_string($a);
+archive_read_support_format_raw($a) && diag archive_error_string($a);
 $r = archive_read_open_filename($a, $filename, 16384);
 is $r, ARCHIVE_OK;
+diag archive_error_string($a) unless $r == ARCHIVE_OK;
 
 $r = archive_read_next_header($a, my $ae);
 is $r, ARCHIVE_OK;

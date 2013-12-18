@@ -54,7 +54,7 @@ while(1)
   }
   elsif(archive_entry_size($entry) > 0)
   {
-    $r = copy_data($a, $ext);
+    copy_data($a, $ext);
   }
 }
 
@@ -72,7 +72,7 @@ sub copy_data
     $r = archive_read_data_block($ar, my $buff, my $offset);
     if($r == ARCHIVE_EOF)
     {
-      return ARCHIVE_OK;
+      return;
     }
     if($r != ARCHIVE_OK)
     {

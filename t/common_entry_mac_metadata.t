@@ -1,7 +1,10 @@
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More;
 use Archive::Libarchive::FFI qw( :all );
+
+plan skip_all => 'requires archive_entry_mac_metadata' unless Archive::Libarchive::FFI->can('archive_entry_mac_metadata');
+plan tests => 5;
 
 my $r;
 my $e = archive_entry_new();

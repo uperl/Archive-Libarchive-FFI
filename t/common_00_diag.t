@@ -72,3 +72,103 @@ diag $@ if $@;
 
 diag '';
 diag '';
+diag 'read filters:';
+
+foreach my $filter (sort grep { s/^archive_read_support_filter_// } keys %Archive::Libarchive::FFI::)
+{
+  next if $filter =~ /^(all|program|program_signature)$/;
+  my $ok = 'no';
+  eval {
+    my $archive = Archive::Libarchive::FFI::archive_read_new();
+    eval qq{
+      my \$status = Archive::Libarchive::FFI::archive_read_support_filter_$filter(\$archive);
+      \$ok = 'yes' if \$status >= Archive::Libarchive::FFI::ARCHIVE_WARN();
+      if(\$status == Archive::Libarchive::FFI::ARCHIVE_WARN())
+      { \$ok = Archive::Libarchive::FFI::archive_error_string(\$archive) }
+      \$ok = 'external' if \$ok =~ /^Using external/;
+    };
+    Archive::Libarchive::FFI::archive_read_free($archive);
+  };
+  diag sprintf "%-15s %s", $filter, $ok;
+}
+
+diag '';
+diag '';
+diag 'read formats:';
+
+foreach my $format (sort grep { s/^archive_read_support_format_// } keys %Archive::Libarchive::FFI::)
+{
+  next if $format =~ /^(all|by_code)$/;
+  my $ok = 'no';
+  eval {
+    my $archive = Archive::Libarchive::FFI::archive_read_new();
+    eval qq{
+      my \$status = Archive::Libarchive::FFI::archive_read_support_format_$format(\$archive);
+      \$ok = 'yes' if \$status >= Archive::Libarchive::FFI::ARCHIVE_WARN();
+      if(\$status == Archive::Libarchive::FFI::ARCHIVE_WARN())
+      { \$ok = Archive::Libarchive::FFI::archive_error_string(\$archive) }
+    };
+    Archive::Libarchive::FFI::archive_read_free($archive);
+  };
+  diag sprintf "%-15s %s", $format, $ok;
+}
+
+diag '';
+diag '';
+diag 'write filters:';
+
+foreach my $filter (sort grep { s/^archive_write_add_filter_// } keys %Archive::Libarchive::FFI::)
+{
+  next if $filter =~ /^(program|by_name)$/;
+  my $ok = 'no';
+  my $error;
+  eval {
+    my $archive = Archive::Libarchive::FFI::archive_write_new();
+    eval qq{
+      my \$status = Archive::Libarchive::FFI::archive_write_add_filter_$filter(\$archive);
+      \$ok = 'yes' if \$status >= Archive::Libarchive::FFI::ARCHIVE_WARN();
+      if(\$status == Archive::Libarchive::FFI::ARCHIVE_WARN())
+      { \$ok = Archive::Libarchive::FFI::archive_error_string(\$archive) }
+      \$ok = 'external' if \$ok =~ /^Using external/;
+    };
+    Archive::Libarchive::FFI::archive_write_free($archive);
+  };
+  diag sprintf "%-15s %s", $filter, $ok;
+  diag $error if defined $error;
+}
+
+diag '';
+diag '';
+diag 'write formats:';
+
+foreach my $format (sort grep { s/^archive_write_set_format_// } keys %Archive::Libarchive::FFI::)
+{
+  next if $format =~ /^(program|by_name)$/;
+  my $ok = 'no';
+  my $error;
+  eval {
+    my $archive = Archive::Libarchive::FFI::archive_write_new();
+    eval qq{
+      my \$status = Archive::Libarchive::FFI::archive_write_set_format_$format(\$archive);
+      \$ok = 'yes' if \$status >= Archive::Libarchive::FFI::ARCHIVE_WARN();
+      if(\$status == Archive::Libarchive::FFI::ARCHIVE_WARN())
+      { \$ok = Archive::Libarchive::FFI::archive_error_string(\$archive) }
+    };
+    Archive::Libarchive::FFI::archive_write_free($archive);
+  };
+  diag sprintf "%-15s %s", $format, $ok;
+  diag $error if defined $error;
+}
+
+diag '';
+diag '';
+
+if(eval { require Alien::Libarchive; 1 })
+{
+  my $alien = Alien::Libarchive->new;
+  diag 'Alien::Libarchive cflags = ' . $alien->cflags;
+  diag 'Alien::Libarchive libs   = ' . $alien->libs;
+  
+  diag '';
+  diag '';
+}

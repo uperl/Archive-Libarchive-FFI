@@ -1,22 +1,24 @@
 use strict;
 use warnings;
 use Archive::Libarchive::FFI qw( :all );
-use Test::More tests => 4 * 4;
+use Test::More;
 use FindBin ();
 use File::Spec;
+
+plan skip_all => 'requires archive_read_open'
+  unless Archive::Libarchive::FFI->can('archive_read_open');
+plan tests => 4 * 6;
 
 my %failures;
 
 foreach my $mode (qw( memory filename callback fh ))
 {
   # TODO: add xar back in if we can figure it out.
-  foreach my $format (qw( tar tar.gz tar.bz2 zip ))
+  foreach my $format (qw( tar tar.gz tar.Z tar.bz2 zip xar ))
   {
     my $testname = "$format $mode";
     my $ok = subtest $testname=> sub {
-      plan skip_all => 'requires archive_read_open'
-        unless Archive::Libarchive::FFI->can('archive_read_open');
-    
+      plan skip_all => "$format not supported" if $format =~ /(\.gz|\.bz2|xar)$/;
       plan tests => 17;
     
       my $filename = File::Spec->catfile($FindBin::Bin, "foo.$format");

@@ -23,8 +23,10 @@ ok $a, 'archive_write_new';
 $r = eval { archive_write_set_format_pax_restricted($a) };
 is $r, ARCHIVE_OK, 'archive_write_set_format_pax_restricted';
 
-$r = eval { archive_write_open_filename($a, $fn) };
-is $r, ARCHIVE_OK, 'archive_write_open_filename';
+my $memory;
+$r = eval { archive_write_open_memory($a, \$memory) };
+diag $@ if $@;
+is $r, ARCHIVE_OK, 'archive_write_open_memory';
 
 foreach my $name (qw( foo bar baz ))
 {
@@ -70,7 +72,7 @@ do {
   my $a = archive_read_new();
   archive_read_support_filter_all($a);
   archive_read_support_format_all($a);
-  archive_read_open_filename($a, $fn, 512);
+  archive_read_open_memory($a, $memory);
   while(archive_read_next_header($a, my $entry) == ARCHIVE_OK)
   {
     my $name = archive_entry_pathname($entry);
