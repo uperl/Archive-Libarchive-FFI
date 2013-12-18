@@ -317,7 +317,8 @@ attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _int64 ], _int, sub
   my($cb, $archive, $filenames, $bs) = @_;
   croak 'archive_read_open_filename: third argument must be array reference' unless ref($filenames) eq 'ARRAY';
   my @filenames = map { Encode::encode(archive_perl_codeset(), $_) } @$filenames;
-  my $ptr = FFI::Raw::MemPtr->new_from_buf(pack( ('P' x @filenames).'L!', @filenames, 0));
+  my $ptr = pack( ('P' x @filenames).'L!', @filenames, 0);
+  $ptr = FFI::Raw::MemPtr->new_from_buf($ptr, length $ptr);
   $cb->($archive, $ptr, $bs);
 };
 
