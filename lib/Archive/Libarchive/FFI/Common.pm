@@ -145,110 +145,113 @@ sub _sub_if_can ($$)
   }
 }
 
+sub _decode { defined $_[0] ? decode(archive_perl_codeset(),$_[0]) : $_[0] }
+sub _encode { defined $_[0] ? encode(archive_perl_codeset(),$_[0]) : $_[0] }
+
 _sub_if_can( archive_version_string => sub {
-  decode(archive_perl_codeset(), _archive_version_string());
+  _decode(_archive_version_string());
 });
 _sub_if_can( archive_format_name => sub {
-  decode(archive_perl_codeset(), _archive_format_name($_[0]));
+  _decode(_archive_format_name($_[0]));
 });
 _sub_if_can( archive_error_string => sub {
-  decode(archive_perl_codeset(), _archive_error_string($_[0]));
+  _decode(_archive_error_string($_[0]));
 });
 _sub_if_can( archive_read_open_filename => sub {
-  _archive_read_open_filename($_[0], encode(archive_perl_codeset(), $_[1]), $_[2]);
+  _archive_read_open_filename($_[0], _encode($_[1]), $_[2]);
 });
 _sub_if_can( archive_read_support_filter_program => sub {
-  _archive_read_support_filter_program($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_read_support_filter_program($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_read_set_filter_option => sub {
-  _archive_read_set_filter_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_read_set_filter_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_read_set_format_option => sub {
-  _archive_read_set_format_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_read_set_format_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_read_set_option => sub {
-  _archive_read_set_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_read_set_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_read_set_options => sub {
-  _archive_read_set_options($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_read_set_options($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_read_set_format => sub {
-  _archive_read_set_format($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_read_set_format($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_filter_name => sub {
-  decode(archive_perl_codeset(), _archive_filter_name($_[0], $_[1]));
+  _decode(_archive_filter_name($_[0], $_[1]));
 });
 _sub_if_can( archive_write_add_filter_by_name => sub {
-  _archive_write_add_filter_by_name($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_write_add_filter_by_name($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_write_add_filter_program => sub {
-  _archive_write_add_filter_program($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_write_add_filter_program($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_read_support_filter_program_signature => sub {
-  _archive_read_support_filter_program_signature($_[0], encode(archive_perl_codeset(), $_[1]), $_[2]);
+  _archive_read_support_filter_program_signature($_[0], _encode($_[1]), $_[2]);
 });
 _sub_if_can( archive_read_append_filter_program_signature => sub {
-  _archive_read_append_filter_program_signature($_[0], encode(archive_perl_codeset(), $_[1]), $_[2]);
+  _archive_read_append_filter_program_signature($_[0], _encode($_[1]), $_[2]);
 });
 _sub_if_can( archive_write_set_format_by_name => sub {
-  _archive_write_set_format_by_name($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_write_set_format_by_name($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_write_open_filename => sub {
-  _archive_write_open_filename($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_write_open_filename($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_write_set_filter_option => sub {
-  _archive_write_set_filter_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_write_set_filter_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_write_set_format_option => sub {
-  _archive_write_set_format_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_write_set_format_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_write_set_option => sub {
-  _archive_write_set_option($_[0], encode(archive_perl_codeset(), $_[1]), encode(archive_perl_codeset(), $_[2]), encode(archive_perl_codeset(), $_[3]));
+  _archive_write_set_option($_[0], _encode($_[1]), _encode($_[2]), _encode($_[3]));
 });
 _sub_if_can( archive_write_set_options => sub {
-  _archive_write_set_options($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_write_set_options($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_write_disk_gid => sub {
-  _archive_write_disk_gid($_[0], encode(archive_perl_codeset(), $_[1]), $_[2]);
+  _archive_write_disk_gid($_[0], _encode($_[1]), $_[2]);
 });
 _sub_if_can( archive_write_disk_uid => sub {
-  _archive_write_disk_uid($_[0], encode(archive_perl_codeset(), $_[1]), $_[2]);
+  _archive_write_disk_uid($_[0], _encode($_[1]), $_[2]);
 });
 _sub_if_can( archive_entry_fflags_text => sub {
-  decode(archive_perl_codeset(), _archive_entry_fflags_text($_[0]));
+  _decode(_archive_entry_fflags_text($_[0]));
 });
 _sub_if_can( archive_read_disk_open => sub {
-  _archive_read_disk_open($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_read_disk_open($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_read_disk_gname => sub {
-  decode(archive_perl_codeset(), _archive_read_disk_gname($_[0], $_[1]));
+  _decode(_archive_read_disk_gname($_[0], $_[1]));
 });
 _sub_if_can( archive_read_disk_uname => sub {
-  decode(archive_perl_codeset(), _archive_read_disk_uname($_[0], $_[1]));
+  _decode(_archive_read_disk_uname($_[0], $_[1]));
 });
 _sub_if_can( archive_entry_acl_add_entry => sub {
-  _archive_entry_acl_add_entry($_[0], $_[1], $_[2], $_[3], $_[4], encode(archive_perl_codeset(), $_[5]));
+  _archive_entry_acl_add_entry($_[0], $_[1], $_[2], $_[3], $_[4], _encode($_[5]));
 });
 _sub_if_can( archive_entry_acl_text => sub {
-  decode(archive_perl_codeset(), _archive_entry_acl_text($_[0], $_[1]));
+  _decode(_archive_entry_acl_text($_[0], $_[1]));
 });
 _sub_if_can( archive_match_include_uname => sub {
-  _archive_match_include_uname($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_match_include_uname($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_match_include_gname => sub {
-  _archive_match_include_gname($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_match_include_gname($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_entry_set_sourcepath => sub {
-  _archive_entry_set_sourcepath($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_entry_set_sourcepath($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_entry_sourcepath => sub {
-  decode(archive_perl_codeset(), _archive_entry_sourcepath($_[0]));
+  _decode(_archive_entry_sourcepath($_[0]));
 });
 _sub_if_can( archive_entry_set_fflags_text => sub {
-  _archive_entry_set_fflags_text($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_entry_set_fflags_text($_[0], _encode($_[1]));
 });
 _sub_if_can( archive_entry_set_link => sub {
-  _archive_entry_set_link($_[0], encode(archive_perl_codeset(), $_[1]));
+  _archive_entry_set_link($_[0], _encode($_[1]));
 });
 
 1;

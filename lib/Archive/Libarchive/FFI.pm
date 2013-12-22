@@ -14,6 +14,7 @@ use FFI::Util qw(
   deref_uint64_get
   deref_uint_get
   deref_ulong_get
+  deref_int64_get
   buffer_to_scalar
   scalar_to_buffer
   deref_int_get
@@ -301,13 +302,12 @@ foreach my $name (qw( gname hardlink pathname symlink uname ))
   attach_function "archive_entry_$name", [ _ptr ], _str, sub
   {
     my($cb, $entry) = @_;
-    my $str = $cb->($entry);
-    Encode::decode(archive_perl_codeset(), $str);
+    _decode($cb->($entry));
   };
   attach_function [ "archive_entry_update_$name\_utf8" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
   {
     my($cb, $entry, $name) = @_;
-    $cb->($entry, Encode::encode('UTF-8', $name));
+    $cb->($entry, defined $name ? Encode::encode('UTF-8', $name) : $name);
     ARCHIVE_OK();
   };
 }
@@ -330,6 +330,27 @@ attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_me
   ARCHIVE_OK();
 };
 
+attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _int64 ], _void, sub # FIXME: last argument is a size_t
+{
+  my($cb, $entry, $name, $value) = @_;
+  my($ptr, $size) = scalar_to_buffer($value);
+  $cb->($entry, $name, $ptr, $size);
+  ARCHIVE_OK();
+};
+
+attach_function 'archive_entry_xattr_next', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my $name = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $ptr  = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $size = FFI::Raw::MemPtr->new_from_ptr(0);
+  
+  my $ret = $_[0]->($_[1], $name, $ptr, $size);
+  $_[2] = deref_str_get($$name);
+  $_[3] = buffer_to_scalar(deref_ptr_get($$ptr), deref_int64_get($$size));
+  
+  $ret;
+};
+
 do { no warnings 'once'; *archive_entry_copy_mac_metadata = \&archive_entry_set_mac_metadata };
 
 attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
@@ -347,11 +368,14 @@ attach_function 'archive_set_error', [ _ptr, _int, _str, _str ], _void, sub
   ARCHIVE_OK();
 };
 
-attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcepath' ], [ _ptr, _str ], _void, sub {
+attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcepath' ], [ _ptr, _str ], _void, sub
+{
   my($cb, $entry, $string) = @_;
   $cb->($entry, $string);
   ARCHIVE_OK();
 };
+
+attach_function [ 'archive_entry_sourcepath' => '_archive_entry_sourcepath' ], [ _ptr ], _str;
 
 # this is an unusual one which doesn't need to be decoded
 # because it should always be ASCII

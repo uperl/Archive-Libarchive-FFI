@@ -131,6 +131,7 @@ $r = eval { archive_entry_set_sourcepath($e, "foo") };
 diag $@ if $@;
 is $r, ARCHIVE_OK, 'archive_entry_set_sourcepath';
 is eval { archive_entry_sourcepath($e) }, 'foo', 'archive_entry_set_sourcepath';
+diag $@ if $@;
 
 subtest fflags => sub {
   plan tests => 5;
@@ -175,6 +176,7 @@ subtest link => sub {
   is archive_entry_symlink($e), undef, 'archive_entry_symlink = undef';
 
   $r = eval { archive_entry_set_link($e, "link") };
+  diag $@ if $@;
   is $r, ARCHIVE_OK, 'archive_entry_set_link';
   
   is archive_entry_hardlink($e), "link", 'archive_entry_hardlink = link';
