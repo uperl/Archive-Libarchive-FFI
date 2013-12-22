@@ -4,6 +4,8 @@ use v5.10;
 use Archive::Libarchive::XS;
 use Path::Class qw( file dir );
 
+exit if $ENV{TRAVIS_BUILD_ID};
+
 do { # constants.pm
 
   my $file = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
