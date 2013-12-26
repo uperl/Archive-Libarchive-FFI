@@ -400,6 +400,16 @@ attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags
   ARCHIVE_OK();
 };
 
+attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ], _int, sub
+{
+  my($cb, $archive, $entry, $fh, $stat) = @_;
+  croak "stat field currently not supported"
+    if defined $stat;
+  my $fd = fileno $fh;
+  $fd = -1 unless defined $fd;
+  $cb->($archive, $entry, $fd, 0);
+};
+
 sub archive_perl_codeset
 {
   I18N::Langinfo::langinfo(I18N::Langinfo::CODESET);
