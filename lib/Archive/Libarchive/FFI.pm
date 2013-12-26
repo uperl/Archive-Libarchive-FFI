@@ -19,6 +19,7 @@ use FFI::Util qw(
   scalar_to_buffer
   deref_int_get
   deref_str_get
+  :types
 );
 
 # ABSTRACT: Perl bindings to libarchive via FFI
@@ -126,27 +127,27 @@ _attach 'archive_entry_size',                            [ _ptr ], _int64;
 _attach 'archive_entry_set_size',                        [ _ptr, _int64 ], _void;
 _attach 'archive_entry_set_perm',                        [ _ptr, _int ], _void;
 _attach 'archive_entry_set_filetype',                    [ _ptr, _int ], _void;
-_attach 'archive_entry_set_mtime',                       [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
-_attach 'archive_entry_set_ctime',                       [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
-_attach 'archive_entry_set_atime',                       [ _ptr, _int, _int ], _void; # FIXME: actually args are (archive_entry *, time_t, long)
+_attach 'archive_entry_set_mtime',                       [ _ptr, _time_t, _long ], _void; 
+_attach 'archive_entry_set_ctime',                       [ _ptr, _time_t, _long ], _void;
+_attach 'archive_entry_set_atime',                       [ _ptr, _time_t, _long ], _void;
 _attach 'archive_entry_atime_is_set',                    [ _ptr ], _int;
-_attach 'archive_entry_atime',                           [ _ptr ], _int64; # FIXME actually a time_t
+_attach 'archive_entry_atime',                           [ _ptr ], _time_t;
 _attach 'archive_entry_atime_nsec',                      [ _ptr ], _long;
 _attach 'archive_entry_birthtime_is_set',                [ _ptr ], _int;
-_attach 'archive_entry_birthtime',                       [ _ptr ], _int64; # FIXME actually a time_t
+_attach 'archive_entry_birthtime',                       [ _ptr ], _time_t;
 _attach 'archive_entry_birthtime_nsec',                  [ _ptr ], _long;
 _attach 'archive_entry_ctime_is_set',                    [ _ptr ], _int;
-_attach 'archive_entry_ctime',                           [ _ptr ], _int64; # FIXME actually a time_t
+_attach 'archive_entry_ctime',                           [ _ptr ], _time_t;
 _attach 'archive_entry_ctime_nsec',                      [ _ptr ], _long;
 _attach 'archive_entry_mtime_is_set',                    [ _ptr ], _int;
-_attach 'archive_entry_mtime',                           [ _ptr ], _int64; # FIXME actually a time_t
+_attach 'archive_entry_mtime',                           [ _ptr ], _time_t;
 _attach 'archive_entry_mtime_nsec',                      [ _ptr ], _long;
 _attach 'archive_entry_dev_is_set',                      [ _ptr ], _int;
-_attach 'archive_entry_dev',                             [ _ptr ], _int64; # FIXME actaully a dev_t
-_attach 'archive_entry_devmajor',                        [ _ptr ], _int64; # FIXME actaully a dev_t
-_attach 'archive_entry_devminor',                        [ _ptr ], _int64; # FIXME actaully a dev_t
+_attach 'archive_entry_dev',                             [ _ptr ], _dev_t;
+_attach 'archive_entry_devmajor',                        [ _ptr ], _dev_t;
+_attach 'archive_entry_devminor',                        [ _ptr ], _dev_t;
 _attach 'archive_entry_fflags_text',                     [ _ptr ], _str;
-_attach 'archive_entry_gid',                             [ _ptr ], _int64; # FIXME actually a gid_t
+_attach 'archive_entry_gid',                             [ _ptr ], _gid_t;
 _attach 'archive_entry_rdev',                            [ _ptr ], _int64;
 _attach 'archive_entry_rdevmajor',                       [ _ptr ], _int64;
 _attach 'archive_entry_rdevminor',                       [ _ptr ], _int64;
@@ -159,11 +160,11 @@ _attach 'archive_entry_ino_is_set',                      [ _ptr ], _int;
 _attach 'archive_entry_mode',                            [ _ptr ], _int;
 _attach 'archive_entry_nlink',                           [ _ptr ], _uint;
 _attach 'archive_entry_perm',                            [ _ptr ], _int;
-_attach 'archive_entry_set_dev',                         [ _ptr, _uint64 ], _void; # FIXME actually a dev_t
-_attach 'archive_entry_set_devmajor',                    [ _ptr, _uint64 ], _void; # FIXME actually a dev_t
-_attach 'archive_entry_set_devminor',                    [ _ptr, _uint64 ], _void; # FIXME actually a dev_t
+_attach 'archive_entry_set_dev',                         [ _ptr, _dev_t ], _void;
+_attach 'archive_entry_set_devmajor',                    [ _ptr, _dev_t ], _void;
+_attach 'archive_entry_set_devminor',                    [ _ptr, _dev_t ], _void;
 _attach 'archive_entry_set_fflags',                      [ _ptr, _ulong, _ulong ], _void;
-_attach 'archive_entry_set_gid',                         [ _ptr, _int64 ], _void; # FIXME actually a gid_t
+_attach 'archive_entry_set_gid',                         [ _ptr, _gid_t ], _void;
 _attach 'archive_entry_set_ino',                         [ _ptr, _int64 ], _void;
 _attach 'archive_entry_set_link',                        [ _ptr, _str ], _void;
 _attach 'archive_entry_set_mode',                        [ _ptr, _int ], _void;
@@ -178,7 +179,7 @@ _attach 'archive_entry_unset_size',                      [ _ptr ], _void;
 _attach 'archive_entry_xattr_clear',                     [ _ptr ], _void;
 _attach 'archive_entry_xattr_count',                     [ _ptr ], _int;
 _attach 'archive_entry_xattr_reset',                     [ _ptr ], _int;
-_attach 'archive_entry_uid',                             [ _ptr ], _int64; # FIXME actualyl a uid_t
+_attach 'archive_entry_uid',                             [ _ptr ], _uid_t;
 _attach 'archive_entry_copy_sourcepath',                 [ _ptr, _str ], _void;
 _attach 'archive_entry_acl',                             [ _ptr ], _ptr;
 _attach 'archive_entry_acl_clear',                       [ _ptr ], _int;
@@ -213,8 +214,8 @@ _attach 'archive_match_excluded',                        [ _ptr, _ptr ], _int;
 _attach 'archive_match_path_excluded',                   [ _ptr, _ptr ], _int;
 _attach 'archive_match_time_excluded',                   [ _ptr, _ptr ], _int;
 _attach 'archive_match_owner_excluded',                  [ _ptr, _ptr ], _int;
-_attach 'archive_match_include_gid',                     [ _ptr, _int64 ], _int;  # FIXME: actually a gid_t
-_attach 'archive_match_include_uid',                     [ _ptr, _int64 ], _int;  # FIXME: actually a uid_T
+_attach 'archive_match_include_gid',                     [ _ptr, _gid_t ], _int;
+_attach 'archive_match_include_uid',                     [ _ptr, _uid_t ], _int;
 _attach 'archive_match_include_gname',                   [ _ptr, _str ], _int;
 _attach 'archive_match_include_uname',                   [ _ptr, _str ], _int;
 
@@ -246,7 +247,7 @@ attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
   $ret;
 };
 
-attach_function 'archive_read_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
+attach_function 'archive_read_data', [ _ptr, _ptr, _size_t ], _int, sub
 {
   # 0 cb 1 archive 2 buffer 3 size
   my $buffer = FFI::Raw::MemPtr->new($_[3]);
@@ -286,7 +287,7 @@ attach_function 'archive_entry_acl_next', [ _ptr, _int, _ptr, _ptr, _ptr, _ptr, 
   $ret;
 };
 
-attach_function 'archive_write_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
+attach_function 'archive_write_data', [ _ptr, _ptr, _size_t ], _int, sub 
 {
   my($cb, $archive, $buffer) = @_;
   my $size = do { use bytes; length($buffer) };
@@ -294,7 +295,7 @@ attach_function 'archive_write_data', [ _ptr, _ptr, _int ], _int, sub # FIXME: t
   $cb->($archive, $ptr, $size);
 };
 
-attach_function 'archive_write_data_block', [ _ptr, _ptr, _int, _int64 ], _int, sub # FIXME: third argument is actually a size_t
+attach_function 'archive_write_data_block', [ _ptr, _ptr, _size_t, _int64 ], _int, sub
 {
   my($cb, $archive, $buffer, $offset) = @_;
   my $size = do { use bytes; length($buffer) };
@@ -317,7 +318,7 @@ foreach my $name (qw( gname hardlink pathname symlink uname ))
   };
 }
 
-attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _int64 ], _int, sub # FIXME: third argument is actually size_t
+attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _size_t ], _int, sub
 {
   my($cb, $archive, $filenames, $bs) = @_;
   croak 'archive_read_open_filename: third argument must be array reference' unless ref($filenames) eq 'ARRAY';
@@ -327,7 +328,7 @@ attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _int64 ], _int, sub
   $cb->($archive, $ptr, $bs);
 };
 
-attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _int64 ], _void, sub # FIXME third argument is actually a size_t
+attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _size_t ], _void, sub
 {
   my($cb, $archive, $buffer) = @_;
   my($ptr, $size) = scalar_to_buffer($buffer);
@@ -335,7 +336,7 @@ attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_me
   ARCHIVE_OK();
 };
 
-attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _int64 ], _void, sub # FIXME: last argument is a size_t
+attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _size_t ], _void, sub
 {
   my($cb, $entry, $name, $value) = @_;
   my($ptr, $size) = scalar_to_buffer($value);
@@ -382,8 +383,7 @@ attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcep
 
 attach_function [ 'archive_entry_sourcepath' => '_archive_entry_sourcepath' ], [ _ptr ], _str;
 
-# FIXME: last arg is a size_t
-attach_function $_, [ _ptr, _str, _ptr, _uint ],_int, sub
+attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
 {
   my($cb, $archive, $command, $signature) = @_;
   $cb->($archive, $command, scalar_to_buffer($signature));
