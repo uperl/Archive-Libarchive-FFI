@@ -423,12 +423,12 @@ attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ],
 
 sub archive_perl_codeset
 {
-  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET);
+  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET());
 }
 
 sub archive_perl_utf8_mode
 {
-  int(I18N::Langinfo::langinfo(I18N::Langinfo::CODESET) eq 'UTF-8');
+  int(I18N::Langinfo::langinfo(I18N::Langinfo::CODESET()) eq 'UTF-8');
 }
 
 require Archive::Libarchive::FFI::Common;
