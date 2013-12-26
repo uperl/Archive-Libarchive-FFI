@@ -79,6 +79,9 @@ _attach 'archive_read_set_option',                       [ _ptr, _str, _str, _st
 _attach 'archive_read_set_options',                      [ _ptr, _str ], _int;
 _attach 'archive_read_set_format',                       [ _ptr, _str, _str, _str ], _int;
 _attach 'archive_read_next_header2',                     [ _ptr, _ptr ], _int;
+_attach 'archive_read_extract',                          [ _ptr, _ptr, _int ], _int;
+_attach 'archive_read_extract2',                         [ _ptr, _ptr, _ptr ], _int;
+_attach 'archive_read_extract_set_skip_file',            [ _ptr, _int64, _int64 ], _void;
 
 _attach 'archive_filter_code',                           [ _ptr, _int ], _int;
 _attach 'archive_filter_count',                          [ _ptr ], _int;
