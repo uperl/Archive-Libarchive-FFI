@@ -10,7 +10,7 @@ package
   Archive::Libarchive::FFI;
 
 use FFI::Sweet;
-use FFI::Util qw( deref_ptr_set );
+use FFI::Util qw( deref_ptr_set _size_t );
 
 use constant {
   CB_DATA        => 0,
@@ -189,7 +189,7 @@ foreach my $name (qw( open read skip close seek ))
   attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
 }
 
-attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
+attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
 {
   my($cb, $archive, $buffer) = @_;
   my $length = do { use bytes; length $buffer };

@@ -15,6 +15,7 @@ use FFI::Util qw(
   deref_uint_get
   deref_ulong_get
   deref_int64_get
+  deref_size_t_get
   buffer_to_scalar
   scalar_to_buffer
   deref_int_get
@@ -263,7 +264,7 @@ attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
   my $size   = FFI::Raw::MemPtr->new_from_ptr(0);
   my $offset = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ret    = $_[0]->($_[1], $buffer, $size, $offset);
-  $size   = do { require Config; $Config::Config{sizesize} == 8 } ? deref_uint64_get($size) : deref_uint_get($size);  # FIXME: size_t
+  $size   = deref_size_t_get($size);
   $offset = deref_uint64_get($offset);
   $_[2]   = buffer_to_scalar(deref_ptr_get($$buffer), $size);
   $_[3]   = $offset;
