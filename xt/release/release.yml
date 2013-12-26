@@ -45,6 +45,11 @@ pod_spelling_system:
     - rdev
     - AppleDouble
     - multivolume
+    - unsets
+    - deregister
+    - dev
+    - sourcepath
+    - xattr
 
 
 pod_coverage:
