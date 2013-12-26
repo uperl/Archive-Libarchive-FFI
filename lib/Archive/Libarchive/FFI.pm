@@ -68,7 +68,8 @@ _attach 'archive_read_open1',                            [ _ptr ], _int;
 _attach 'archive_read_open_filename',                    [ _ptr, _str, _int ], _int;
 _attach 'archive_read_data_skip',                        [ _ptr ], _int;
 _attach 'archive_read_close',                            [ _ptr ], _int;
-_attach 'archive_read_append_filter_program',           [ _ptr, _str ], _int;
+_attach 'archive_read_append_filter',                    [ _ptr, _int ], _int;
+_attach 'archive_read_append_filter_program',            [ _ptr, _str ], _int;
 _attach 'archive_read_support_filter_program',           [ _ptr, _str ], _int;
 _attach 'archive_read_support_format_by_code',           [ _ptr, _int ], _int;
 _attach 'archive_read_header_position',                  [ _ptr ], _int64;
@@ -393,13 +394,13 @@ attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
   ARCHIVE_OK();
 };
 
-sub archive_perl_codeset
 attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags_text' ], [ _ptr, _str ], _void, sub
 {
   shift->(@_);
   ARCHIVE_OK();
 };
 
+sub archive_perl_codeset
 {
   I18N::Langinfo::langinfo(I18N::Langinfo::CODESET);
 }
