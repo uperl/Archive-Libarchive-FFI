@@ -82,6 +82,7 @@ _attach 'archive_read_next_header2',                     [ _ptr, _ptr ], _int;
 _attach 'archive_filter_code',                           [ _ptr, _int ], _int;
 _attach 'archive_filter_count',                          [ _ptr ], _int;
 _attach 'archive_filter_name',                           [ _ptr, _int ], _str;
+_attach 'archive_filter_bytes',                          [ _ptr, _int ], _int64;
 
 _attach 'archive_write_new',                             undef, _ptr;
 _attach 'archive_write_add_filter',                      [ _ptr, _int ], _int;
