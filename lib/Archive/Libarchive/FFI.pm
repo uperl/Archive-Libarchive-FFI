@@ -393,6 +393,12 @@ attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
 };
 
 sub archive_perl_codeset
+attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags_text' ], [ _ptr, _str ], _void, sub
+{
+  shift->(@_);
+  ARCHIVE_OK();
+};
+
 {
   I18N::Langinfo::langinfo(I18N::Langinfo::CODESET);
 }
