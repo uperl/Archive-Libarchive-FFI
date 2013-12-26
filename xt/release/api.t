@@ -3,6 +3,8 @@ use warnings;
 use Test::More;
 use Archive::Libarchive::FFI;
 BEGIN {
+  plan skip_all => 'test intended only for me'
+    unless $ENV{USER} eq 'ollisg';
   plan skip_all => 'test requires YAML'
     unless eval q{ use YAML qw( Dump ); 1 };
   plan skip_all => 'test requires Archive::Libarchive::XS'

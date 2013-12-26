@@ -10,7 +10,7 @@ package
   Archive::Libarchive::FFI;
 
 use FFI::Sweet;
-use FFI::Util qw( deref_ptr_set );
+use FFI::Util qw( deref_ptr_set _size_t );
 
 use constant {
   CB_DATA        => 0,
@@ -189,7 +189,7 @@ foreach my $name (qw( open read skip close seek ))
   attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
 }
 
-attach_function 'archive_read_open_memory', [ _ptr, _ptr, _int ], _int, sub # FIXME: third argument is actually a size_t
+attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
 {
   my($cb, $archive, $buffer) = @_;
   my $length = do { use bytes; length $buffer };
@@ -212,6 +212,65 @@ attach_function 'archive_write_free', [ _ptr ], _int, sub
   my $ret = $cb->($archive);
   delete $callbacks{$archive};
   $ret;
+};
+
+my %lookups;
+
+use constant {
+  CB_LOOKUP_USER  => 0,
+  CB_LOOKUP_GROUP => 1,
+};
+
+my $mylook_write_user_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $name, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
+  return $id unless defined $look_cb;
+  $look_cb->($data, $name, $id);
+}, _int64, _ptr, _str, _int64);
+
+my $mylook_write_group_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $name, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
+  $DB::single = 1;
+  return $id unless defined $look_cb;
+  $look_cb->($data, $name, $id);
+}, _int64, _ptr, _str, _int64);
+
+my $mylook_user_cleanup = FFI::Raw::Callback->new(sub {
+  my($archive) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
+  $clean_cb->($data) if defined $clean_cb;
+  delete $lookups{$archive};
+}, _void, _ptr);
+
+my $mylook_group_cleanup = FFI::Raw::Callback->new(sub {
+  my($archive) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
+  $DB::single = 1;
+  $clean_cb->($data) if defined $clean_cb;
+  delete $lookups{$archive};
+}, _void, _ptr);
+
+attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_USER] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_write_user_lookup, $mylook_user_cleanup);
+  }
+  return $cb->($archive,0,0,0);
+};
+
+attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_GROUP] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_write_group_lookup, $mylook_group_cleanup);
+  }
+  return $cb->($archive,0,0,0);
 };
 
 1;
