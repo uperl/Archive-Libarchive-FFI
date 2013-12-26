@@ -214,6 +214,65 @@ attach_function 'archive_write_free', [ _ptr ], _int, sub
   $ret;
 };
 
+my %lookups;
+
+use constant {
+  CB_LOOKUP_USER  => 0,
+  CB_LOOKUP_GROUP => 1,
+};
+
+my $mylook_write_user_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $name, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
+  return $id unless defined $look_cb;
+  $look_cb->($data, $name, $id);
+}, _int64, _ptr, _str, _int64);
+
+my $mylook_write_group_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $name, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
+  $DB::single = 1;
+  return $id unless defined $look_cb;
+  $look_cb->($data, $name, $id);
+}, _int64, _ptr, _str, _int64);
+
+my $mylook_user_cleanup = FFI::Raw::Callback->new(sub {
+  my($archive) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
+  $clean_cb->($data) if defined $clean_cb;
+  delete $lookups{$archive};
+}, _void, _ptr);
+
+my $mylook_group_cleanup = FFI::Raw::Callback->new(sub {
+  my($archive) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
+  $DB::single = 1;
+  $clean_cb->($data) if defined $clean_cb;
+  delete $lookups{$archive};
+}, _void, _ptr);
+
+attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_USER] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_write_user_lookup, $mylook_user_cleanup);
+  }
+  return $cb->($archive,0,0,0);
+};
+
+attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_GROUP] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_write_group_lookup, $mylook_group_cleanup);
+  }
+  return $cb->($archive,0,0,0);
+};
+
 1;
 
 __END__
