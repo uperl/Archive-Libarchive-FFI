@@ -382,6 +382,13 @@ attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcep
 
 attach_function [ 'archive_entry_sourcepath' => '_archive_entry_sourcepath' ], [ _ptr ], _str;
 
+# FIXME: last arg is a size_t
+attach_function $_, [ _ptr, _str, _ptr, _uint ],_int, sub
+{
+  my($cb, $archive, $command, $signature) = @_;
+  $cb->($archive, $command, scalar_to_buffer($signature));
+} for qw( archive_read_append_filter_program_signature archive_read_support_filter_program_signature );
+
 # this is an unusual one which doesn't need to be decoded
 # because it should always be ASCII
 attach_function 'archive_entry_strmode',                 [ _ptr ], _str;
