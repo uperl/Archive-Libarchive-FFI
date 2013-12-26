@@ -813,7 +813,7 @@ Unsets the size property for the archive entry.
 
 =head2 archive_entry_xattr_add_entry
 
- my $status = archive_entry_xattr_add_entry($entry, $name, $value);
+ my $status = archive_entry_xattr_add_entry($entry, $name, $buffer);
 
 Add an extended attribute (xattr) to the archive entry.
 

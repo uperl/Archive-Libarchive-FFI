@@ -1,4 +1,4 @@
-# Archive::Libarchive::FFI
+# Archive::Libarchive::FFI [![Build Status](https://secure.travis-ci.org/plicease/Archive-Libarchive-FFI.png)](http://travis-ci.org/plicease/Archive-Libarchive-FFI)
 
 Perl bindings to libarchive via FFI
 

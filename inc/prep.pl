@@ -1,8 +1,11 @@
 use strict;
 use warnings;
 use v5.10;
-use Archive::Libarchive::XS;
 use Path::Class qw( file dir );
+
+exit if $ENV{TRAVIS_BUILD_ID};
+
+require Archive::Libarchive::XS;
 
 do { # constants.pm
 
