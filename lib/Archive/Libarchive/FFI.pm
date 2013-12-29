@@ -33,6 +33,14 @@ require Archive::Libarchive::FFI::Callback;
 
 $Archive::Libarchive::FFI::on_attach ||= sub {};
 
+sub _attach_function ($$$;$)
+{
+  eval {
+    attach_function($_[0], $_[1], $_[2], $_[3]);
+  };
+  warn $@ if $@ && $ENV{ARCHIVE_LIBARCHIVE_FFI_VERBOSE};
+}
+
 sub _attach ($$$)
 {
   $Archive::Libarchive::FFI::on_attach->(@_);
@@ -40,7 +48,7 @@ sub _attach ($$$)
   $name = [ $name => "_$name" ] if grep { $_ == FFI::Raw::str } ($ret, @$arg);
   if($ret == _void)
   {
-    attach_function $name, $arg, $ret, sub {
+    _attach_function $name, $arg, $ret, sub {
       my $code = shift;
       $code->(@_);
       ARCHIVE_OK();
@@ -48,7 +56,7 @@ sub _attach ($$$)
   }
   else
   {
-    attach_function $name, $arg, $ret;
+    _attach_function $name, $arg, $ret;
   }
 }
 
@@ -230,7 +238,7 @@ _attach "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
 
-attach_function 'archive_entry_fflags', [ _ptr, _ptr, _ptr ], _void, sub
+_attach_function 'archive_entry_fflags', [ _ptr, _ptr, _ptr ], _void, sub
 {
   my $set   = FFI::Raw::MemPtr->new_from_ptr(0);
   my $clear = FFI::Raw::MemPtr->new_from_ptr(0);
@@ -240,7 +248,7 @@ attach_function 'archive_entry_fflags', [ _ptr, _ptr, _ptr ], _void, sub
   return ARCHIVE_OK();
 };
 
-attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
+_attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
 {
   my $entry = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ret = $_[0]->($_[1], $entry);
@@ -248,7 +256,7 @@ attach_function 'archive_read_next_header', [ _ptr, _ptr ], _int, sub
   $ret;
 };
 
-attach_function 'archive_read_data', [ _ptr, _ptr, _size_t ], _int, sub
+_attach_function 'archive_read_data', [ _ptr, _ptr, _size_t ], _int, sub
 {
   # 0 cb 1 archive 2 buffer 3 size
   my $buffer = FFI::Raw::MemPtr->new($_[3]);
@@ -257,7 +265,7 @@ attach_function 'archive_read_data', [ _ptr, _ptr, _size_t ], _int, sub
   $ret;
 };
 
-attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   # 0 cb 1 archive 2 buffer 3 offset
   my $buffer = FFI::Raw::MemPtr->new_from_ptr(0);
@@ -271,7 +279,7 @@ attach_function 'archive_read_data_block', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
   $ret;
 };
 
-attach_function 'archive_entry_acl_next', [ _ptr, _int, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_entry_acl_next', [ _ptr, _int, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   # 0 cb 1 entry 2 want_type
   my $type    = FFI::Raw::MemPtr->new_from_ptr(0); # 3
@@ -288,7 +296,7 @@ attach_function 'archive_entry_acl_next', [ _ptr, _int, _ptr, _ptr, _ptr, _ptr, 
   $ret;
 };
 
-attach_function 'archive_write_data', [ _ptr, _ptr, _size_t ], _int, sub 
+_attach_function 'archive_write_data', [ _ptr, _ptr, _size_t ], _int, sub 
 {
   my($cb, $archive, $buffer) = @_;
   my $size = do { use bytes; length($buffer) };
@@ -296,7 +304,7 @@ attach_function 'archive_write_data', [ _ptr, _ptr, _size_t ], _int, sub
   $cb->($archive, $ptr, $size);
 };
 
-attach_function 'archive_write_data_block', [ _ptr, _ptr, _size_t, _int64 ], _int, sub
+_attach_function 'archive_write_data_block', [ _ptr, _ptr, _size_t, _int64 ], _int, sub
 {
   my($cb, $archive, $buffer, $offset) = @_;
   my $size = do { use bytes; length($buffer) };
@@ -306,12 +314,12 @@ attach_function 'archive_write_data_block', [ _ptr, _ptr, _size_t, _int64 ], _in
 
 foreach my $name (qw( gname hardlink pathname symlink uname ))
 {
-  attach_function "archive_entry_$name", [ _ptr ], _str, sub
+  _attach_function "archive_entry_$name", [ _ptr ], _str, sub
   {
     my($cb, $entry) = @_;
     _decode($cb->($entry));
   };
-  attach_function [ "archive_entry_update_$name\_utf8" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
+  _attach_function [ "archive_entry_update_$name\_utf8" => "archive_entry_set_$name"], [ _ptr, _str ], _void, sub
   {
     my($cb, $entry, $name) = @_;
     $cb->($entry, defined $name ? Encode::encode('UTF-8', $name) : $name);
@@ -319,7 +327,7 @@ foreach my $name (qw( gname hardlink pathname symlink uname ))
   };
 }
 
-attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _size_t ], _int, sub
+_attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _size_t ], _int, sub
 {
   my($cb, $archive, $filenames, $bs) = @_;
   croak 'archive_read_open_filename: third argument must be array reference' unless ref($filenames) eq 'ARRAY';
@@ -329,7 +337,7 @@ attach_function 'archive_read_open_filenames', [ _ptr, _ptr, _size_t ], _int, su
   $cb->($archive, $ptr, $bs);
 };
 
-attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _size_t ], _void, sub
+_attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_metadata' ], [ _ptr, _ptr, _size_t ], _void, sub
 {
   my($cb, $archive, $buffer) = @_;
   my($ptr, $size) = scalar_to_buffer($buffer);
@@ -337,7 +345,7 @@ attach_function [ 'archive_entry_copy_mac_metadata' => 'archive_entry_set_mac_me
   ARCHIVE_OK();
 };
 
-attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _size_t ], _void, sub
+_attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _size_t ], _void, sub
 {
   my($cb, $entry, $name, $value) = @_;
   my($ptr, $size) = scalar_to_buffer($value);
@@ -345,7 +353,7 @@ attach_function 'archive_entry_xattr_add_entry', [ _ptr, _str, _ptr, _size_t ], 
   ARCHIVE_OK();
 };
 
-attach_function 'archive_entry_xattr_next', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_entry_xattr_next', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   my $name = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ptr  = FFI::Raw::MemPtr->new_from_ptr(0);
@@ -360,7 +368,7 @@ attach_function 'archive_entry_xattr_next', [ _ptr, _ptr, _ptr, _ptr ], _int, su
 
 do { no warnings 'once'; *archive_entry_copy_mac_metadata = \&archive_entry_set_mac_metadata };
 
-attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
+_attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
 {
   my($cb, $archive) = @_;
   my $size = FFI::Raw::MemPtr->new_from_ptr(0);
@@ -368,23 +376,23 @@ attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
   my $buffer = buffer_to_scalar($ptr, deref_uint64_get($$size));
 };
 
-attach_function 'archive_set_error', [ _ptr, _int, _str, _str ], _void, sub
+_attach_function 'archive_set_error', [ _ptr, _int, _str, _str ], _void, sub
 {
   my($cb, $archive, $status, $format, @args) = @_;
   $cb->($archive, $status, "%s", sprintf($format, @args));
   ARCHIVE_OK();
 };
 
-attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcepath' ], [ _ptr, _str ], _void, sub
+_attach_function [ 'archive_entry_copy_sourcepath' => '_archive_entry_set_sourcepath' ], [ _ptr, _str ], _void, sub
 {
   my($cb, $entry, $string) = @_;
   $cb->($entry, $string);
   ARCHIVE_OK();
 };
 
-attach_function [ 'archive_entry_sourcepath' => '_archive_entry_sourcepath' ], [ _ptr ], _str;
+_attach_function [ 'archive_entry_sourcepath' => '_archive_entry_sourcepath' ], [ _ptr ], _str;
 
-attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
+_attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
 {
   my($cb, $archive, $command, $signature) = @_;
   $cb->($archive, $command, scalar_to_buffer($signature));
@@ -392,9 +400,9 @@ attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
 
 # this is an unusual one which doesn't need to be decoded
 # because it should always be ASCII
-attach_function 'archive_entry_strmode',                 [ _ptr ], _str;
+_attach_function 'archive_entry_strmode',                 [ _ptr ], _str;
 
-attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
+_attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
 {
   my($cb, $lr) = @_;
   my $ptr1 = FFI::Raw::MemPtr->new_from_ptr($_[2]);
@@ -405,13 +413,13 @@ attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
   ARCHIVE_OK();
 };
 
-attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags_text' ], [ _ptr, _str ], _void, sub
+_attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags_text' ], [ _ptr, _str ], _void, sub
 {
   shift->(@_);
   ARCHIVE_OK();
 };
 
-attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ], _int, sub
+_attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ], _int, sub
 {
   my($cb, $archive, $entry, $fh, $stat) = @_;
   croak "stat field currently not supported"
