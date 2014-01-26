@@ -26,6 +26,23 @@ use FFI::Util qw(
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
+ffi_lib do {
+  require Config;
+  my($module, $modlibname) = ('Archive::Libarchive::FFI', __FILE__);
+  my @modparts = split(/::/,$module);
+  my $modfname = $modparts[-1];
+  my $modpname = join('/',@modparts);
+  my $c = @modparts;
+  $modlibname =~ s,[\\/][^\\/]+$,, while $c--;    # Q&D basename
+  my $file = "$modlibname/auto/$modpname/$modfname.$Config::Config{dlext}";
+  unless(-e $file)
+  {
+    $modlibname =~ s,[\\/][^\\/]+$,,;
+    $file = "$modlibname/arch/auto/$modpname/$modfname.$Config::Config{dlext}";
+  }
+  \$file;
+};
+
 ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::Constant;
@@ -428,6 +445,38 @@ _attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ]
   $fd = -1 unless defined $fd;
   $cb->($archive, $entry, $fd, 0);
 };
+
+_attach_function [ 'my_set_user_data_name' => '_my_set_user_data_name' ], [ _ptr, _str ], _void;
+
+foreach my $type (qw( uname gname ))
+{
+  _attach_function [ "my_archive_read_disk_set_$type\_lookup" => "archive_read_disk_set_$type\_lookup" ], [ _ptr, _ptr, _ptr ], _int, sub
+  {
+    my($cb, $archive, $data, $lookup, $cleanup) = @_;
+
+    # closures are fun.
+    # er.    
+    my $lookup2;
+    my $cleanup2;
+    
+    $lookup2 =  FFI::Raw::Callback->new(sub {
+      my($ptr, $id) = @_;
+      if($lookup)
+      {
+        my $str = $lookup->($data, $id);
+        _my_set_user_data_name($ptr, $str) if defined $str;
+      }
+    }, _void, _ptr, _int64);
+    
+    $cleanup2 = FFI::Raw::Callback->new(sub {
+      $cleanup->($data) if $cleanup;
+      undef $lookup2;
+      undef $cleanup2;
+    }, _void);
+    
+    $cb->($archive, $lookup2, $cleanup2);
+  };
+}
 
 sub archive_perl_codeset
 {

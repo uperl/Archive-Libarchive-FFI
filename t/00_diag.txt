@@ -4,4 +4,5 @@ FFI::Raw
 FFI::Sweet
 FFI::Util
 Module::Build
+Module::Build::FFI
 Test::More
