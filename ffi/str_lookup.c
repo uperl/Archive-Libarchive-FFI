@@ -54,8 +54,15 @@ my_set_user_data_name(struct user_data_t *ud, const char *name)
   }
 }
 
-int
-my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
+typedef int (setf_t)(
+  struct archive *archive, 
+  void *,
+  void *,
+  void *
+);
+
+static int
+my_set_lookup(setf_t *setf, struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
   struct user_data_t *ud;
   int ret;
@@ -66,30 +73,22 @@ my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t looku
     ud->lookup  = lookup;
     ud->cleanup = cleanup;
     ud->buffer  = (char *) malloc(33);
-    ret = archive_read_disk_set_gname_lookup(archive, (void *)ud, my_lookup, my_cleanup);
+    ret = setf(archive, (void *)ud, (void*)my_lookup, (void*)my_cleanup);
   }
   else
-    ret = archive_read_disk_set_gname_lookup(archive, NULL, NULL, NULL);
+    ret = setf(archive, NULL, NULL, NULL);
 
   return ret;
 }
 
 int
+my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
+{
+  return my_set_lookup((setf_t*)archive_read_disk_set_gname_lookup, archive, lookup, cleanup);
+}
+
+int
 my_archive_read_disk_set_uname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
-  struct user_data_t *ud;
-  int ret;
-
-  if(lookup != NULL || cleanup != NULL)
-  {
-    ud = (struct user_data_t *) malloc(sizeof(struct user_data_t));
-    ud->lookup = lookup;
-    ud->cleanup = cleanup;
-    ud->buffer = (char *) malloc(33);
-    ret = archive_read_disk_set_uname_lookup(archive, (void *)ud, my_lookup, my_cleanup);
-  }
-  else
-    ret = archive_read_disk_set_uname_lookup(archive, NULL, NULL, NULL);
-
-  return ret;
+  return my_set_lookup((setf_t*)archive_read_disk_set_uname_lookup, archive, lookup, cleanup);
 }
