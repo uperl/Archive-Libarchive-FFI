@@ -253,6 +253,21 @@ _sub_if_can( archive_entry_set_fflags_text => sub {
 _sub_if_can( archive_entry_set_link => sub {
   _archive_entry_set_link($_[0], _encode($_[1]));
 });
+_sub_if_can( archive_match_exclude_pattern => sub {
+  _archive_match_exclude_pattern($_[0], _encode($_[1]))
+});
+_sub_if_can( archive_match_exclude_pattern_from_file => sub {
+  _archive_match_exclude_pattern_from_file($_[0], _encode($_[1]), $_[2])
+});
+_sub_if_can( archive_match_include_pattern => sub {
+  _archive_match_include_pattern($_[0], _encode($_[1]))
+});
+_sub_if_can( archive_match_include_pattern_from_file => sub {
+  _archive_match_include_pattern_from_file($_[0], _encode($_[1]), $_[2])
+});
+_sub_if_can( archive_match_include_file_time => sub {
+  _archive_match_include_file_time($_[0], $_[1], _enccode( $_[2]))
+});
 
 1;
 

@@ -249,6 +249,12 @@ _attach 'archive_match_include_gid',                     [ _ptr, _gid_t ], _int;
 _attach 'archive_match_include_uid',                     [ _ptr, _uid_t ], _int;
 _attach 'archive_match_include_gname',                   [ _ptr, _str ], _int;
 _attach 'archive_match_include_uname',                   [ _ptr, _str ], _int;
+_attach 'archive_match_exclude_entry',                   [ _ptr, _int, _ptr ], _int;
+_attach 'archive_match_exclude_pattern',                 [ _ptr, _str ], _int;
+_attach 'archive_match_exclude_pattern_from_file',       [ _ptr, _str, _int ], _int;
+_attach 'archive_match_include_pattern',                 [ _ptr, _str ], _int;
+_attach 'archive_match_include_pattern_from_file',       [ _ptr, _str, _int ], _int;
+_attach 'archive_match_include_file_time',               [ _ptr, _int, _str ], _int;
 
 _attach "archive_read_support_filter_$_",  [ _ptr ], _int
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
@@ -259,6 +265,8 @@ _attach "archive_write_add_filter_$_", [ _ptr ], _int
 _attach "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
+
+_attach_function 'archive_match_include_date', [ _ptr, _int, _str ], _int;
 
 _attach_function 'archive_entry_sparse_next', [ _ptr, _ptr, _ptr ], _int, sub
 {

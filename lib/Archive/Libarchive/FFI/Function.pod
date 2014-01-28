@@ -979,6 +979,24 @@ codes.
 
 A textual description of the format of the current entry.
 
+=head2 archive_match_exclude_entry
+
+ my $status = archive_match_exclude_entry($archive, $flag, $entry);
+
+Add exclusion entry
+
+=head2 archive_match_exclude_pattern
+
+ my $status = archive_match_exclude_pattern($archive, $pattern);
+
+Add exclusion pathname pattern.
+
+=head2 archive_match_exclude_pattern_from_file
+
+ my $status = archive_match_exclude_pattern_from_file($archive, $filename, $null_separator);
+
+Add exclusion pathname pattern from file.
+
 =head2 archive_match_excluded
 
  my $bool = archive_match_excluded($archive, $entry);
@@ -993,6 +1011,18 @@ and L<#archive_match_owner_excluded>.
 
 Free the resources previously allocated with L<#archive_match_new>.
 
+=head2 archive_match_include_date
+
+ my $status = archive_match_include_date($archive, $flag, $date_string);
+
+Set inclusion time by a date string
+
+=head2 archive_match_include_file_time
+
+ my $status = archive_match_include_file_time($archive, $flag, $pathname);
+
+Set inclusion time by a particular file
+
 =head2 archive_match_include_gid
 
  my $status = archive_match_include_gid($archive, $gid);
@@ -1004,6 +1034,18 @@ The match object $archive should match entries with the given $gid
  my $status = archive_match_include_gname($archive, $gname);
 
 The match object $archive should match entries with the given group name
+
+=head2 archive_match_include_pattern
+
+ my $status = archive_match_include_pattern_from_file($archive, $pattern);
+
+Add inclusion pathname pattern
+
+=head2 archive_match_include_pattern_from_file
+
+ my $status = archive_match_include_pattern_from_file($archive, $filename, $null_separator);
+
+Add inclusion pathname pattern from file
 
 =head2 archive_match_include_uid
 
