@@ -156,6 +156,7 @@ _attach 'archive_entry_set_filetype',                    [ _ptr, _int ], _void;
 _attach 'archive_entry_set_mtime',                       [ _ptr, _time_t, _long ], _void; 
 _attach 'archive_entry_set_ctime',                       [ _ptr, _time_t, _long ], _void;
 _attach 'archive_entry_set_atime',                       [ _ptr, _time_t, _long ], _void;
+_attach 'archive_entry_set_birthtime',                   [ _ptr, _time_t, _long ], _void;
 _attach 'archive_entry_atime_is_set',                    [ _ptr ], _int;
 _attach 'archive_entry_atime',                           [ _ptr ], _time_t;
 _attach 'archive_entry_atime_nsec',                      [ _ptr ], _long;
@@ -213,6 +214,10 @@ _attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _in
 _attach 'archive_entry_acl_reset',                       [ _ptr, _int ], _int;
 _attach 'archive_entry_acl_text',                        [ _ptr, _int ], _str;
 _attach 'archive_entry_acl_count',                       [ _ptr, _int ], _int;
+_attach 'archive_entry_sparse_clear',                    [ _ptr ], _void;
+_attach 'archive_entry_sparse_add_entry',                [ _ptr, _int64, _int64 ], _void;
+_attach 'archive_entry_sparse_count',                    [ _ptr ], _int;
+_attach 'archive_entry_sparse_reset',                    [ _ptr ], _int;
 
 _attach 'archive_entry_linkresolver_free',               [ _ptr ], _void;
 _attach 'archive_entry_linkresolver_new',                undef, _ptr;
@@ -254,6 +259,16 @@ _attach "archive_write_add_filter_$_", [ _ptr ], _int
 _attach "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
+
+_attach_function 'archive_entry_sparse_next', [ _ptr, _ptr, _ptr ], _int, sub
+{
+  my $offset = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $length = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $ret = $_[0]->($_[1], $offset, $length);
+  $_[2] = deref_int64_get($$offset);
+  $_[3] = deref_int64_get($$length);
+  return $ret;
+};
 
 _attach_function 'archive_entry_fflags', [ _ptr, _ptr, _ptr ], _void, sub
 {

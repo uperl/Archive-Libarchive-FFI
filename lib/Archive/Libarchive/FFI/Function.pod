@@ -519,6 +519,12 @@ Returns the minor component of the rdev property for the archive entry.
 
 Sets the access time property for the archive entry.
 
+=head2 archive_entry_set_birthtime
+
+ my $status = archive_entry_set_birthtime($entry, $birthtime, $nsec);
+
+Sets the birthtime (creation time) for the archive entry.
+
 =head2 archive_entry_set_ctime
 
  my $status = archive_entry_set_ctime($entry, $ctime, $nsec);
@@ -746,6 +752,45 @@ Returns true if the size property for the archive entry has been set.
  my $sourcepath = archive_entry_sourcepath($entry);
 
 Gets the sourcepath property for the archive entry object.
+
+=head2 archive_entry_sparse_add_entry
+
+ my $status = archive_entry_sparse_add_entry($entry, $offset, $length)
+
+Add a sparse region to the entry.
+
+=head2 archive_entry_sparse_clear
+
+ my $status = archive_entry_sparse_clear($entry)
+
+Remove all sparse region from the archive entry.
+
+=head2 archive_entry_sparse_count
+
+ my $count = archive_entry_sparse_count($entry);
+
+Return the number of sparse entries in the entry.
+
+=head2 archive_entry_sparse_next
+
+ my $status = archive_entry_sparse_next($entry, $offset, $length);
+
+Return the next sparse region for the entry.  Example:
+
+ archive_entry_sparse_reset($entry);
+ while(my $r = archive_entry_sparse_next($entry, $offset, $length))
+ {
+   last if $r == ARCHIVE_WARN;
+   die archive_error_string($a) if $r < ARCHIVE_OK;
+   
+   # do something with $name and $value
+ }
+
+=head2 archive_entry_sparse_reset
+
+ my $count = archive_entry_sparse_reset($entry);
+
+Reset the internal sparse region iterator for the entry (see L<#archive_entry_sparse_next> for an example).
 
 =head2 archive_entry_stat
 

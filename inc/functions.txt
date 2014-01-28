@@ -53,6 +53,7 @@ archive_entry_rdev
 archive_entry_rdevmajor
 archive_entry_rdevminor
 archive_entry_set_atime
+archive_entry_set_birthtime
 archive_entry_set_ctime
 archive_entry_set_dev
 archive_entry_set_devmajor
@@ -83,6 +84,11 @@ archive_entry_set_uname
 archive_entry_size
 archive_entry_size_is_set
 archive_entry_sourcepath
+archive_entry_sparse_add_entry
+archive_entry_sparse_clear
+archive_entry_sparse_count
+archive_entry_sparse_next
+archive_entry_sparse_reset
 archive_entry_stat
 archive_entry_strmode
 archive_entry_symlink
