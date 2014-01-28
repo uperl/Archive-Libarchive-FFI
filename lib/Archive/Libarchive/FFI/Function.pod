@@ -1047,6 +1047,12 @@ Add inclusion pathname pattern
 
 Add inclusion pathname pattern from file
 
+=head2 archive_match_include_time
+
+ my $status = archive_match_include_time($archive, $flag, $sec, $nsec);
+
+Set inclusion time
+
 =head2 archive_match_include_uid
 
  my $status = archive_match_include_uid($archive, $uid);
@@ -1076,6 +1082,12 @@ Test if a file is excluded by its uid, gid, user name or group name.
  my $bool = archive_match_path_excluded($archive, $entry);
 
 Test if pathname is excluded.
+
+=head2 archive_match_path_unmatched_inclusions
+
+ my $count = archive_match_path_unmatched_inclusions($archive);
+
+Return the amount number of unmatched inclusion patterns
 
 =head2 archive_match_time_excluded
 

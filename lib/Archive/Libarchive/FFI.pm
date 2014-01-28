@@ -255,6 +255,8 @@ _attach 'archive_match_exclude_pattern_from_file',       [ _ptr, _str, _int ], _
 _attach 'archive_match_include_pattern',                 [ _ptr, _str ], _int;
 _attach 'archive_match_include_pattern_from_file',       [ _ptr, _str, _int ], _int;
 _attach 'archive_match_include_file_time',               [ _ptr, _int, _str ], _int;
+_attach 'archive_match_include_time',                    [ _ptr, _int, _time_t, _long ], _int;
+_attach 'archive_match_path_unmatched_inclusions',       [ _ptr ], _int;
 
 _attach "archive_read_support_filter_$_",  [ _ptr ], _int
   for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
