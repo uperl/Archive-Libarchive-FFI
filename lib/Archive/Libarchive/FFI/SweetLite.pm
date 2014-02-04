@@ -58,7 +58,6 @@ sub attach_function ($$$;$)
     next if $@;
     
     no strict 'refs';
-    print "installing $pkg\::$install_name\n";
     *{join '::', $pkg, $install_name} = $wrapper ? sub { $wrapper->($ffi, @_) } : $ffi->coderef;
     return;
   }
