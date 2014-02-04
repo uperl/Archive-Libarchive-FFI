@@ -1,4 +1,6 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.04      2014-02-04 13:22:23 -0500
   - firsty CPAN release
