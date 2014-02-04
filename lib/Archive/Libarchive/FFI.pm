@@ -19,6 +19,7 @@ use FFI::Util qw(
   scalar_to_buffer
   deref_int_get
   deref_str_get
+  locate_module_share_lib
   :types
 );
 
@@ -39,19 +40,7 @@ BEGIN {
 # VERSION
 
 ffi_lib do {
-  require Config;
-  my($module, $modlibname) = ('Archive::Libarchive::FFI', __FILE__);
-  my @modparts = split(/::/,$module);
-  my $modfname = $modparts[-1];
-  my $modpname = join('/',@modparts);
-  my $c = @modparts;
-  $modlibname =~ s,[\\/][^\\/]+$,, while $c--;    # Q&D basename
-  my $file = "$modlibname/auto/$modpname/$modfname.$Config::Config{dlext}";
-  unless(-e $file)
-  {
-    $modlibname =~ s,[\\/][^\\/]+$,,;
-    $file = "$modlibname/arch/auto/$modpname/$modfname.$Config::Config{dlext}";
-  }
+  my $file = locate_module_share_lib();
   \$file;
 };
 
