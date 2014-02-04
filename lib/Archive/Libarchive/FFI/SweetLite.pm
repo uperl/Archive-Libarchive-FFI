@@ -3,7 +3,6 @@ package
 
 use strict;
 use warnings;
-use Try::Tiny;
 use FFI::Raw;
 use Text::ParseWords qw( shellwords );
 use Exporter::Tidy
@@ -60,12 +59,11 @@ sub attach_function ($$$;$)
     
     my $base_sub = sub {
       my @args = @_;
-      return try {
+      my $ret = eval {
         $ffi->call(@args);
-      }
-      catch {
-        die "$name: $_";
       };
+      die "$name: $@" if $@;
+      return $ret;
     };
     
     no strict 'refs';
