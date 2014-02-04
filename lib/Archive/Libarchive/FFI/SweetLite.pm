@@ -3,6 +3,7 @@ package
 
 use strict;
 use warnings;
+use Try::Tiny;
 use FFI::Raw;
 use Text::ParseWords qw( shellwords );
 use Exporter::Tidy
@@ -57,8 +58,18 @@ sub attach_function ($$$;$)
     my $ffi = eval { FFI::Raw->new($lib, $name, $rv_type, @$arg_types) };
     next if $@;
     
+    my $base_sub = sub {
+      my @args = @_;
+      return try {
+        $ffi->call(@args);
+      }
+      catch {
+        die "$name: $_";
+      };
+    };
+    
     no strict 'refs';
-    *{join '::', $pkg, $install_name} = $wrapper ? sub { $wrapper->($ffi, @_) } : $ffi->coderef;
+    *{join '::', $pkg, $install_name} = $wrapper ? sub { $wrapper->($base_sub, @_) } : $base_sub;
     return;
   }
   
