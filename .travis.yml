@@ -10,9 +10,7 @@ install:
   - cpanm -n FFI::Raw
   - cpanm -n Test::CPAN::Changes Test::EOL Test::Fixme Test::NoTabs Test::Pod::Spelling::CommonMistakes Test::Spelling Test::Strict Test::Version || true
   - cpanm -n Pod::Abstract
-  - git clone https://github.com/plicease/FFI-Util.git && cd FFI-Util && dzil install && cd .. && rm -rf FFI-Util
-  # workaround for gh#31 (Archive::Libarchive::XS)
-  - cpanm -n http://cpan.metacpan.org/authors/id/R/RJ/RJBS/Mixin-Linewise-0.102.tar.gz
+  - cpanm -n FFI::Util
 
 perl:
   - "5.10"
