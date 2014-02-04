@@ -1,7 +1,6 @@
 Alien::Libarchive
 Exporter::Tidy
 FFI::Raw
-FFI::Sweet
 FFI::Util
 Module::Build
 Module::Build::FFI

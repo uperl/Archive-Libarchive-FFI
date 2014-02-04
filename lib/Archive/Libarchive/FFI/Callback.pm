@@ -9,7 +9,18 @@ use warnings;
 package
   Archive::Libarchive::FFI;
 
-use FFI::Sweet;
+BEGIN {
+
+  if(eval { require FFI::Sweet })
+  {
+    FFI::Sweet->import;
+  }
+  else
+  {
+    require Archive::Libarchive::FFI::SweetLite;
+    Archive::Libarchive::FFI::SweetLite->import;
+  }
+}
 use FFI::Util qw( deref_ptr_set _size_t );
 
 use constant {

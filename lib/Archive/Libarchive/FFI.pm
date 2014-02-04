@@ -8,7 +8,6 @@ use Exporter::Tidy ();
 use Encode ();
 use Carp qw( croak );
 use FFI::Raw ();
-use FFI::Sweet;
 use FFI::Util qw(
   deref_ptr_get
   deref_uint64_get
@@ -22,6 +21,19 @@ use FFI::Util qw(
   deref_str_get
   :types
 );
+
+BEGIN {
+
+  if(eval { require FFI::Sweet })
+  {
+    FFI::Sweet->import;
+  }
+  else
+  {
+    require Archive::Libarchive::FFI::SweetLite;
+    Archive::Libarchive::FFI::SweetLite->import;
+  }
+}
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
