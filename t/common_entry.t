@@ -25,8 +25,11 @@ is $r, ARCHIVE_OK, 'archive_entry_set_mode';
 is eval { archive_entry_mode($e) }, 0644, 'archive_entry_mode (0644)';
 diag $@ if $@;
 
-is eval { archive_entry_perm($e) }, 0644, 'archive_entry_perm(0644)';
-diag $@ if $@;
+SKIP: { 
+  skip 'test requires archive_entry_perm', 1 unless Archive::Libarchive::FFI->can('archive_entry_perm');
+  is eval { archive_entry_perm($e) }, 0644, 'archive_entry_perm(0644)';
+  diag $@ if $@;
+};
 
 $r = eval { archive_entry_set_filetype($e, AE_IFREG) };
 diag $@ if $@;

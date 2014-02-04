@@ -45,8 +45,8 @@ extract archive
       my $r = archive_read_next_header($archive, my $entry);
       last if $r == ARCHIVE_EOF;
       
-    archive_write_header($disk, $entry);
-    
+      archive_write_header($disk, $entry);
+      
       while(1)
       {
         my $r = archive_read_data_block($archive, my $buffer, my $offset);
@@ -294,30 +294,30 @@ These examples are also included with the distribution.
     {
       my($outname, @filenames) = @_;
       
-    my $a = archive_write_new();
-    
-    archive_write_add_filter_gzip($a);
-    archive_write_set_format_pax_restricted($a);
-    archive_write_open_filename($a, $outname);
-    
-    foreach my $filename (@filenames)
-    {
-      my $st = stat $filename;
-      my $entry = archive_entry_new();
-      archive_entry_set_pathname($entry, $filename);
-      archive_entry_set_size($entry, $st->size);
-      archive_entry_set_filetype($entry, AE_IFREG);
-      archive_entry_set_perm($entry, 0644);
-      archive_write_header($a, $entry);
-      open my $fh, '<', $filename;
-      my $len = read $fh, my $buff, 8192;
-      while($len > 0)
-      {
-        archive_write_data($a, $buff);
-        $len = read $fh, $buff, 8192;
-      }
-      close $fh;
+      my $a = archive_write_new();
       
+      archive_write_add_filter_gzip($a);
+      archive_write_set_format_pax_restricted($a);
+      archive_write_open_filename($a, $outname);
+      
+      foreach my $filename (@filenames)
+      {
+        my $st = stat $filename;
+        my $entry = archive_entry_new();
+        archive_entry_set_pathname($entry, $filename);
+        archive_entry_set_size($entry, $st->size);
+        archive_entry_set_filetype($entry, AE_IFREG);
+        archive_entry_set_perm($entry, 0644);
+        archive_write_header($a, $entry);
+        open my $fh, '<', $filename;
+        my $len = read $fh, my $buff, 8192;
+        while($len > 0)
+        {
+          archive_write_data($a, $buff);
+          $len = read $fh, $buff, 8192;
+        }
+        close $fh;
+        
         archive_entry_free($entry);
       }
       archive_write_close($a);
@@ -496,7 +496,7 @@ locale name for all the platforms that your script will run.
 
 There are two Perl only functions that give information about the
 current codeset as understood by libarchive.
-[archive_perl_utf8_mode](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_perl_utf8_mode)
+[archive\_perl\_utf8\_mode](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_perl_utf8_mode)
 if the currently selected codeset is UTF-8.
 
     use strict;
@@ -505,7 +505,7 @@ if the currently selected codeset is UTF-8.
     
     die "must use UTF-8 locale" unless archive_perl_utf8_mode();
 
-[archive_perl_codeset](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_perl_codeset)
+[archive\_perl\_codeset](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_perl_codeset)
 returns the currently selected codeset.
 
     use strict;
@@ -549,9 +549,9 @@ read:
 
 Archive and entry objects are really pointers to opaque C structures
 and need to be freed using one of 
-[archive_read_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_read_free), 
-[archive_write_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_write_free) or 
-[archive_entry_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_entry_free), 
+[archive\_read\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_read_free), 
+[archive\_write\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_write_free) or 
+[archive\_entry\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_entry_free), 
 in order to free the resources associated with those objects.
 
 Proper Unicode (or non-ASCII character support) depends on setting the

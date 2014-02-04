@@ -22,17 +22,17 @@ to distinguish them (example: $archive1, $archive2).
 An archive object identifier (actually a pointer to the C structure used by
 libarchive as the archive object).
 
-These are created with L<#archive_read_new>, L<#archive_write_new> or
-L<#archive_write_disk_new> and deleted with L<#archive_read_free> or 
-L<#archive_write_free>.
+These are created with L<archive_read_new|Archive::Libarchive::FFI::Function#archive_read_new>, L<archive_write_new|Archive::Libarchive::FFI::Function#archive_write_new> or
+L<archive_write_disk_new|Archive::Libarchive::FFI::Function#archive_write_disk_new> and deleted with L<archive_read_free|Archive::Libarchive::FFI::Function#archive_read_free> or 
+L<archive_write_free|Archive::Libarchive::FFI::Function#archive_write_free>.
 
 =item $entry
 
 An archive entry identifier (actually a pointer to the C structure used by
 libarchive as the archive entry object).
 
-These are created with L<#archive_entry_new> and deleted with
-L<#archive_entry_free>.  They can also be returned by L<#archive_read_next_header>,
+These are created with L<archive_entry_new|Archive::Libarchive::FFI::Function#archive_entry_new> and deleted with
+L<archive_entry_free|Archive::Libarchive::FFI::Function#archive_entry_free>.  They can also be returned by L<archive_read_next_header|Archive::Libarchive::FFI::Function#archive_read_next_header>,
 but in that case libarchive will handle the allocation and freeing of
 resources for the entry.
 
@@ -158,7 +158,7 @@ non-extended ACLs are added.
 
  my $status = archive_entry_acl_next($entry, $want_type, $type, $permset, $tag, $qual, $name);
 
-return the next entry of the ACL list.  This functions may only be called after L<#archive_entry_acl_reset>
+return the next entry of the ACL list.  This functions may only be called after L<archive_entry_acl_reset|Archive::Libarchive::FFI::Function#archive_entry_acl_reset>
 has indicated the presence of extended ACL entries.
 
 =head2 archive_entry_acl_reset
@@ -166,10 +166,10 @@ has indicated the presence of extended ACL entries.
  my $status = archive_entry_acl_reset($entry, $want_type);
 
 prepare reading the list of ACL entries with
-L<#archive_entry_acl_next> or L<#archive_entry_acl_next_w>.  The function returns
+L<archive_entry_acl_next|Archive::Libarchive::FFI::Function#archive_entry_acl_next> or L<archive_entry_acl_next_w|Archive::Libarchive::FFI::Function#archive_entry_acl_next_w>.  The function returns
 either 0, if no non-extended ACLs are found.  In this case, the access permissions
-should be obtained by L<#archive_entry_mode> or set using L<chmod|perlfunc#chmod>.
-Otherwise, the function returns the same value as L<#archive_entry_acl_count>.
+should be obtained by L<archive_entry_mode|Archive::Libarchive::FFI::Function#archive_entry_mode> or set using L<chmod|perlfunc#chmod>.
+Otherwise, the function returns the same value as L<archive_entry_acl_count|Archive::Libarchive::FFI::Function#archive_entry_acl_count>.
 
 =head2 archive_entry_acl_text
 
@@ -178,7 +178,7 @@ Otherwise, the function returns the same value as L<#archive_entry_acl_count>.
 converts the ACL entries for the given type mask into a string.  In addition to the normal type flags,
 C<ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID> and C<ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT> can be specified
 to further customize the result.  The returned long string is valid until the next call to 
-L<#archive_entry_acl_clear>, L<#archive_entry_acl_add_entry>, L<#archive_entry_acl_text>.
+L<archive_entry_acl_clear|Archive::Libarchive::FFI::Function#archive_entry_acl_clear>, L<archive_entry_acl_add_entry|Archive::Libarchive::FFI::Function#archive_entry_acl_add_entry>, L<archive_entry_acl_text|Archive::Libarchive::FFI::Function#archive_entry_acl_text>.
 
 =head2 archive_entry_atime
 
@@ -235,11 +235,11 @@ A deep copy operation; all text fields are duplicated.
 
 Sets the fflags_text property for the archive entry object.
 
-This is an alias for L<#archive_entry_set_fflags_text>.
+This is an alias for L<archive_entry_set_fflags_text|Archive::Libarchive::FFI::Function#archive_entry_set_fflags_text>.
 
 =head2 archive_entry_copy_mac_metadata
 
-An Alias for L<#archive_entry_set_mac_metadata>.
+An Alias for L<archive_entry_set_mac_metadata|Archive::Libarchive::FFI::Function#archive_entry_set_mac_metadata>.
 
 =head2 archive_entry_copy_sourcepath
 
@@ -257,7 +257,7 @@ Converts the various fields in the format used by L<stat|perlfunc#stat> to the f
 
 The fields C<$blksize>, C<$blocks> supported by L<stat|perlfunc#stat>, are not supported by this function.
 
-This is an alias for L<#archive_entry_set_stat>.
+This is an alias for L<archive_entry_set_stat|Archive::Libarchive::FFI::Function#archive_entry_set_stat>.
 
 =head2 archive_entry_ctime
 
@@ -396,7 +396,7 @@ Returns true if the inode property for the entry has been set.
  my $status = archive_entry_linkify($linkresolver, $entry1, $entry2)
 
 Behavior depends on the link resolver strategy 
-(L<#archive_entry_linkresolver_set_strategy>).  See libarchive documentation
+(L<archive_entry_linkresolver_set_strategy|Archive::Libarchive::FFI::Function#archive_entry_linkresolver_set_strategy>).  See libarchive documentation
 (C<archive_entry_linkify(3)>) for details.
 
 Note that $entry1 and $entry2 are passed by value and may be changed or
@@ -440,8 +440,8 @@ C<archive_entry_copy_mac_metadata>.
  my $mode = archive_entry_mode($entry);
 
 Get a combination of file type and permission and provide the equivalent of st_mode.
-use of L<#archive_entry_filetype> and L<#archive_entry_perm> for getting and
-L<#archive_entry_set_filetype> and L<#archive_entry_set_perm> for setting is
+use of L<archive_entry_filetype|Archive::Libarchive::FFI::Function#archive_entry_filetype> and L<archive_entry_perm|Archive::Libarchive::FFI::Function#archive_entry_perm> for getting and
+L<archive_entry_set_filetype|Archive::Libarchive::FFI::Function#archive_entry_set_filetype> and L<archive_entry_set_perm|Archive::Libarchive::FFI::Function#archive_entry_set_perm> for setting is
 recommended.
 
 =head2 archive_entry_mtime
@@ -651,8 +651,8 @@ C<archive_entry_copy_mac_metadata>.
  my $status = archive_entry_set_mode($entry, $mode);
 
 Set a combination of file type and permission and provide the equivalent of st_mode.
-use of L<#archive_entry_filetype> and L<#archive_entry_perm> for getting and
-L<#archive_entry_set_filetype> and L<#archive_entry_set_perm> for setting is
+use of L<archive_entry_filetype|Archive::Libarchive::FFI::Function#archive_entry_filetype> and L<archive_entry_perm|Archive::Libarchive::FFI::Function#archive_entry_perm> for getting and
+L<archive_entry_set_filetype|Archive::Libarchive::FFI::Function#archive_entry_set_filetype> and L<archive_entry_set_perm|Archive::Libarchive::FFI::Function#archive_entry_set_perm> for setting is
 recommended.
 
 =head2 archive_entry_set_mtime
@@ -790,7 +790,7 @@ Return the next sparse region for the entry.  Example:
 
  my $count = archive_entry_sparse_reset($entry);
 
-Reset the internal sparse region iterator for the entry (see L<#archive_entry_sparse_next> for an example).
+Reset the internal sparse region iterator for the entry (see L<archive_entry_sparse_next|Archive::Libarchive::FFI::Function#archive_entry_sparse_next> for an example).
 
 =head2 archive_entry_stat
 
@@ -927,14 +927,14 @@ is incremented by calls to C<archive_write_header> or C<archive_read_next_header
 
  my $count = archive_filter_bytes($archive, $level);
 
-Byte count for the given filter level.  See L<#archive_filter_count> for details of the
+Byte count for the given filter level.  See L<archive_filter_count|Archive::Libarchive::FFI::Function#archive_filter_count> for details of the
 level numbering.
 
 =head2 archive_filter_code
 
  my $code = archive_filter_code($archive, $level);
 
-Returns a numeric code identifying the indicated filter.  See L<#archive_filter_count>
+Returns a numeric code identifying the indicated filter.  See L<archive_filter_count|Archive::Libarchive::FFI::Function#archive_filter_count>
 for details of the level numbering.
 
 =head2 archive_filter_count
@@ -958,7 +958,7 @@ uudecoding, and C<archive_position(a,(0))> would return the number of bytes afte
 
  my $string = archive_filter_name($archive, $level);
 
-Returns a textual name identifying the indicated filter.  See L<#archive_filter_count> for
+Returns a textual name identifying the indicated filter.  See L<archive_filter_count|Archive::Libarchive::FFI::Function#archive_filter_count> for
 details of the numbering.
 
 =head2 archive_format
@@ -1002,14 +1002,14 @@ Add exclusion pathname pattern from file.
  my $bool = archive_match_excluded($archive, $entry);
 
 Test if archive_entry is excluded. This is a convenience function. This is the
-same as calling all L<#archive_match_path_excluded>, L<#archive_match_time_excluded>
-and L<#archive_match_owner_excluded>.
+same as calling all L<archive_match_path_excluded|Archive::Libarchive::FFI::Function#archive_match_path_excluded>, L<archive_match_time_excluded|Archive::Libarchive::FFI::Function#archive_match_time_excluded>
+and L<archive_match_owner_excluded|Archive::Libarchive::FFI::Function#archive_match_owner_excluded>.
 
 =head2 archive_match_free
 
  my $status = archive_match_free($archive);
 
-Free the resources previously allocated with L<#archive_match_new>.
+Free the resources previously allocated with L<archive_match_new|Archive::Libarchive::FFI::Function#archive_match_new>.
 
 =head2 archive_match_include_date
 
@@ -1088,6 +1088,12 @@ Test if pathname is excluded.
  my $count = archive_match_path_unmatched_inclusions($archive);
 
 Return the amount number of unmatched inclusion patterns
+
+=head2 archive_match_path_unmatched_inclusions_next
+
+ my $status = archive_match_path_unmatched_inclusions_next($archive, $pattern);
+
+Fetch the next unmatched pattern.
 
 =head2 archive_match_time_excluded
 
@@ -1171,7 +1177,7 @@ due to compression and internal buffer optimizations.
 
  my $status = archive_read_data_into_fh($archive, $fh);
 
-A convenience function that repeatedly calls L<#archive_read_data_block> to copy the entire entry to the provided file handle.
+A convenience function that repeatedly calls L<archive_read_data_block|Archive::Libarchive::FFI::Function#archive_read_data_block> to copy the entire entry to the provided file handle.
 
 =head2 archive_read_data_skip
 
@@ -1220,7 +1226,7 @@ traversal.
  my $status = archive_read_disk_entry_from_file($archive, $entry, $fh, \@stat);
  my $status = archive_read_disk_entry_from_file($archive, $entry, undef, \@stat);
 
-Populates a struct archive_entry object with information about a particular file.  The archive_entry object must have already been created with L<#archive_entry_new> and at least one of the
+Populates a struct archive_entry object with information about a particular file.  The archive_entry object must have already been created with L<archive_entry_new|Archive::Libarchive::FFI::Function#archive_entry_new> and at least one of the
 source path or path fields must already be set.  (If both are set, the source path will be used.)
 
 Information is read from disk using the path name from the struct archive_entry object.  If a file handle ($fh) is provided, some information will be obtained using that file handle, on
@@ -1323,17 +1329,17 @@ returns C<undef>.
 
  my $status = archive_read_extract($archive, $entry, $flags);
 
-A convenience function that wraps the corresponding archive_write_disk interfaces.  The first call to L<#archive_read_extract> creates a restore object using L<#archive_write_disk_new> and
-L<#archive_write_disk_set_standard_lookup>, then transparently invokes L<#archive_write_disk_set_options>, L<#archive_write_header>, L<#archive_write_data>, and L<#archive_write_finish_entry> to
-create the entry on disk and copy data into it.  The flags argument is passed unmodified to L<#archive_write_disk_set_options>.
+A convenience function that wraps the corresponding archive_write_disk interfaces.  The first call to L<archive_read_extract|Archive::Libarchive::FFI::Function#archive_read_extract> creates a restore object using L<archive_write_disk_new|Archive::Libarchive::FFI::Function#archive_write_disk_new> and
+L<archive_write_disk_set_standard_lookup|Archive::Libarchive::FFI::Function#archive_write_disk_set_standard_lookup>, then transparently invokes L<archive_write_disk_set_options|Archive::Libarchive::FFI::Function#archive_write_disk_set_options>, L<archive_write_header|Archive::Libarchive::FFI::Function#archive_write_header>, L<archive_write_data|Archive::Libarchive::FFI::Function#archive_write_data>, and L<archive_write_finish_entry|Archive::Libarchive::FFI::Function#archive_write_finish_entry> to
+create the entry on disk and copy data into it.  The flags argument is passed unmodified to L<archive_write_disk_set_options|Archive::Libarchive::FFI::Function#archive_write_disk_set_options>.
 
 =head2 archive_read_extract2
 
  my $status = archive_read_extract2($archive1, $entry, $archive2);
 
 This is another version of archive_read_extract() that allows you to provide your own restore object.  In particular, this allows you to override the standard lookup functions using
-L<#archive_write_disk_set_group_lookup>, and L<#archive_write_disk_set_user_lookup>.  Note that L<#archive_read_extract2> does not accept a flags argument; you should use
-L<#archive_write_disk_set_options> to set the restore options yourself.
+L<archive_write_disk_set_group_lookup|Archive::Libarchive::FFI::Function#archive_write_disk_set_group_lookup>, and L<archive_write_disk_set_user_lookup|Archive::Libarchive::FFI::Function#archive_write_disk_set_user_lookup>.  Note that L<archive_read_extract2|Archive::Libarchive::FFI::Function#archive_read_extract2> does not accept a flags argument; you should use
+L<archive_write_disk_set_options|Archive::Libarchive::FFI::Function#archive_write_disk_set_options> to set the restore options yourself.
 
 =head2 archive_read_extract_set_skip_file
 
@@ -1346,7 +1352,7 @@ generally set to the dev/ino of the archive being read.
 
  my $status = archive_read_free($archive);
 
-Invokes L<#archive_read_close> if it was not invoked manually, then
+Invokes L<archive_read_close|Archive::Libarchive::FFI::Function#archive_read_close> if it was not invoked manually, then
 release all resources.
 
 =head2 archive_read_header_position
@@ -1406,7 +1412,7 @@ obtain raw bytes from the archive.
 
  my $status = archive_read_open_fh($archive, $fh, $block_size);
 
-Like L<#archive_read_open_filename>, except that it accepts a file handle and block
+Like L<archive_read_open_filename|Archive::Libarchive::FFI::Function#archive_read_open_filename>, except that it accepts a file handle and block
 size rather than a filename.  Note that the file handle will not be automatically
 closed at end-of-archive.
 
@@ -1773,7 +1779,7 @@ Seek within the body of an entry.  Similar to C<lseek>.
  my $status = archive_set_error($archive, $errno, $format, @args);
 
 Sets the numeric error code and error description that will be returned by
-L<#archive_errno> and L<#archive_error_string>.  This function should be
+L<archive_errno|Archive::Libarchive::FFI::Function#archive_errno> and L<archive_error_string|Archive::Libarchive::FFI::Function#archive_error_string>.  This function should be
 used within I/O callbacks to set system-specific error codes and error
 descriptions.  This function accepts a printf-like format string and
 arguments (via perl's L<sprintf|perlfunc#sprintf>.
@@ -2098,7 +2104,7 @@ archive to standard out.
 
  my $status = archive_write_open_memory($archive, \$scalar);
 
-A convenience form of L<#archive_write_open> that accepts a reference to a scalar that will receive the archive.
+A convenience form of L<archive_write_open|Archive::Libarchive::FFI::Function#archive_write_open> that accepts a reference to a scalar that will receive the archive.
 
 =head2 archive_write_set_bytes_in_last_block
 

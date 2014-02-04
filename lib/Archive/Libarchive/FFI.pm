@@ -280,6 +280,14 @@ _attach_function 'archive_entry_sparse_next', [ _ptr, _ptr, _ptr ], _int, sub
   return $ret;
 };
 
+_attach_function 'archive_match_path_unmatched_inclusions_next', [ _ptr, _ptr ], _int, sub
+{
+  my $pattern = FFI::Raw::MemPtr->new_from_ptr(0);
+  my $ret = $_[0]->($_[1], $pattern);
+  $_[2] = deref_str_get($$pattern);
+  return $ret;
+};
+
 _attach_function 'archive_entry_fflags', [ _ptr, _ptr, _ptr ], _void, sub
 {
   my $set   = FFI::Raw::MemPtr->new_from_ptr(0);
