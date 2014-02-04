@@ -466,10 +466,9 @@ _attach_function 'archive_entry_strmode',                 [ _ptr ], _str;
 
 _attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
 {
-  my($cb, $lr) = @_;
   my $ptr1 = FFI::Raw::MemPtr->new_from_ptr($_[2]);
   my $ptr2 = FFI::Raw::MemPtr->new_from_ptr($_[3]);
-  $cb->($lr, $ptr1, $ptr2);
+  $_[0]->($_[1], $ptr1, $ptr2);
   $_[2] = deref_ptr_get($ptr1);
   $_[3] = deref_ptr_get($ptr2);
   ARCHIVE_OK();
