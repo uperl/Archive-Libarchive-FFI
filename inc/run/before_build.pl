@@ -4,12 +4,13 @@ use v5.10;
 use Path::Class qw( file dir );
 
 exit if $ENV{TRAVIS_BUILD_ID};
+exit if $^O eq 'freebsd';
 
 require Archive::Libarchive::XS;
 
 do { # constants.pm
 
-  my $file = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
+  my $file = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
   
   $file->parent->mkpath(0,0755);
   
@@ -43,8 +44,8 @@ do { # constants.pm
 do { # import from inc
   foreach my $basename (qw( SeeAlso.pm constants.txt functions.txt ))
   {
-    my $source = file(__FILE__)->parent->parent->parent->file('Archive-Libarchive-XS', 'inc', $basename);
-    my $dest   = file(__FILE__)->parent->file($basename);
+    my $source = file(__FILE__)->parent->parent->parent->parent->file('Archive-Libarchive-XS', 'inc', $basename);
+    my $dest   = file(__FILE__)->parent->parent->file($basename);
     say $source->absolute;
     $dest->spew(scalar $source->slurp);
   }
@@ -52,13 +53,13 @@ do { # import from inc
 
 do { # import examples from XS version
 
-  my $source = file(__FILE__)->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('example');
+  my $source = file(__FILE__)->parent->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('example');
   
   unless(-d $source)
   {
     die "first checkout Archive::Libarchive::XS";
   }
-  my $dest = file(__FILE__)->parent->parent->subdir('example');
+  my $dest = file(__FILE__)->parent->parent->parent->subdir('example');
   
   foreach my $example ($source->children)
   {
@@ -78,8 +79,8 @@ do { # import examples from XS version
 
 do { # import tests from XS version
 
-  my $source = file(__FILE__)->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('t');
-  my $dest = file(__FILE__)->parent->parent->subdir('t');
+  my $source = file(__FILE__)->parent->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('t');
+  my $dest = file(__FILE__)->parent->parent->parent->subdir('t');
 
   foreach my $archive ($source->children)
   {
@@ -103,20 +104,20 @@ do { # import tests from XS version
 do { # import documentation
   use Pod::Abstract;
 
-  my $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS.pm ));
-  my $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI.pm ));
+  my $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS.pm ));
+  my $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI.pm ));
   doco($source, $dest);
 
-  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Constant.pod ));
-  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
+  $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Constant.pod ));
+  $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
   doco($source, $dest);
 
-  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Callback.pm ));
-  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Callback.pm ));
+  $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Callback.pm ));
+  $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Callback.pm ));
   doco($source, $dest);
   
-  $source = file(__FILE__)->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Function.pod ));
-  $dest   = file(__FILE__)->parent->parent->file(qw( lib Archive Libarchive FFI Function.pod ));
+  $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Function.pod ));
+  $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Function.pod ));
   
   my $doc = $source->slurp;
   $doc =~ s/XS/FFI/g;

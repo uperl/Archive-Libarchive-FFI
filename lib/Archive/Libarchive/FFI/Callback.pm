@@ -37,6 +37,17 @@ use constant {
 
 my %callbacks;
 
+do {
+  no warnings 'redefine';
+  sub _attach_function ($$$;$)
+  {
+    eval {
+      attach_function($_[0], $_[1], $_[2], $_[3]);
+    };
+    warn $@ if $@ && $ENV{ARCHIVE_LIBARCHIVE_FFI_VERBOSE};
+  }
+};
+
 my $myopen = FFI::Raw::Callback->new(sub {
   my($archive) = @_;
   my $status = eval {
@@ -123,7 +134,7 @@ my $myclose = FFI::Raw::Callback->new(sub
   $status;
 }, _int, _ptr, _ptr);
 
-attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   my($cb, $archive, $cd, $open, $write, $close) = @_;
   $callbacks{$archive}->[CB_DATA] = $cd;
@@ -151,7 +162,7 @@ sub archive_read_open ($$$$$)
   archive_read_open2($archive, $data, $open, $read, undef, $close);
 }
 
-attach_function 'archive_read_open2', [ _ptr, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_read_open2', [ _ptr, _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   my($cb, $archive, $cd, $open, $read, $skip, $close) = @_;
   $callbacks{$archive}->[CB_DATA] = $cd;
@@ -197,10 +208,10 @@ foreach my $name (qw( open read skip close seek ))
     }
   };die $@ if $@;
   
-  attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
+  _attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
 }
 
-attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
+_attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
 {
   my($cb, $archive, $buffer) = @_;
   my $length = do { use bytes; length $buffer };
@@ -209,7 +220,7 @@ attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
   $cb->($archive, $ptr, $length);
 };
 
-attach_function 'archive_read_free', [ _ptr ], _int, sub
+_attach_function 'archive_read_free', [ _ptr ], _int, sub
 {
   my($cb, $archive) = @_;
   my $ret = $cb->($archive);
@@ -217,7 +228,7 @@ attach_function 'archive_read_free', [ _ptr ], _int, sub
   $ret;
 };
 
-attach_function 'archive_write_free', [ _ptr ], _int, sub
+_attach_function 'archive_write_free', [ _ptr ], _int, sub
 {
   my($cb, $archive) = @_;
   my $ret = $cb->($archive);
@@ -262,7 +273,7 @@ my $mylook_group_cleanup = FFI::Raw::Callback->new(sub {
   delete $lookups{$archive};
 }, _void, _ptr);
 
-attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
   if(defined $look_cb || defined $clean_cb)
@@ -273,7 +284,7 @@ attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ]
   return $cb->($archive,0,0,0);
 };
 
-attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+_attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
   my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
   if(defined $look_cb || defined $clean_cb)

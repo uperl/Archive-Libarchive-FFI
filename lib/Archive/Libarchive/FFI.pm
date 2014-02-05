@@ -87,10 +87,22 @@ _attach 'archive_file_count',                            [ _ptr ], _int;
 _attach 'archive_format',                                [ _ptr ], _int;
 _attach 'archive_format_name',                           [ _ptr ], _str;
 _attach 'archive_seek_data',                             [ _ptr, _int64, _int ], _int64;
-_attach 'archive_error_string',                          [ _ptr ], _str;
+
+if(archive_version_number() >= 3000000)
+{
+  _attach 'archive_error_string',                          [ _ptr ], _str;
+}
+else
+{
+  _attach_function [ 'archive_error_string' => '_archive_error_string' ], [ _ptr ], _str, sub {
+    my($sub, $archive) = @_;
+    my $ret = $sub->($archive);
+    return if $ret eq '(Empty error message)';
+    return $ret;
+  };
+}
 
 _attach 'archive_read_new',                              undef, _ptr;
-_attach 'archive_read_support_filter_all',               [ _ptr ], _int;
 _attach 'archive_read_support_format_all',               [ _ptr ], _int;
 _attach 'archive_read_open1',                            [ _ptr ], _int;
 _attach 'archive_read_open_filename',                    [ _ptr, _str, _int ], _int;
@@ -211,7 +223,6 @@ _attach 'archive_entry_uid',                             [ _ptr ], _uid_t;
 _attach 'archive_entry_copy_sourcepath',                 [ _ptr, _str ], _void;
 _attach 'archive_entry_acl',                             [ _ptr ], _ptr;
 _attach 'archive_entry_acl_clear',                       [ _ptr ], _int;
-_attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _int, _int, _str ], _int;
 _attach 'archive_entry_acl_reset',                       [ _ptr, _int ], _int;
 _attach 'archive_entry_acl_text',                        [ _ptr, _int ], _str;
 _attach 'archive_entry_acl_count',                       [ _ptr, _int ], _int;
@@ -219,6 +230,18 @@ _attach 'archive_entry_sparse_clear',                    [ _ptr ], _void;
 _attach 'archive_entry_sparse_add_entry',                [ _ptr, _int64, _int64 ], _void;
 _attach 'archive_entry_sparse_count',                    [ _ptr ], _int;
 _attach 'archive_entry_sparse_reset',                    [ _ptr ], _int;
+
+if(archive_version_number() >= 3000000)
+{
+  _attach 'archive_entry_acl_add_entry',                   [ _ptr, _int, _int, _int, _int, _str ], _int;
+}
+else
+{
+  _attach_function [ 'archive_entry_acl_add_entry' => '_archive_entry_acl_add_entry' ], [ _ptr, _int, _int, _int, _int, _str ], _void, sub {
+    shift->(@_);
+    ARCHIVE_OK();
+  };
+}
 
 _attach 'archive_entry_linkresolver_free',               [ _ptr ], _void;
 _attach 'archive_entry_linkresolver_new',                undef, _ptr;
@@ -259,12 +282,40 @@ _attach 'archive_match_include_file_time',               [ _ptr, _int, _str ], _
 _attach 'archive_match_include_time',                    [ _ptr, _int, _time_t, _long ], _int;
 _attach 'archive_match_path_unmatched_inclusions',       [ _ptr ], _int;
 
-_attach "archive_read_support_filter_$_",  [ _ptr ], _int
-  for qw( bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz );
+# TODO: also support alternate names for
+#       archive_read_support_filter_program => archive_read_support_compression_program
+#       archive_read_support_filter_program_signature => archive_read_support_compression_program_signature
+foreach my $type (qw( all bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz ))
+{
+  my $name = "archive_read_support_filter_$type";
+  eval {
+    attach_function $name, [ _ptr ], _int;
+  };
+  if($@)
+  {
+    my $real = "archive_read_support_compression_$type";
+    eval { attach_function [ $real => $name ], [ _ptr ], _int };
+  }
+}
+
 _attach "archive_read_support_format_$_",  [ _ptr ], _int
   for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
-_attach "archive_write_add_filter_$_", [ _ptr ], _int
-  for qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz );
+
+# TODO: also support alternate names for
+#       archive_write_add_filter_program => archive_write_set_compression_program
+foreach my $type (qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz ))
+{
+  my $name = "archive_write_add_filter_$type";
+  eval {
+    attach_function $name, [ _ptr ], _int;
+  };
+  if($@)
+  {
+    my $real = "archive_write_set_compression_$type";
+    eval { attach_function [ $real => $name ], [ _ptr ], _int };
+  }
+}  
+
 _attach "archive_write_set_format_$_", [ _ptr ], _int
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
