@@ -47,7 +47,6 @@ ffi_lib do {
 ffi_lib(Alien::Libarchive->new);
 
 require Archive::Libarchive::FFI::Constant;
-require Archive::Libarchive::FFI::Callback;
 
 $Archive::Libarchive::FFI::on_attach ||= sub {};
 
@@ -89,6 +88,9 @@ sub _attach ($$$)
 }
 
 _attach 'archive_version_number',                        undef, _int;
+
+require Archive::Libarchive::FFI::Callback;
+
 _attach 'archive_version_string',                        undef, _str;
 _attach 'archive_clear_error',                           [ _ptr ], _void;
 _attach 'archive_copy_error',                            [ _ptr ], _int;
