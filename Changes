@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.06      2014-02-05 15:14:53 -0500
   - callback functions were made optional, as they are in the XS version
     (support for older versions of libarchive)
   - various fixes to support libarchive 2.x
