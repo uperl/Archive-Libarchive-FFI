@@ -4,7 +4,7 @@ use v5.10;
 use Path::Class qw( file dir );
 
 exit if $ENV{TRAVIS_BUILD_ID};
-exit if $^O eq 'freebsd';
+exit if $^O eq 'freebsd' || $^O eq 'netbsd';
 
 require Archive::Libarchive::XS;
 

@@ -220,7 +220,7 @@ _attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
   $cb->($archive, $ptr, $length);
 };
 
-_attach_function 'archive_read_free', [ _ptr ], _int, sub
+_attach_function archive_version_number() >= 3000000 ? 'archive_read_free' : [ archive_read_finish => 'archive_read_free' ], [ _ptr ], _int, sub
 {
   my($cb, $archive) = @_;
   my $ret = $cb->($archive);
@@ -228,7 +228,7 @@ _attach_function 'archive_read_free', [ _ptr ], _int, sub
   $ret;
 };
 
-_attach_function 'archive_write_free', [ _ptr ], _int, sub
+_attach_function archive_version_number() >= 3000000 ? 'archive_write_free' : [ archive_write_finish => 'archive_write_free' ], [ _ptr ], _int, sub
 {
   my($cb, $archive) = @_;
   my $ret = $cb->($archive);

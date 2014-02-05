@@ -44,6 +44,7 @@ foreach my $function_name (qw( archive_read_support_filter_program_signature arc
 
     SKIP: {
       skip 'requires ARCHIVE_FILTER_PROGRAM', 1 unless eval { ARCHIVE_FILTER_PROGRAM() };
+      skip 'requires archive_filter_code', 1 unless Archive::Libarchive::FFI->can('archive_filter_code');
       is archive_filter_code($a, 0), ARCHIVE_FILTER_PROGRAM(), 'archive_filter_code';
     };
     is archive_format($a), ARCHIVE_FORMAT_TAR_USTAR, 'archive_format';
