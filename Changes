@@ -1,6 +1,13 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - callback functions were made optional, as they are in the XS version
+    (support for older versions of libarchive)
+  - various fixes to support libarchive 2.x
+    including versons of libarchive that do not have archive_read/write_free
+    (use archive_read/write_finish instead)
+  - fixed argument count bug that only manifested itself on FreeBSD (GH#13)
+  - build fixes for NetBSD
 
 0.05      2014-02-04 13:24:04 -0500
   - bump version to match Archive::Libarchive::XS
