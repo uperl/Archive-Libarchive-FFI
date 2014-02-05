@@ -516,7 +516,8 @@ _attach_function 'archive_entry_linkify', [ _ptr, _ptr, _ptr ], _void, sub
 
 _attach_function [ 'archive_entry_copy_fflags_text' => '_archive_entry_set_fflags_text' ], [ _ptr, _str ], _void, sub
 {
-  shift->(@_);
+  my($sub, $entry, $text) = @_;
+  $sub->($entry, $text);
   ARCHIVE_OK();
 };
 
