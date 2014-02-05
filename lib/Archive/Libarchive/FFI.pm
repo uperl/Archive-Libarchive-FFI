@@ -63,7 +63,17 @@ sub _attach ($$$)
 {
   $Archive::Libarchive::FFI::on_attach->(@_);
   my($name, $arg, $ret) = @_;
-  $name = [ $name => "_$name" ] if grep { $_ == FFI::Raw::str } ($ret, @$arg);
+  if(grep { $_ == FFI::Raw::str } ($ret, @$arg))
+  {
+    if(ref $name)
+    {
+      $name->[1] = "_" . $name->[1];
+    }
+    else
+    {
+      $name = [ $name => "_$name" ] 
+    }
+  }
   if($ret == _void)
   {
     _attach_function $name, $arg, $ret, sub {
@@ -110,7 +120,6 @@ _attach 'archive_read_data_skip',                        [ _ptr ], _int;
 _attach 'archive_read_close',                            [ _ptr ], _int;
 _attach 'archive_read_append_filter',                    [ _ptr, _int ], _int;
 _attach 'archive_read_append_filter_program',            [ _ptr, _str ], _int;
-_attach 'archive_read_support_filter_program',           [ _ptr, _str ], _int;
 _attach 'archive_read_support_format_by_code',           [ _ptr, _int ], _int;
 _attach 'archive_read_header_position',                  [ _ptr ], _int64;
 _attach 'archive_read_set_filter_option',                [ _ptr, _str, _str, _str ], _int;
@@ -123,6 +132,16 @@ _attach 'archive_read_extract',                          [ _ptr, _ptr, _int ], _
 _attach 'archive_read_extract2',                         [ _ptr, _ptr, _ptr ], _int;
 _attach 'archive_read_extract_set_skip_file',            [ _ptr, _int64, _int64 ], _void;
 
+if(archive_version_number() >= 3000000)
+{
+  _attach 'archive_read_support_filter_program', [ _ptr, _str ], _int;
+}
+else
+{
+  _attach ['archive_read_support_compression_program' => 'archive_read_support_filter_program'], [ _ptr, _str ], _int;
+}
+
+
 _attach 'archive_filter_code',                           [ _ptr, _int ], _int;
 _attach 'archive_filter_count',                          [ _ptr ], _int;
 _attach 'archive_filter_name',                           [ _ptr, _int ], _str;
@@ -131,7 +150,6 @@ _attach 'archive_filter_bytes',                          [ _ptr, _int ], _int64;
 _attach 'archive_write_new',                             undef, _ptr;
 _attach 'archive_write_add_filter',                      [ _ptr, _int ], _int;
 _attach 'archive_write_add_filter_by_name',              [ _ptr, _str ], _int;
-_attach 'archive_write_add_filter_program',              [ _ptr, _str ], _int;
 _attach 'archive_write_set_format',                      [ _ptr, _int ], _int;
 _attach 'archive_write_set_format_by_name',              [ _ptr, _str ], _int;
 _attach 'archive_write_open_filename',                   [ _ptr, _str ], _int;
@@ -156,6 +174,16 @@ _attach 'archive_write_get_bytes_in_last_block',         [ _ptr ], _int;
 _attach 'archive_write_get_bytes_per_block',             [ _ptr ], _int;
 _attach 'archive_write_set_bytes_in_last_block',         [ _ptr, _int ], _int;
 _attach 'archive_write_set_bytes_per_block',             [ _ptr, _int ], _int;
+
+if(archive_version_number() >= 3000000)
+{
+  _attach 'archive_write_add_filter_program', [ _ptr, _str ], _int;
+}
+else
+{
+  _attach ['archive_write_set_compression_program' => 'archive_write_add_filter_program'], [ _ptr, _str ], _int;
+}
+
 
 _attach 'archive_entry_clear',                           [ _ptr ], _void;
 _attach 'archive_entry_clone',                           [ _ptr ], _ptr;
@@ -282,9 +310,6 @@ _attach 'archive_match_include_file_time',               [ _ptr, _int, _str ], _
 _attach 'archive_match_include_time',                    [ _ptr, _int, _time_t, _long ], _int;
 _attach 'archive_match_path_unmatched_inclusions',       [ _ptr ], _int;
 
-# TODO: also support alternate names for
-#       archive_read_support_filter_program => archive_read_support_compression_program
-#       archive_read_support_filter_program_signature => archive_read_support_compression_program_signature
 foreach my $type (qw( all bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz ))
 {
   my $name = "archive_read_support_filter_$type";
@@ -301,8 +326,6 @@ foreach my $type (qw( all bzip2 compress gzip grzip lrzip lzip lzma lzop none rp
 _attach "archive_read_support_format_$_",  [ _ptr ], _int
   for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 
-# TODO: also support alternate names for
-#       archive_write_add_filter_program => archive_write_set_compression_program
 foreach my $type (qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz ))
 {
   my $name = "archive_write_add_filter_$type";
@@ -498,7 +521,9 @@ _attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
 {
   my($cb, $archive, $command, $signature) = @_;
   $cb->($archive, $command, scalar_to_buffer($signature));
-} for qw( archive_read_append_filter_program_signature archive_read_support_filter_program_signature );
+} for (
+  'archive_read_append_filter_program_signature',
+  archive_version_number() >= 3000000 ? 'archive_read_support_filter_program_signature' : [ archive_read_support_compression_program_signature => 'archive_read_support_filter_program_signature']);
 
 # this is an unusual one which doesn't need to be decoded
 # because it should always be ASCII
