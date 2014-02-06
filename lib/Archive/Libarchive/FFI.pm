@@ -865,6 +865,15 @@ read:
  # or
  my $decoded_content = decode('KOI8-R', $raw);
 
+=head1 SUPPORT
+
+If you find bugs, please open an issue on the project GitHub repository:
+
+L<https://github.com/plicease/Archive-Libarchive-FFI/issues?state=open>
+
+If you have a fix, please open a pull request.  You can see the CONTRIBUTING
+file for traps, hints and pitfalls.
+
 =head1 CAVEATS
 
 Archive and entry objects are really pointers to opaque C structures
