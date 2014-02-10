@@ -1,7 +1,11 @@
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More;
 use Archive::Libarchive::FFI qw( :all );
+
+plan skip_all => 'requires archive_read_disk_new'
+  unless Archive::Libarchive::FFI->can('archive_read_disk_new');
+plan tests => 5;
 
 my $r;
 

@@ -168,6 +168,8 @@ subtest fflags => sub {
 };  
 
 subtest link => sub {
+  plan skip_all => 'requires archive_entry_set_hardlink'
+    unless Archive::Libarchive::FFI->can('archive_entry_set_hardlink');
   plan tests => 7;
   
   $r = archive_entry_set_hardlink($e, "hardlinkname");

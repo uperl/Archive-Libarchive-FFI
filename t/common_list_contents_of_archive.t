@@ -61,7 +61,11 @@ foreach my $mode (qw( memory filename callback fh ))
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 1)";
 
-      is archive_file_count($a), 1, "archive_file_count = 1";
+      SKIP: {
+        skip 'requires archive_file_count'
+          unless Archive::Libarchive::FFI->can('archive_file_count');
+        is archive_file_count($a), 1, "archive_file_count = 1";
+      };
 
       is archive_entry_pathname($entry), "foo/foo.txt", 'archive_entry_pathname($entry) = foo/foo.txt';
 
@@ -95,7 +99,11 @@ foreach my $mode (qw( memory filename callback fh ))
         }
       }
 
-      is archive_file_count($a), 2, "archive_file_count = 2";
+      SKIP: {
+        skip 'requires archive_file_count'
+          unless Archive::Libarchive::FFI->can('archive_file_count');
+        is archive_file_count($a), 2, "archive_file_count = 2";
+      };
 
       is archive_entry_pathname($entry), "foo/bar.txt", 'archive_entry_pathname($entry) = foo/bar.txt';
 
@@ -105,7 +113,11 @@ foreach my $mode (qw( memory filename callback fh ))
       $r = archive_read_next_header($a, $entry);
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 3)";
 
-      is archive_file_count($a), 3, "archive_file_count = 3";
+      SKIP: {
+        skip 'requires archive_file_count'
+          unless Archive::Libarchive::FFI->can('archive_file_count');
+        is archive_file_count($a), 3, "archive_file_count = 3";
+      };
 
       is archive_entry_pathname($entry), "foo/baz.txt", 'archive_entry_pathname($entry) = foo/baz.txt';
 

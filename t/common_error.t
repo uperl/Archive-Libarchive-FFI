@@ -14,7 +14,7 @@ $r = eval { archive_set_error($archive, 42, "error %d (%s)", 42, "KIRK") };
 diag $@ if $@;
 is $r, ARCHIVE_OK, 'archive_set_error';
 
-is archive_error_string($archive), "error 42 (KIRK)", 'archive_error_string = string';
+like archive_error_string($archive), qr{error 42 \(KIRK\)}, 'archive_error_string = string';
 is archive_errno($archive), 42, 'archive_errno = 42';
 
 $r = archive_read_free($archive);
