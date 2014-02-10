@@ -81,14 +81,19 @@ my_set_lookup(setf_t *setf, struct archive *archive, lookup_cb_t lookup, cleanup
   return ret;
 }
 
+
+#if defined(HAS_archive_read_disk_set_gname_lookup)
 int
 my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
   return my_set_lookup((setf_t*)archive_read_disk_set_gname_lookup, archive, lookup, cleanup);
 }
+#endif
 
+#if defined(HAS_archive_read_disk_set_uname_lookup)
 int
 my_archive_read_disk_set_uname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
   return my_set_lookup((setf_t*)archive_read_disk_set_uname_lookup, archive, lookup, cleanup);
 }
+#endif
