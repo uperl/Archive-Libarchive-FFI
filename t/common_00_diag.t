@@ -145,7 +145,7 @@ diag 'write formats:';
 foreach my $format (sort grep { s/^archive_write_set_format_// } keys %Archive::Libarchive::FFI::)
 {
   next if $format =~ /^(program|by_name)$/;
-  if(Archive::Libarchive::FFI::archive_version_number() < 3000000 && "Archive::Libarchive::FFI" =~ /ffi/i)
+  if(Archive::Libarchive::FFI::archive_version_number() < 3000000 && "Archive::Libarchive::FFI" =~ /(ffi|any)/i)
   {
     if(($format =~ /^(ar_bsd|ar_svr4|cpio|cpio_newc|mtree)$/ && $^O eq 'freebsd') || $^O eq 'netbsd' || $^O eq 'midnightbsd')
     {
