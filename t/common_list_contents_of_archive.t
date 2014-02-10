@@ -62,7 +62,7 @@ foreach my $mode (qw( memory filename callback fh ))
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 1)";
 
       SKIP: {
-        skip 'requires archive_file_count'
+        skip 'requires archive_file_count', 1
           unless Archive::Libarchive::FFI->can('archive_file_count');
         is archive_file_count($a), 1, "archive_file_count = 1";
       };
@@ -100,7 +100,7 @@ foreach my $mode (qw( memory filename callback fh ))
       }
 
       SKIP: {
-        skip 'requires archive_file_count'
+        skip 'requires archive_file_count', 1
           unless Archive::Libarchive::FFI->can('archive_file_count');
         is archive_file_count($a), 2, "archive_file_count = 2";
       };
@@ -114,7 +114,7 @@ foreach my $mode (qw( memory filename callback fh ))
       is $r, ARCHIVE_OK, "r = ARCHIVE_OK (archive_read_next_header 3)";
 
       SKIP: {
-        skip 'requires archive_file_count'
+        skip 'requires archive_file_count', 1
           unless Archive::Libarchive::FFI->can('archive_file_count');
         is archive_file_count($a), 3, "archive_file_count = 3";
       };
