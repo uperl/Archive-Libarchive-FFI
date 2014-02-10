@@ -3,6 +3,20 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#if ARCHIVE_VERSION_NUMBER < 3000000
+# if !defined(__LA_INT64_T)
+#  if defined(_WIN32) && !defined(__CYGWIN__)
+#   define __LA_INT64_T    __int64
+#  else
+#   if defined(_SCO_DS)
+#    define __LA_INT64_T    long long
+#   else
+#    define __LA_INT64_T    int64_t
+#   endif
+#  endif
+# endif
+#endif
+
 struct user_data_t;
 
 typedef void (*lookup_cb_t)(struct user_data_t *, __LA_INT64_T);
