@@ -2,6 +2,7 @@
 #include <string.h>
 #include <archive.h>
 #include <archive_entry.h>
+#include <ffi_util.h>
 
 #if ARCHIVE_VERSION_NUMBER < 3000000
 # if !defined(__LA_INT64_T)
@@ -51,7 +52,7 @@ my_cleanup(void *data)
   free(ud);
 }
 
-void
+FFI_UTIL_EXPORT void
 my_set_user_data_name(struct user_data_t *ud, const char *name)
 {
   int len;
@@ -97,7 +98,7 @@ my_set_lookup(setf_t *setf, struct archive *archive, lookup_cb_t lookup, cleanup
 
 
 #if defined(HAS_archive_read_disk_set_gname_lookup)
-int
+FFI_UTIL_EXPORT int
 my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
   return my_set_lookup((setf_t*)archive_read_disk_set_gname_lookup, archive, lookup, cleanup);
@@ -105,7 +106,7 @@ my_archive_read_disk_set_gname_lookup(struct archive *archive, lookup_cb_t looku
 #endif
 
 #if defined(HAS_archive_read_disk_set_uname_lookup)
-int
+FFI_UTIL_EXPORT int
 my_archive_read_disk_set_uname_lookup(struct archive *archive, lookup_cb_t lookup, cleanup_cb_t cleanup)
 {
   return my_set_lookup((setf_t*)archive_read_disk_set_uname_lookup, archive, lookup, cleanup);
