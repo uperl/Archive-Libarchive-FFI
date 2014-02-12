@@ -24,15 +24,24 @@ sub ffi_lib ($)
   {
     if(eval { $lib->isa('Alien::Libarchive') })
     {
-      if($lib->install_type eq 'share')
+      if($^O =~ /^(MSWin32|cygwin)/)
       {
-        if($^O eq 'MSWin32')
+        if($lib->install_type eq 'share')
         {
-          die 'fixme';
-        }
-        elsif($^O eq 'cygwin')
-        {
-          die 'fixme';
+          require File::Spec;
+          my $dir = File::Spec->catdir($lib->dist_dir, 'bin');
+          my $dh;
+          opendir($dh, $dir);
+          foreach my $file (readdir $dh)
+          {
+            next if $file =~ /^\./;
+            next unless $file =~ /\.dll$/i;
+            my $path = File::Spec->catfile($dir, $file);
+            $path = Cygwin::posix_to_win_path($path) if $FFI::Raw::VERSION eq '0.27';
+            push @libs, $path;
+          }
+          closedir $dh;
+          return;
         }
       }
       push @libs, DynaLoader::dl_findfile(shellwords $lib->libs);
