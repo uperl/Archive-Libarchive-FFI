@@ -43,6 +43,11 @@ sub ffi_lib ($)
           closedir $dh;
           return;
         }
+        elsif($^O eq 'cygwin')
+        {
+          push @libs, 'cygarchive-2.dll';
+          return;
+        }
       }
       push @libs, DynaLoader::dl_findfile(shellwords $lib->libs);
     }
