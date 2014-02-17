@@ -37,7 +37,6 @@ sub ffi_lib ($)
             next if $file =~ /^\./;
             next unless $file =~ /\.dll$/i;
             my $path = File::Spec->catfile($dir, $file);
-            $path = Cygwin::posix_to_win_path($path) if $FFI::Raw::VERSION eq '0.27';
             push @libs, $path;
           }
           closedir $dh;
