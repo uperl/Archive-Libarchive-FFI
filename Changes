@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.0701    2014-02-21 17:35:06 -0500
   - require FFI::Raw 0.28 and FFI::Util 0.06 for recent bugfixes
   
 0.07      2014-02-10 18:54:14 -0500
