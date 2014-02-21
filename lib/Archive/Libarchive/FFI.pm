@@ -2,8 +2,6 @@ package Archive::Libarchive::FFI;
 
 use strict;
 use warnings;
-use Alien::Libarchive;
-use I18N::Langinfo ();
 use Exporter::Tidy ();
 use Encode ();
 use Carp qw( croak );
@@ -25,6 +23,9 @@ use FFI::Util qw(
 
 BEGIN {
 
+  require Alien::Libarchive;
+  Alien::Libarchive->import unless $^O eq 'MSWin32';
+
   if(eval { require FFI::Sweet })
   {
     FFI::Sweet->import;
@@ -33,6 +34,16 @@ BEGIN {
   {
     require Archive::Libarchive::FFI::SweetLite;
     Archive::Libarchive::FFI::SweetLite->import;
+  }
+
+  if($^O eq 'MSWin32')
+  {
+    eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
+      no warnings;
+      sub _uid_t () { FFI::Raw::ushort() }
+      sub _gid_t () { FFI::Raw::ushort() }
+    };
+    die $@ if $@;
   }
 }
 
@@ -590,19 +601,37 @@ foreach my $type (qw( uname gname ))
   };
 }
 
-sub archive_perl_codeset
+if(eval q{ require I18N::Langinfo; 1 })
 {
-  I18N::Langinfo::langinfo(I18N::Langinfo::CODESET());
+  eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
+    sub archive_perl_codeset
+    {
+      I18N::Langinfo::langinfo(I18N::Langinfo::CODESET());
+    }
+    sub archive_perl_utf8_mode
+    {
+      int(I18N::Langinfo::langinfo(I18N::Langinfo::CODESET()) eq 'UTF-8');
+    }
+  };
+  die $@ if $@;
 }
-
-sub archive_perl_utf8_mode
+else
 {
-  int(I18N::Langinfo::langinfo(I18N::Langinfo::CODESET()) eq 'UTF-8');
+  eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
+    sub archive_perl_codeset
+    {
+      'ANSI_X3.4-1968';
+    }
+    sub archive_perl_utf8_mode
+    {
+      0;
+    }
+  };  
 }
 
 require Archive::Libarchive::FFI::Common;
 
-eval q{
+eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
   use Exporter::Tidy
     func  => [grep /^archive_/,       keys %Archive::Libarchive::FFI::],
     const => [grep /^(AE_|ARCHIVE_)/, keys %Archive::Libarchive::FFI::];

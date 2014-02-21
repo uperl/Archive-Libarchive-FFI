@@ -22,7 +22,7 @@ sub ffi_lib ($)
   my $lib = shift;
   if(ref $lib)
   {
-    if(eval { $lib->isa('Alien::Libarchive') })
+    if(eval { $lib->isa('Alien::Libarchive') } || eval { $lib->isa('Alien::Libarchive::MSWin32') })
     {
       if($^O =~ /^(MSWin32|cygwin)/)
       {
