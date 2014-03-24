@@ -74,7 +74,7 @@ my $mywrite = FFI::Raw::Callback->new(sub
     return ARCHIVE_FATAL();
   }
   $status;
-}, _int, _ptr, _ptr, _ptr, _int64);
+}, _int, _ptr, _ptr, _ptr, _size_t);
 
 my $myread = FFI::Raw::Callback->new(sub
 {
