@@ -499,7 +499,7 @@ _attach_function 'archive_entry_xattr_next', [ _ptr, _ptr, _ptr, _ptr ], _int, s
   
   my $ret = $_[0]->($_[1], $name, $ptr, $size);
   $_[2] = deref_str_get($$name);
-  $_[3] = buffer_to_scalar(deref_ptr_get($$ptr), deref_int64_get($$size));
+  $_[3] = buffer_to_scalar(deref_ptr_get($$ptr), deref_size_t_get($$size));
   
   $ret;
 };
@@ -511,7 +511,7 @@ _attach_function 'archive_entry_mac_metadata', [ _ptr, _ptr ], _ptr, sub
   my($cb, $archive) = @_;
   my $size = FFI::Raw::MemPtr->new_from_ptr(0);
   my $ptr = $cb->($archive, $size);
-  my $buffer = buffer_to_scalar($ptr, deref_uint64_get($$size));
+  my $buffer = buffer_to_scalar($ptr, deref_size_t_get($$size));
 };
 
 _attach_function 'archive_set_error', [ _ptr, _int, _str, _str ], _void, sub
