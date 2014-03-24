@@ -36,15 +36,6 @@ BEGIN {
     Archive::Libarchive::FFI::SweetLite->import;
   }
 
-  if($^O eq 'MSWin32')
-  {
-    eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
-      no warnings;
-      sub _uid_t () { FFI::Raw::ushort() }
-      sub _gid_t () { FFI::Raw::ushort() }
-    };
-    die $@ if $@;
-  }
 }
 
 # ABSTRACT: Perl bindings to libarchive via FFI
@@ -228,7 +219,7 @@ _attach 'archive_entry_dev',                             [ _ptr ], _dev_t;
 _attach 'archive_entry_devmajor',                        [ _ptr ], _dev_t;
 _attach 'archive_entry_devminor',                        [ _ptr ], _dev_t;
 _attach 'archive_entry_fflags_text',                     [ _ptr ], _str;
-_attach 'archive_entry_gid',                             [ _ptr ], _gid_t;
+_attach 'archive_entry_gid',                             [ _ptr ], _int64;
 _attach 'archive_entry_rdev',                            [ _ptr ], _int64;
 _attach 'archive_entry_rdevmajor',                       [ _ptr ], _int64;
 _attach 'archive_entry_rdevminor',                       [ _ptr ], _int64;
@@ -245,7 +236,7 @@ _attach 'archive_entry_set_dev',                         [ _ptr, _dev_t ], _void
 _attach 'archive_entry_set_devmajor',                    [ _ptr, _dev_t ], _void;
 _attach 'archive_entry_set_devminor',                    [ _ptr, _dev_t ], _void;
 _attach 'archive_entry_set_fflags',                      [ _ptr, _ulong, _ulong ], _void;
-_attach 'archive_entry_set_gid',                         [ _ptr, _gid_t ], _void;
+_attach 'archive_entry_set_gid',                         [ _ptr, _int64 ], _void;
 _attach 'archive_entry_set_ino',                         [ _ptr, _int64 ], _void;
 _attach 'archive_entry_set_link',                        [ _ptr, _str ], _void;
 _attach 'archive_entry_set_mode',                        [ _ptr, _int ], _void;
@@ -260,7 +251,7 @@ _attach 'archive_entry_unset_size',                      [ _ptr ], _void;
 _attach 'archive_entry_xattr_clear',                     [ _ptr ], _void;
 _attach 'archive_entry_xattr_count',                     [ _ptr ], _int;
 _attach 'archive_entry_xattr_reset',                     [ _ptr ], _int;
-_attach 'archive_entry_uid',                             [ _ptr ], _uid_t;
+_attach 'archive_entry_uid',                             [ _ptr ], _int64;
 _attach 'archive_entry_copy_sourcepath',                 [ _ptr, _str ], _void;
 _attach 'archive_entry_acl',                             [ _ptr ], _ptr;
 _attach 'archive_entry_acl_clear',                       [ _ptr ], _int;
@@ -310,8 +301,8 @@ _attach 'archive_match_excluded',                        [ _ptr, _ptr ], _int;
 _attach 'archive_match_path_excluded',                   [ _ptr, _ptr ], _int;
 _attach 'archive_match_time_excluded',                   [ _ptr, _ptr ], _int;
 _attach 'archive_match_owner_excluded',                  [ _ptr, _ptr ], _int;
-_attach 'archive_match_include_gid',                     [ _ptr, _gid_t ], _int;
-_attach 'archive_match_include_uid',                     [ _ptr, _uid_t ], _int;
+_attach 'archive_match_include_gid',                     [ _ptr, _int64 ], _int;
+_attach 'archive_match_include_uid',                     [ _ptr, _int64 ], _int;
 _attach 'archive_match_include_gname',                   [ _ptr, _str ], _int;
 _attach 'archive_match_include_uname',                   [ _ptr, _str ], _int;
 _attach 'archive_match_exclude_entry',                   [ _ptr, _int, _ptr ], _int;
