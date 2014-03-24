@@ -2,6 +2,12 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.0703    2014-03-24 17:17:33 -0400
+  - fixed some type declarations which were causing failures on 32bit Linux
+    (possibly others)
+    specifically: use int64_t instead of gid_t/uid_t for UID/GID types
+                  use size_t instead of int64_t for buffer sizes
+
 0.0702    2014-02-22 10:30:50 -0500
   - require FFI::Raw 0.28 and FFI::Util 0.06 for recent bugfixes
   
