@@ -17,7 +17,6 @@ use FFI::Util qw(
   scalar_to_buffer
   deref_int_get
   deref_str_get
-  locate_module_share_lib
   :types
 );
 
@@ -40,11 +39,6 @@ BEGIN {
 
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
-
-ffi_lib do {
-  my $file = locate_module_share_lib();
-  \$file;
-};
 
 ffi_lib(Alien::Libarchive->new);
 
