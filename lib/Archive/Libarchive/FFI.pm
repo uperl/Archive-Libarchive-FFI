@@ -560,38 +560,6 @@ _attach_function 'archive_read_disk_entry_from_file', [ _ptr, _ptr, _int, _ptr ]
   $cb->($archive, $entry, $fd, 0);
 };
 
-_attach_function [ 'my_set_user_data_name' => '_my_set_user_data_name' ], [ _ptr, _str ], _void;
-
-foreach my $type (qw( uname gname ))
-{
-  _attach_function [ "my_archive_read_disk_set_$type\_lookup" => "archive_read_disk_set_$type\_lookup" ], [ _ptr, _ptr, _ptr ], _int, sub
-  {
-    my($cb, $archive, $data, $lookup, $cleanup) = @_;
-
-    # closures are fun.
-    # er.    
-    my $lookup2;
-    my $cleanup2;
-    
-    $lookup2 =  FFI::Raw::Callback->new(sub {
-      my($ptr, $id) = @_;
-      if($lookup)
-      {
-        my $str = $lookup->($data, $id);
-        _my_set_user_data_name($ptr, $str) if defined $str;
-      }
-    }, _void, _ptr, _int64);
-    
-    $cleanup2 = FFI::Raw::Callback->new(sub {
-      $cleanup->($data) if $cleanup;
-      undef $lookup2;
-      undef $cleanup2;
-    }, _void);
-    
-    $cb->($archive, $lookup2, $cleanup2);
-  };
-}
-
 if(eval q{ require I18N::Langinfo; 1 })
 {
   eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{

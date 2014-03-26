@@ -153,7 +153,7 @@ _attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, s
     $callbacks{$archive}->[CB_CLOSE] = $close;
     $close = $myclose;
   }
-  $cb->($archive, 0, $open||0, $write||0, $close||0);
+  $cb->($archive, undef, $open||0, $write||0, $close||0);
 };
 
 sub archive_read_open ($$$$$)
@@ -186,7 +186,7 @@ _attach_function 'archive_read_open2', [ _ptr, _ptr, _ptr, _ptr, _ptr, _ptr ], _
     $callbacks{$archive}->[CB_CLOSE] = $close;
     $close = $myclose;
   }
-  $cb->($archive, 0, $open||0, $read||0, $skip||0, $close||0);
+  $cb->($archive, undef, $open||0, $read||0, $skip||0, $close||0);
 };
 
 sub archive_read_set_callback_data ($$)
@@ -253,10 +253,27 @@ my $mylook_write_user_lookup = FFI::Raw::Callback->new(sub {
 my $mylook_write_group_lookup = FFI::Raw::Callback->new(sub {
   my($archive, $name, $id) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
-  $DB::single = 1;
   return $id unless defined $look_cb;
   $look_cb->($data, $name, $id);
 }, _int64, _ptr, _str, _int64);
+
+my $mylook_read_user_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
+  return undef unless defined $look_cb;
+  my $name = $look_cb->($data, $id);
+  return $name if defined $name;
+  return;
+}, _str, _ptr, _int64);
+
+my $mylook_read_group_lookup = FFI::Raw::Callback->new(sub {
+  my($archive, $id) = @_;
+  my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
+  return undef unless defined $look_cb;
+  my $name = $look_cb->($data, $id);
+  return $name if defined $name;
+  return;
+}, _str, _ptr, _int64);
 
 my $mylook_user_cleanup = FFI::Raw::Callback->new(sub {
   my($archive) = @_;
@@ -268,7 +285,6 @@ my $mylook_user_cleanup = FFI::Raw::Callback->new(sub {
 my $mylook_group_cleanup = FFI::Raw::Callback->new(sub {
   my($archive) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
-  $DB::single = 1;
   $clean_cb->($data) if defined $clean_cb;
   delete $lookups{$archive};
 }, _void, _ptr);
@@ -281,7 +297,7 @@ _attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr 
     $lookups{$archive}->[CB_LOOKUP_USER] = [ $data, $look_cb, $clean_cb ];
     return $cb->($archive, $archive, $mylook_write_user_lookup, $mylook_user_cleanup);
   }
-  return $cb->($archive,0,0,0);
+  return $cb->($archive, undef, undef, undef);
 };
 
 _attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
@@ -292,7 +308,29 @@ _attach_function 'archive_write_disk_set_group_lookup', [ _ptr, _ptr, _ptr, _ptr
     $lookups{$archive}->[CB_LOOKUP_GROUP] = [ $data, $look_cb, $clean_cb ];
     return $cb->($archive, $archive, $mylook_write_group_lookup, $mylook_group_cleanup);
   }
-  return $cb->($archive,0,0,0);
+  return $cb->($archive, undef, undef, undef);
+};
+
+_attach_function 'archive_read_disk_set_uname_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_USER] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_read_user_lookup, $mylook_user_cleanup);
+  }
+  return $cb->($archive, undef, undef, undef);
+};
+
+_attach_function 'archive_read_disk_set_gname_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
+{
+  my($cb, $archive, $data, $look_cb, $clean_cb) = @_;
+  if(defined $look_cb || defined $clean_cb)
+  {
+    $lookups{$archive}->[CB_LOOKUP_GROUP] = [ $data, $look_cb, $clean_cb ];
+    return $cb->($archive, $archive, $mylook_read_group_lookup, $mylook_group_cleanup);
+  }
+  return $cb->($archive, undef, undef, undef);
 };
 
 1;
