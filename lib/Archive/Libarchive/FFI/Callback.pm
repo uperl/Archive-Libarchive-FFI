@@ -211,14 +211,43 @@ foreach my $name (qw( open read skip close seek ))
   _attach_function "archive_read_set_$name\_callback", [ _ptr, _ptr ], _int;
 }
 
-_attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
+if(archive_version_number() >= 3000000)
 {
-  my($cb, $archive, $buffer) = @_;
-  my $length = do { use bytes; length $buffer };
-  my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
-  $callbacks{$archive}->[CB_BUFFER] = $ptr;  # TODO: CB_BUFFER or CB_DATA (or something else?)
-  $cb->($archive, $ptr, $length);
-};
+  _attach_function 'archive_read_open_memory', [ _ptr, _ptr, _size_t ], _int, sub
+  {
+    my($cb, $archive, $buffer) = @_;
+    my $length = do { use bytes; length $buffer };
+    my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
+    $callbacks{$archive}->[CB_BUFFER] = $ptr;  # TODO: CB_BUFFER or CB_DATA (or something else?)
+    $cb->($archive, $ptr, $length);
+  };
+}
+else
+{
+  sub _archive_read_open_memory_read
+  {
+    my($archive, $data) = @_;
+    if($data->{done})
+    {
+      return (ARCHIVE_OK(), '');
+    }
+    else
+    {
+      $data->{done} = 1;
+      return (ARCHIVE_OK, $data->{buffer});
+    }
+  }
+
+  *archive_read_open_memory = sub ($$) {
+    my($archive, $buffer) = @_;
+    my $r = archive_read_open($archive, { buffer => $buffer, done => 0 }, undef, \&_archive_read_open_memory_read, undef);
+    unless($r == ARCHIVE_OK)
+    {
+      warn "error: " . archive_error_string($archive);
+    }
+    $r;
+  };
+}
 
 _attach_function archive_version_number() >= 3000000 ? 'archive_read_free' : [ archive_read_finish => 'archive_read_free' ], [ _ptr ], _int, sub
 {

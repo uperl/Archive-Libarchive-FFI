@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - for libarchive 2.x, use our own Perl implementation of archive_read_open_memory
+    as interfacing with the C version is causing SIGSEGV.
 
 0.0704    2014-03-27 10:41:31 -0400
   - Take advantage of FFI::Raw 0.29's ability to return strings from callbacks
