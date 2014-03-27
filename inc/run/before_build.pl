@@ -3,9 +3,7 @@ use warnings;
 use v5.10;
 use Path::Class qw( file dir );
 
-exit if $ENV{TRAVIS_BUILD_ID};
-exit if $^O eq 'freebsd' || $^O eq 'netbsd';
-exit unless $ENV{USER} eq 'ollisg';
+exit unless $ENV{ARCHIVE_LIBARCHIVE_FFI_BUILD_IMPORT};
 
 require Archive::Libarchive::XS;
 
