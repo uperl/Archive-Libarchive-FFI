@@ -234,14 +234,14 @@ else
     else
     {
       $data->{done} = 1;
-      return (ARCHIVE_OK, $data->{buffer});
+      return (ARCHIVE_OK(), $data->{buffer});
     }
   }
 
   *archive_read_open_memory = sub ($$) {
     my($archive, $buffer) = @_;
     my $r = archive_read_open($archive, { buffer => $buffer, done => 0 }, undef, \&_archive_read_open_memory_read, undef);
-    unless($r == ARCHIVE_OK)
+    unless($r == ARCHIVE_OK())
     {
       warn "error: " . archive_error_string($archive);
     }
