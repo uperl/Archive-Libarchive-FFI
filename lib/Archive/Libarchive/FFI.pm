@@ -527,7 +527,13 @@ _attach_function $_, [ _ptr, _str, _ptr, _size_t ],_int, sub
   $cb->($archive, $command, scalar_to_buffer($signature));
 } for (
   'archive_read_append_filter_program_signature',
-  archive_version_number() >= 3000000 ? 'archive_read_support_filter_program_signature' : [ archive_read_support_compression_program_signature => 'archive_read_support_filter_program_signature']);
+# TODO:
+# using archive_read_support_compression_program_signature for archive_read_support_filter_program_signature doesn't
+# appear to actually work for libarchive 2.x, so I am commenting it out for now.  This does appear to make it slightly
+# out of sync with the capability of the XS version, so if you need this function either use the XS version, or
+# upgrade to libarchie >= 3
+#  archive_version_number() >= 3000000 ? 'archive_read_support_filter_program_signature' : [ archive_read_support_compression_program_signature => 'archive_read_support_filter_program_signature']);
+  'archive_read_support_filter_program_signature');
 
 # this is an unusual one which doesn't need to be decoded
 # because it should always be ASCII
