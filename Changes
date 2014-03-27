@@ -2,6 +2,10 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.0704    2014-03-27 10:41:31 -0400
+  - Take advantage of FFI::Raw 0.29's ability to return strings from callbacks
+  - And therefore remove dependency on Module::Build::FFI
+
 0.0703    2014-03-24 17:17:33 -0400
   - fixed some type declarations which were causing failures on 32bit Linux
     (possibly others)
