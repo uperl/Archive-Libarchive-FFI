@@ -101,7 +101,7 @@ do { # import tests from XS version
 };
 
 do { # import documentation
-  use Pod::Abstract;
+  require Pod::Abstract;
 
   my $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS.pm ));
   my $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI.pm ));
