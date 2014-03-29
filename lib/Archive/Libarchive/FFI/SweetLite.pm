@@ -55,6 +55,24 @@ sub ffi_lib ($)
       push @libs, $$lib;
     }
   }
+  
+  if($^O eq 'openbsd')
+  {
+    @libs = map {
+      my $path = $_;
+      if($path =~ m{^(.+)/([^/]+)\.a})
+      {
+        my $dir  = $1;
+        my $pat  = quotemeta $2;
+        my $dh;
+        opendir $dh, $dir;
+        my($so) = sort grep /^$pat\.so/, readdir $dh;
+        closedir $dh;
+        $path = "$dir/$so";
+      }
+      $path;
+    } @libs;
+  }
 }
 
 sub attach_function ($$$;$)

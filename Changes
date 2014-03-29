@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - fix for OpenBSD
 
 0.0705    2014-03-27 12:59:38 -0400
   - for libarchive 2.x, use our own Perl implementation of archive_read_open_memory
