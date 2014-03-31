@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.0706    2014-03-31 11:10:49 -0400
   - fix for OpenBSD
 
 0.0705    2014-03-27 12:59:38 -0400
