@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.0801    2014-06-10 15:40:01 -0400
+  - Fix bundled dists
+
 0.0800    2014-06-10 12:54:29 -0400
   - Archive::Libarchive 0.19 compatability
 
