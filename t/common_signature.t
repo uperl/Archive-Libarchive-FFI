@@ -40,7 +40,8 @@ foreach my $function_name (qw( archive_read_support_filter_program_signature arc
     diag archive_error_string($a) if $r != ARCHIVE_OK;
 
     $r = archive_read_next_header($a, my $ae);
-    is $r, ARCHIVE_OK, 'archive_read_open_memory';
+    is $r, ARCHIVE_OK, 'archive_read_next_header';
+    diag archive_error_string($a) if $r != ARCHIVE_OK;
 
     SKIP: {
       skip 'requires ARCHIVE_FILTER_PROGRAM', 1 unless eval { ARCHIVE_FILTER_PROGRAM() };

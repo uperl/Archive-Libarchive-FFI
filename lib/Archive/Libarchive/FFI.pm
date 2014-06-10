@@ -607,8 +607,6 @@ eval '# line '. __LINE__ . ' "' . __FILE__ . qq("\n) . q{
 
 __END__
 
-=encoding utf-8
-
 =head1 SYNOPSIS
 
 list archive filenames

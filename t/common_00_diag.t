@@ -145,13 +145,10 @@ diag 'write formats:';
 foreach my $format (sort grep { s/^archive_write_set_format_// } keys %Archive::Libarchive::FFI::)
 {
   next if $format =~ /^(program|by_name)$/;
-  if(Archive::Libarchive::FFI::archive_version_number() < 3000000 && "Archive::Libarchive::FFI" =~ /(ffi|any)/i)
+  unless(eval { Archive::Libarchive::FFI::archive_version_number() >= 3000000 } || "Archive::Libarchive::FFI" !~ /(ffi|any)/i)
   {
-    if(($format =~ /^(ar_bsd|ar_svr4|cpio|cpio_newc|mtree)$/ && $^O eq 'freebsd') || $^O eq 'netbsd' || $^O eq 'midnightbsd')
-    {
-      diag sprintf "%-15s %s", $format, 'skip test';
-      next;
-    }
+    diag sprintf "%-15s %s", $format, 'skip test';
+    next;
   }
   my $ok = 'no';
   my $error;
@@ -177,6 +174,7 @@ if(eval { require Alien::Libarchive; 1 })
   my $alien = Alien::Libarchive->new;
   diag 'Alien::Libarchive cflags = ' . $alien->cflags;
   diag 'Alien::Libarchive libs   = ' . $alien->libs;
+  diag 'version                  = ' . eval { Archive::Libarchive::FFI::archive_version_number() };
   
   diag '';
   diag '';
