@@ -40,7 +40,14 @@ BEGIN {
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
-ffi_lib(Alien::Libarchive->new);
+if(Alien::Libarchive->isa('Alien::Base'))
+{
+  ffi_lib(Alien::Libarchive->new);
+}
+else
+{
+  ffi_lib(\$_) for Alien::Libarchive->new->dlls;
+}
 
 require Archive::Libarchive::FFI::Constant;
 
