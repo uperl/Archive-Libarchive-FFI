@@ -5,7 +5,6 @@ install:
   - sudo apt-get install libarchive-dev
   - cpanm -n Dist::Zilla
   - dzil authordeps --missing |cpanm -n
-  - cpanm -n Alien::Libarchive
   - cpanm -n Exporter::Tidy
   - cpanm -n FFI::Raw
   - cpanm -n Test::CPAN::Changes Test::EOL Test::Fixme Test::NoTabs Test::Pod::Spelling::CommonMistakes Test::Spelling Test::Strict Test::Version || true
@@ -24,4 +23,6 @@ env:
   - ALIEN_LIBARCHIVE=share
   - ALIEN_LIBARCHIVE=system
 
-script: dzil test -v
+script:
+  - cpanm -n -v Alien::Libarchive
+  - dzil test -v
