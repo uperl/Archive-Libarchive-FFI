@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - use Alien::Libarchive::Installer if possible
+    instead of the heavier weight Alien::Libarchive
 
 0.0801    2014-06-10 15:40:01 -0400
   - Fix bundled dists

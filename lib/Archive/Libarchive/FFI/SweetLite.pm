@@ -20,59 +20,7 @@ my @libs;
 sub ffi_lib ($)
 {
   my $lib = shift;
-  if(ref $lib)
-  {
-    if(eval { $lib->isa('Alien::Libarchive') } || eval { $lib->isa('Alien::Libarchive::MSWin32') })
-    {
-      if($^O =~ /^(MSWin32|cygwin)/)
-      {
-        if($lib->install_type eq 'share')
-        {
-          require File::Spec;
-          my $dir = File::Spec->catdir($lib->dist_dir, 'bin');
-          my $dh;
-          opendir($dh, $dir);
-          foreach my $file (readdir $dh)
-          {
-            next if $file =~ /^\./;
-            next unless $file =~ /\.dll$/i;
-            my $path = File::Spec->catfile($dir, $file);
-            push @libs, $path;
-          }
-          closedir $dh;
-          return;
-        }
-        elsif($^O eq 'cygwin')
-        {
-          push @libs, 'cygarchive-2.dll';
-          return;
-        }
-      }
-      push @libs, DynaLoader::dl_findfile(shellwords $lib->libs);
-    }
-    else
-    {
-      push @libs, $$lib;
-    }
-  }
-  
-  if($^O eq 'openbsd')
-  {
-    @libs = map {
-      my $path = $_;
-      if($path =~ m{^(.+)/([^/]+)\.a})
-      {
-        my $dir  = $1;
-        my $pat  = quotemeta $2;
-        my $dh;
-        opendir $dh, $dir;
-        my($so) = sort grep /^$pat\.so/, readdir $dh;
-        closedir $dh;
-        $path = "$dir/$so";
-      }
-      $path;
-    } @libs;
-  }
+  push @libs, $$lib;
 }
 
 sub attach_function ($$$;$)
