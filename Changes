@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.0802    2014-06-19 07:48:01 -0400
+  - promote to production
+
 0.0801_01 2014-06-18 15:55:44 -0400
   - use Alien::Libarchive::Installer if possible
     instead of the heavier weight Alien::Libarchive
