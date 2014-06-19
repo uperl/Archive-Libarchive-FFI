@@ -11,7 +11,7 @@ sub new
   
   unless(eval { Alien::Libarchive::Installer->system_install( test => 'ffi', alien => 1 ) })
   {
-    $args{requires}->{'Alien::Libarchive'} = '0.20';
+    $args{requires}->{'Alien::Libarchive'} = '0.21';
   }
   
   my $self = $class->SUPER::new(%args);
