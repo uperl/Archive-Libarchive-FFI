@@ -1,5 +1,6 @@
 Alien::Libarchive::Installer
 Exporter::Tidy
+FFI::Platypus
 FFI::Raw
 FFI::Util
 Module::Build

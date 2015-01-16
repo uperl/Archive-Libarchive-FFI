@@ -3,7 +3,7 @@ package
 
 use strict;
 use warnings;
-use FFI::Raw;
+use FFI::Platypus;
 use Exporter::Tidy
   default => [qw(
     ffi_lib attach_function
