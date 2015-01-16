@@ -219,7 +219,8 @@ if(archive_version_number() >= 3000000)
   {
     my($cb, $archive, $buffer) = @_;
     my $length = do { use bytes; length $buffer };
-    my $ptr = FFI::Raw::MemPtr->new_from_buf($buffer, $length);
+    # TODO: non dynamic cast to make this faster
+    my $ptr = cast string => opaque => $buffer;
     $callbacks{$archive}->[CB_BUFFER] = $ptr;  # TODO: CB_BUFFER or CB_DATA (or something else?)
     $cb->($archive, $ptr, $length);
   };
