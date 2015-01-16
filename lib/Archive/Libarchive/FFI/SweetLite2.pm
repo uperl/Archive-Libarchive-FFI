@@ -23,6 +23,7 @@ sub ffi_lib ($)
   $ffi->lib($$lib);
 }
 
+my $count = 0;
 sub attach_function ($$$;$)
 {
   my($name, $arg_types, $rv_type, $wrapper ) = @_;
@@ -30,11 +31,22 @@ sub attach_function ($$$;$)
   $arg_types //= [];
   my $install_name = $name;
   ( $name, $install_name ) = @{ $name } if ref $name;
-  
-  my $f = $ffi->function( $name => [map { chr $_ } @$arg_types] => chr $rv_type );
-  do {
+
+  if($wrapper)
+  {
+    my $tmpname = "Archive::Libarchive::FFI::SweetLite2::Tmp::${install_name}${count}";
+    $count++;
+    $ffi->attach( [$name => $tmpname] => [map { chr $_ } @$arg_types] => chr $rv_type );
+    my $sub = eval qq{
+      sub { \$wrapper->(\\\&$tmpname, \@_) }
+    };
+    warn $@ if $@;
     no strict 'refs';
-    *{join '::', $pkg, $install_name} = $wrapper ? sub { $wrapper->($f, @_) } : sub { $f->(@_) };
+    *{join '::', $pkg, $install_name} = $sub;
+  }
+  else
+  {
+    $ffi->attach( [$name => join('::', $pkg, $install_name)] => [map { chr $_ } @$arg_types] => chr $rv_type );
   }
 }
 
