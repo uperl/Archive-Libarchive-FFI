@@ -22,17 +22,8 @@ use FFI::Util qw(
 );
 
 BEGIN {
-
-  if(eval { require FFI::Sweet })
-  {
-    FFI::Sweet->import;
-  }
-  else
-  {
-    require Archive::Libarchive::FFI::SweetLite;
-    Archive::Libarchive::FFI::SweetLite->import;
-  }
-
+  require Archive::Libarchive::FFI::SweetLite2;
+  Archive::Libarchive::FFI::SweetLite2->import;
 }
 
 # ABSTRACT: Perl bindings to libarchive via FFI

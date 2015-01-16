@@ -10,17 +10,13 @@ package
   Archive::Libarchive::FFI;
 
 BEGIN {
-
-  if(eval { require FFI::Sweet })
-  {
-    FFI::Sweet->import;
-  }
-  else
-  {
-    require Archive::Libarchive::FFI::SweetLite;
-    Archive::Libarchive::FFI::SweetLite->import;
-  }
+  require Archive::Libarchive::FFI::SweetLite2;
+  Archive::Libarchive::FFI::SweetLite2->import;
 }
+
+my $ffi = Archive::Libarchive::FFI::SweetLite2->platypus;
+
+use FFI::Platypus::Memory qw( cast );
 use FFI::Util qw( deref_ptr_set _size_t );
 
 use constant {
@@ -48,7 +44,7 @@ do {
   }
 };
 
-my $myopen = FFI::Raw::Callback->new(sub {
+our $myopen_closure = $ffi->closure(sub {
   my($archive) = @_;
   my $status = eval {
     $callbacks{$archive}->[CB_OPEN]->($archive, $callbacks{$archive}->[CB_DATA]);
@@ -59,9 +55,10 @@ my $myopen = FFI::Raw::Callback->new(sub {
     return ARCHIVE_FATAL();
   }
   $status;
-}, _int, _ptr, _ptr);
+});
+my $myopen = cast '(opaque,opaque)->int' => 'opaque', $myopen_closure;
 
-my $mywrite = FFI::Raw::Callback->new(sub 
+our $mywrite_closure = $ffi->closure(sub 
 {
   my($archive, $null, $ptr, $size) = @_;
   my $buffer = buffer_to_scalar($ptr, $size);
@@ -74,9 +71,10 @@ my $mywrite = FFI::Raw::Callback->new(sub
     return ARCHIVE_FATAL();
   }
   $status;
-}, _int, _ptr, _ptr, _ptr, _size_t);
+});
+my $mywrite = cast '(opaque,opaque,opaque,size_t)->int'=>'opaque', $mywrite_closure;
 
-my $myread = FFI::Raw::Callback->new(sub
+our $myread_closure = $ffi->closure(sub
 {
   my($archive, $null, $optr) = @_;
   my($status, $buffer) = eval {
@@ -90,9 +88,10 @@ my $myread = FFI::Raw::Callback->new(sub
   my($ptr, $size) = scalar_to_buffer($buffer);
   deref_ptr_set($optr, $ptr);
   $size;
-}, _uint64, _ptr, _ptr, _ptr);
+});
+my $myread = cast '(opaque,opaque,opaque)->uint64'=>'opaque', $myread_closure;
 
-my $myskip = FFI::Raw::Callback->new(sub
+our $myskip_closure = $ffi->closure(sub
 {
   my($archive, $null, $request) = @_;
   my $status = eval {
@@ -104,9 +103,10 @@ my $myskip = FFI::Raw::Callback->new(sub
     return ARCHIVE_FATAL();
   }
   $status;
-}, _uint64, _ptr, _ptr, _uint64);
+});
+my $myskip = cast '(opaque,opaque,uint64)->uint64' => 'opaque', $myskip_closure;
 
-my $myseek = FFI::Raw::Callback->new(sub
+our $myseek_closure = $ffi->closure(sub
 {
   my($archive, $null, $offset, $whence) = @_;
   my $status = eval {
@@ -118,9 +118,10 @@ my $myseek = FFI::Raw::Callback->new(sub
     return ARCHIVE_FATAL();
   }
   $status;
-}, _uint64, _ptr, _ptr, _uint64, _int);
+});
+my $myseek = cast '(opaque,opaque,uint64,int)->uint64' => 'opaque', $myseek_closure;
 
-my $myclose = FFI::Raw::Callback->new(sub
+our $myclose_closure = $ffi->closure(sub
 {
   my($archive) = @_;
   my $status = eval {
@@ -132,7 +133,8 @@ my $myclose = FFI::Raw::Callback->new(sub
     return ARCHIVE_FATAL();
   }
   $status;
-}, _int, _ptr, _ptr);
+});
+my $myclose = cast '(opaque,opaque)->int' => 'opaque', $myclose_closure;
 
 _attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
@@ -272,51 +274,61 @@ use constant {
   CB_LOOKUP_GROUP => 1,
 };
 
-my $mylook_write_user_lookup = FFI::Raw::Callback->new(sub {
+our $mylook_write_user_lookup_closure = $ffi->closure(sub {
   my($archive, $name, $id) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
   return $id unless defined $look_cb;
   $look_cb->($data, $name, $id);
-}, _int64, _ptr, _str, _int64);
+});
+my $mylook_write_user_lookup = cast '(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_user_lookup_closure;
 
-my $mylook_write_group_lookup = FFI::Raw::Callback->new(sub {
+our $mylook_write_group_lookup_closure = $ffi->closure(sub {
   my($archive, $name, $id) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
   return $id unless defined $look_cb;
   $look_cb->($data, $name, $id);
-}, _int64, _ptr, _str, _int64);
+});
+my $mylook_write_group_lookup = cast '(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_group_lookup_closure;
 
-my $mylook_read_user_lookup = FFI::Raw::Callback->new(sub {
+our $mylook_read_user_lookup_closure = $ffi->closure(sub {
   my($archive, $id) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
   return undef unless defined $look_cb;
-  my $name = $look_cb->($data, $id);
-  return $name if defined $name;
+  use 5.010;
+  state $name;
+  $name = $look_cb->($data, $id);
+  return cast string => opaque => $name if defined $name;
   return;
-}, _str, _ptr, _int64);
+});
+my $mylook_read_user_lookup = cast '(opaque,sint64)->opaque'=>'opaque', $mylook_read_user_lookup_closure;
 
-my $mylook_read_group_lookup = FFI::Raw::Callback->new(sub {
+our $mylook_read_group_lookup_closure = $ffi->closure(sub {
   my($archive, $id) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
   return undef unless defined $look_cb;
-  my $name = $look_cb->($data, $id);
-  return $name if defined $name;
+  use 5.010;
+  state $name;
+  $name = $look_cb->($data, $id);
+  return cast string => opaque => $name if defined $name;
   return;
-}, _str, _ptr, _int64);
+});
+my $mylook_read_group_lookup = cast '(opaque,sint64)->opaque'=>'opaque', $mylook_read_group_lookup_closure;
 
-my $mylook_user_cleanup = FFI::Raw::Callback->new(sub {
+our $mylook_user_cleanup_closure = $ffi->closure(sub {
   my($archive) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_USER] };
   $clean_cb->($data) if defined $clean_cb;
   delete $lookups{$archive};
 }, _void, _ptr);
+my $mylook_user_cleanup = cast '(opaque)->void'=>'opaque', $mylook_user_cleanup_closure;
 
-my $mylook_group_cleanup = FFI::Raw::Callback->new(sub {
+our $mylook_group_cleanup_closure = $ffi->closure(sub {
   my($archive) = @_;
   my($data, $look_cb, $clean_cb) = @{ $lookups{$archive}->[CB_LOOKUP_GROUP] };
   $clean_cb->($data) if defined $clean_cb;
   delete $lookups{$archive};
-}, _void, _ptr);
+});
+my $mylook_group_cleanup = cast '(opaque)->void'=>'opaque',$mylook_group_cleanup_closure;
 
 _attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
