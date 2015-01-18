@@ -16,7 +16,6 @@ BEGIN {
 
 my $ffi = Archive::Libarchive::FFI::SweetLite2->platypus;
 
-use FFI::Platypus::Memory qw( cast );
 use FFI::Util qw( deref_ptr_set _size_t );
 
 use constant {
@@ -56,7 +55,7 @@ our $myopen_closure = $ffi->closure(sub {
   }
   $status;
 });
-my $myopen = cast '(opaque,opaque)->int' => 'opaque', $myopen_closure;
+my $myopen = $ffi->cast('(opaque,opaque)->int' => 'opaque', $myopen_closure);
 
 our $mywrite_closure = $ffi->closure(sub 
 {
@@ -72,7 +71,7 @@ our $mywrite_closure = $ffi->closure(sub
   }
   $status;
 });
-my $mywrite = cast '(opaque,opaque,opaque,size_t)->int'=>'opaque', $mywrite_closure;
+my $mywrite = $ffi->cast('(opaque,opaque,opaque,size_t)->int'=>'opaque', $mywrite_closure);
 
 our $myread_closure = $ffi->closure(sub
 {
@@ -89,7 +88,7 @@ our $myread_closure = $ffi->closure(sub
   deref_ptr_set($optr, $ptr);
   $size;
 });
-my $myread = cast '(opaque,opaque,opaque)->uint64'=>'opaque', $myread_closure;
+my $myread = $ffi->cast('(opaque,opaque,opaque)->uint64'=>'opaque', $myread_closure);
 
 our $myskip_closure = $ffi->closure(sub
 {
@@ -104,7 +103,7 @@ our $myskip_closure = $ffi->closure(sub
   }
   $status;
 });
-my $myskip = cast '(opaque,opaque,uint64)->uint64' => 'opaque', $myskip_closure;
+my $myskip = $ffi->cast('(opaque,opaque,uint64)->uint64' => 'opaque', $myskip_closure);
 
 our $myseek_closure = $ffi->closure(sub
 {
@@ -119,7 +118,7 @@ our $myseek_closure = $ffi->closure(sub
   }
   $status;
 });
-my $myseek = cast '(opaque,opaque,uint64,int)->uint64' => 'opaque', $myseek_closure;
+my $myseek = $ffi->cast('(opaque,opaque,uint64,int)->uint64' => 'opaque', $myseek_closure);
 
 our $myclose_closure = $ffi->closure(sub
 {
@@ -134,7 +133,7 @@ our $myclose_closure = $ffi->closure(sub
   }
   $status;
 });
-my $myclose = cast '(opaque,opaque)->int' => 'opaque', $myclose_closure;
+my $myclose = $ffi->cast('(opaque,opaque)->int' => 'opaque', $myclose_closure);
 
 _attach_function 'archive_write_open', [ _ptr, _ptr, _ptr, _ptr, _ptr ], _int, sub
 {
@@ -220,7 +219,7 @@ if(archive_version_number() >= 3000000)
     my($cb, $archive, $buffer) = @_;
     my $length = do { use bytes; length $buffer };
     # TODO: non dynamic cast to make this faster
-    my $ptr = cast string => opaque => $buffer;
+    my $ptr = $ffi->cast(string => opaque => $buffer);
     $callbacks{$archive}->[CB_BUFFER] = $ptr;  # TODO: CB_BUFFER or CB_DATA (or something else?)
     $cb->($archive, $ptr, $length);
   };
@@ -281,7 +280,7 @@ our $mylook_write_user_lookup_closure = $ffi->closure(sub {
   return $id unless defined $look_cb;
   $look_cb->($data, $name, $id);
 });
-my $mylook_write_user_lookup = cast '(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_user_lookup_closure;
+my $mylook_write_user_lookup = $ffi->cast('(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_user_lookup_closure);
 
 our $mylook_write_group_lookup_closure = $ffi->closure(sub {
   my($archive, $name, $id) = @_;
@@ -289,7 +288,7 @@ our $mylook_write_group_lookup_closure = $ffi->closure(sub {
   return $id unless defined $look_cb;
   $look_cb->($data, $name, $id);
 });
-my $mylook_write_group_lookup = cast '(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_group_lookup_closure;
+my $mylook_write_group_lookup = $ffi->cast('(opaque,string,sint64)->sint64'=>'opaque',$mylook_write_group_lookup_closure);
 
 our $mylook_read_user_lookup_closure = $ffi->closure(sub {
   my($archive, $id) = @_;
@@ -298,10 +297,10 @@ our $mylook_read_user_lookup_closure = $ffi->closure(sub {
   use 5.010;
   state $name;
   $name = $look_cb->($data, $id);
-  return cast string => opaque => $name if defined $name;
+  return $ffi->cast(string => opaque => $name) if defined $name;
   return;
 });
-my $mylook_read_user_lookup = cast '(opaque,sint64)->opaque'=>'opaque', $mylook_read_user_lookup_closure;
+my $mylook_read_user_lookup = $ffi->cast('(opaque,sint64)->opaque'=>'opaque', $mylook_read_user_lookup_closure);
 
 our $mylook_read_group_lookup_closure = $ffi->closure(sub {
   my($archive, $id) = @_;
@@ -310,10 +309,10 @@ our $mylook_read_group_lookup_closure = $ffi->closure(sub {
   use 5.010;
   state $name;
   $name = $look_cb->($data, $id);
-  return cast string => opaque => $name if defined $name;
+  return $ffi->cast(string => opaque => $name) if defined $name;
   return;
 });
-my $mylook_read_group_lookup = cast '(opaque,sint64)->opaque'=>'opaque', $mylook_read_group_lookup_closure;
+my $mylook_read_group_lookup = $ffi->cast('(opaque,sint64)->opaque'=>'opaque', $mylook_read_group_lookup_closure);
 
 our $mylook_user_cleanup_closure = $ffi->closure(sub {
   my($archive) = @_;
@@ -321,7 +320,7 @@ our $mylook_user_cleanup_closure = $ffi->closure(sub {
   $clean_cb->($data) if defined $clean_cb;
   delete $lookups{$archive};
 }, _void, _ptr);
-my $mylook_user_cleanup = cast '(opaque)->void'=>'opaque', $mylook_user_cleanup_closure;
+my $mylook_user_cleanup = $ffi->cast('(opaque)->void'=>'opaque', $mylook_user_cleanup_closure);
 
 our $mylook_group_cleanup_closure = $ffi->closure(sub {
   my($archive) = @_;
@@ -329,7 +328,7 @@ our $mylook_group_cleanup_closure = $ffi->closure(sub {
   $clean_cb->($data) if defined $clean_cb;
   delete $lookups{$archive};
 });
-my $mylook_group_cleanup = cast '(opaque)->void'=>'opaque',$mylook_group_cleanup_closure;
+my $mylook_group_cleanup = $ffi->cast('(opaque)->void'=>'opaque',$mylook_group_cleanup_closure);
 
 _attach_function 'archive_write_disk_set_user_lookup', [ _ptr, _ptr, _ptr, _ptr ], _int, sub
 {

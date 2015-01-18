@@ -6,6 +6,7 @@ use Alien::Libarchive::Installer;
 use Exporter::Tidy ();
 use Encode ();
 use Carp qw( croak );
+use FFI::Platypus;
 use FFI::Raw ();
 use FFI::Util qw(
   deref_ptr_get
