@@ -66,8 +66,8 @@ $ffi->type( 'float'          => 'f' );
 $ffi->type( 'double'         => 'd' );
 
 $ffi->custom_type(opaque => p => {
-  perl_to_ffi => sub { ref($_[0]) ? ${$_[0]} : $_[0] },
-  ffi_to_perl => sub { $_[0] },
+  perl_to_native => sub { ref($_[0]) ? ${$_[0]} : $_[0] },
+  native_to_perl => sub { $_[0] },
 });
 
 sub _void ()     { ord 'v' }
