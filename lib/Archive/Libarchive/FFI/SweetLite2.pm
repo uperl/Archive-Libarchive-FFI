@@ -65,7 +65,7 @@ $ffi->type( 'unsigned char'  => 'C' );
 $ffi->type( 'float'          => 'f' );
 $ffi->type( 'double'         => 'd' );
 
-$ffi->custom_type(opaque => p => {
+$ffi->custom_type(p => {
   perl_to_native => sub { ref($_[0]) ? ${$_[0]} : $_[0] },
   native_to_perl => sub { $_[0] },
 });
