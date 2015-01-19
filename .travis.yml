@@ -10,7 +10,7 @@ install:
   - cpanm -n Test::CPAN::Changes Test::EOL Test::Fixme Test::NoTabs Test::Pod::Spelling::CommonMistakes Test::Spelling Test::Strict Test::Version || true
   - cpanm -n Pod::Abstract
   - cpanm -n FFI::Util
-  - cpanm -n https://dist.wdlabs.com/FFI-Platypus-0.08.tar.gz
+  - cpanm -n https://dist.wdlabs.com/FFI-Platypus-0.09.tar.gz
 
 perl:
   - "5.10"
