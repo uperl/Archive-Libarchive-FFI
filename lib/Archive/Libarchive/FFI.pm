@@ -73,22 +73,37 @@ sub _attach ($$$)
   }
 }
 
-_attach 'archive_version_number',                        undef, _int;
+our $ffi = FFI::Platypus->new;
+$ffi->lib(Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls);
+$ffi->type(opaque => 'archive');
+$ffi->ignore_not_found(1);
+$ffi->type(string => 'ustring'); # utf-8 string TODO: encode/decode
+#$ffi->custom_type(ustring => { # utf-8 string
+#  native_type => 'string',
+#  perl_to_native => sub {
+#    defined $_[0] ? Encode::encode(archive_perl_codeset(), $_[0]) : undef;
+#  },
+#  native_to_perl => sub {
+#    defined $_[0] ? Encode::decode(archive_perl_codeset(), $_[0]) : undef;
+#  },
+#});
+
+$ffi->attach(archive_version_number => []          => 'int'    => '');
+$ffi->attach(archive_version_string => []          => 'ustring' => '');
+$ffi->attach(archive_clear_error    => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_copy_error     => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_errno          => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_file_count     => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_format         => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_format_count   => ['archive'] => 'int'    => '$');
+$ffi->attach(archive_format_name    => ['archive'] => 'ustring' => '$');
+$ffi->attach(archive_seek_data      => ['archive','sint64','int'] => 'int' => '$$$');
 
 require Archive::Libarchive::FFI::Callback;
 
-_attach 'archive_version_string',                        undef, _str;
-_attach 'archive_clear_error',                           [ _ptr ], _void;
-_attach 'archive_copy_error',                            [ _ptr ], _int;
-_attach 'archive_errno',                                 [ _ptr ], _int;
-_attach 'archive_file_count',                            [ _ptr ], _int;
-_attach 'archive_format',                                [ _ptr ], _int;
-_attach 'archive_format_name',                           [ _ptr ], _str;
-_attach 'archive_seek_data',                             [ _ptr, _int64, _int ], _int64;
-
 if(archive_version_number() >= 3000000)
 {
-  _attach 'archive_error_string',                          [ _ptr ], _str;
+  $ffi->attach(archive_error_string => ['archive'] => 'ustring' => '$');
 }
 else
 {
@@ -300,34 +315,38 @@ _attach 'archive_match_path_unmatched_inclusions',       [ _ptr ], _int;
 
 foreach my $type (qw( all bzip2 compress gzip grzip lrzip lzip lzma lzop none rpm uu xz ))
 {
+  $ffi->ignore_not_found(0);
   my $name = "archive_read_support_filter_$type";
   eval {
-    attach_function $name, [ _ptr ], _int;
+    $ffi->attach($name => ['archive'] => 'int' => '$');
   };
   if($@)
   {
     my $real = "archive_read_support_compression_$type";
-    eval { attach_function [ $real => $name ], [ _ptr ], _int };
+    eval { $ffi->attach([$real => $name] => ['archive'] => 'int' => '$') };
   }
+  $ffi->ignore_not_found(1);
 }
 
-_attach "archive_read_support_format_$_",  [ _ptr ], _int
+$ffi->attach("archive_read_support_format_$_" => ['archive'] => 'int' => '$')
   for qw( 7zip ar cab cpio empty gnutar iso9660 lha mtree rar raw tar xar zip );
 
 foreach my $type (qw( b64encode bzip2 compress grzip gzip lrzip lzip lzma lzop none uuencode xz ))
 {
+  $ffi->ignore_not_found(0);
   my $name = "archive_write_add_filter_$type";
   eval {
-    attach_function $name, [ _ptr ], _int;
+    $ffi->attach($name => ['archive'] => 'int');
   };
   if($@)
   {
     my $real = "archive_write_set_compression_$type";
-    eval { attach_function [ $real => $name ], [ _ptr ], _int };
+    eval { $ffi->attach([$real => $name] => ['archive'] => 'int') }
   }
+  $ffi->ignore_not_found(1);
 }  
 
-_attach "archive_write_set_format_$_", [ _ptr ], _int
+$ffi->attach("archive_write_set_format_$_" => ['archive'] => 'int')
   for qw( 7zip ar_bsd ar_svr4 cpio cpio_newc gnutar iso9660 mtree mtree_classic 
           pax pax_restricted shar shar_dump ustar v7tar xar zip);
 
