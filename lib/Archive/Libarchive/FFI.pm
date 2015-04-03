@@ -2,7 +2,6 @@ package Archive::Libarchive::FFI;
 
 use strict;
 use warnings;
-use Alien::Libarchive::Installer;
 use Exporter::Tidy ();
 use Encode ();
 use Carp qw( croak );
@@ -30,7 +29,15 @@ BEGIN {
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
-ffi_lib(\$_) for Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls;
+if($ENV{ARCHIVE_LIBARCHIVE_FFI_DLL})
+{
+  ffi_lib(\$ENV{ARCHIVE_LIBARCHIVE_FFI_DLL});
+}
+else
+{
+  require Alien::Libarchive::Installer;
+  ffi_lib(\$_) for Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls;
+}
 
 require Archive::Libarchive::FFI::Constant;
 
@@ -74,7 +81,10 @@ sub _attach ($$$)
 }
 
 our $ffi = FFI::Platypus->new;
-$ffi->lib(Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls);
+$ffi->lib($ENV{ARCHIVE_LIBARCHIVE_FFI_DLL} || do {
+  require Alien::Libarchive::Installer;
+  Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls
+});
 $ffi->type(opaque => 'archive');
 $ffi->ignore_not_found(1);
 $ffi->type(string => 'ustring'); # utf-8 string TODO: encode/decode

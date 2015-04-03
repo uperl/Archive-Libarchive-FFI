@@ -19,4 +19,14 @@ sub new
   $self;
 }
 
+sub ACTION_test
+{
+  my $self = shift;
+  
+  local $ENV{ARCHIVE_LIBARCHIVE_FFI_DLL};
+  ($ENV{ARCHIVE_LIBARCHIVE_FFI_DLL}) = Alien::Libarchive::Installer->system_install( test => 'ffi', alien => 1 )->dlls;
+  
+  $self->SUPER::ACTION_test(@_);
+}
+
 1;
