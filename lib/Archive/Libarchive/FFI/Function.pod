@@ -604,13 +604,13 @@ Sets the group id property for the archive entry.
 
 =head2 archive_entry_set_gname
 
- my $status = archive_entry_set_gname
+ my $status = archive_entry_set_gname($entry, $string)
 
 Sets the gname for the archive entry object.
 
 =head2 archive_entry_set_hardlink
 
- my $status = archive_entry_set_hardlink
+ my $status = archive_entry_set_hardlink($entry, $string)
 
 Sets the hardlink for the archive entry object.
 
@@ -669,7 +669,7 @@ Sets the number of hardlinks for the entry.
 
 =head2 archive_entry_set_pathname
 
- my $status = archive_entry_set_pathname
+ my $status = archive_entry_set_pathname($entry, $string)
 
 Sets the pathname for the archive entry object.
 
@@ -719,7 +719,7 @@ The fields C<$blksize>, C<$blocks> supported by L<stat|perlfunc#stat>, are not s
 
 =head2 archive_entry_set_symlink
 
- my $status = archive_entry_set_symlink
+ my $status = archive_entry_set_symlink($entry, $string)
 
 Sets the symlink for the archive entry object.
 
@@ -731,7 +731,7 @@ Set the UID (user id) property for the archive entry.
 
 =head2 archive_entry_set_uname
 
- my $status = archive_entry_set_uname
+ my $status = archive_entry_set_uname($entry, $string)
 
 Sets the uname for the archive entry object.
 

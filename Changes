@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+  - New constant ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS
+  - Fixed synopsis for archive_entry_set_pathname style functions
+    (Documentation)
 
 0.0802    2014-06-19 07:48:01 -0400
   - promote to production
