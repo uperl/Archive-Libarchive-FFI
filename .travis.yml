@@ -1,8 +1,13 @@
 language: perl
 
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libarchive-dev
+
 install:
-  - sudo apt-get update
-  - sudo apt-get install libarchive-dev
   - cpanm -n Dist::Zilla
   - dzil authordeps --missing |cpanm -n
   - cpanm -n Exporter::Tidy
