@@ -2,6 +2,7 @@ package Archive::Libarchive::FFI::Callback;
 
 use strict;
 use warnings;
+use 5.008;
 
 # ABSTRACT: Libarchive callbacks
 # VERSION

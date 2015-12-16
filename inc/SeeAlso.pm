@@ -1,8 +1,9 @@
 package inc::SeeAlso;
 
 use Moose;
-use v5.10;
 with 'Dist::Zilla::Role::FileMunger';
+
+my $data;
 
 sub munge_files
 {
@@ -13,7 +14,6 @@ sub munge_files
   $self->zilla->log_fatal("could not find main module")
     unless $file;
   
-  state $data;
   unless(defined $data)
   {
     local $/;
