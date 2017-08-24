@@ -12,9 +12,9 @@ my $post_diag;
 $modules{$_} = $_ for qw(
   Alien::Libarchive3
   Exporter::Tidy
+  ExtUtils::MakeMaker
   FFI::Raw
   FFI::Util
-  Module::Build
   Module::Build::FFI
   Test::More
 );
