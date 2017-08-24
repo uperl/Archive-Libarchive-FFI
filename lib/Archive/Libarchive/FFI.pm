@@ -2,7 +2,7 @@ package Archive::Libarchive::FFI;
 
 use strict;
 use warnings;
-use Alien::Libarchive::Installer;
+use Alien::Libarchive3;
 use Exporter::Tidy ();
 use Encode ();
 use Carp qw( croak );
@@ -38,7 +38,7 @@ BEGIN {
 # ABSTRACT: Perl bindings to libarchive via FFI
 # VERSION
 
-ffi_lib(\$_) for Alien::Libarchive::Installer->system_install( test => 'ffi' )->dlls;
+ffi_lib(\$_) for Alien::Libarchive3->dynamic_libs;
 
 require Archive::Libarchive::FFI::Constant;
 

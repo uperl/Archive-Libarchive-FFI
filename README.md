@@ -585,9 +585,8 @@ be written.
 - [Archive::Libarchive::XS](https://metacpan.org/pod/Archive::Libarchive::XS)
 - [Archive::Libarchive::FFI](https://metacpan.org/pod/Archive::Libarchive::FFI)
 
-    Both of these provide the same API to libarchive via [Alien::Libarchive](https://metacpan.org/pod/Alien::Libarchive),
-    but the bindings are implemented in XS for one and via [FFI::Sweet](https://metacpan.org/pod/FFI::Sweet) for
-    the other.
+    Both of these provide the same API to libarchive but the bindings are
+    implemented in XS for one and via [FFI::Raw](https://metacpan.org/pod/FFI::Raw) for the other.
 
 - [Archive::Libarchive::Any](https://metacpan.org/pod/Archive::Libarchive::Any)
 
@@ -618,7 +617,7 @@ be written.
 
 # AUTHOR
 
-Graham Ollis &lt;plicease@cpan.org>
+Graham Ollis <plicease@cpan.org>
 
 # COPYRIGHT AND LICENSE
 

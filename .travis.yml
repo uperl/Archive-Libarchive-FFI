@@ -8,27 +8,25 @@ addons:
       - libarchive-dev
 
 install:
-  - cpanm -n Dist::Zilla
-  - dzil authordeps --missing |cpanm -n
-  - cpanm -n Exporter::Tidy
-  - cpanm -n FFI::Raw
-  - cpanm -n Test::CPAN::Changes Test::EOL Test::Fixme Test::NoTabs Test::Pod::Spelling::CommonMistakes Test::Spelling Test::Strict Test::Version || true
-  - cpanm -n Pod::Abstract
-  - cpanm -n FFI::Util
+  - ./maint/travis-install-mods
+  - dzil -I. authordeps --missing | grep -v inc::SeeAlso |cpanm -n
+  - dzil -I. listdeps --missing | cpanm -n
 
 perl:
-  - "5.10"
-  - "5.12"
   - "5.14"
   - "5.16"
   - "5.18"
   - "5.20"
   - "5.22"
+  - "5.24"
+  - "5.26"
 
-env:
-  - ALIEN_LIBARCHIVE=share
-  - ALIEN_LIBARCHIVE=system
+matrix:
+  global:
+    - ALIEN_BASE_NO_ABMB=1
+  env:
+    - ALIEN_LIBARCHIVE=share
+    - ALIEN_LIBARCHIVE=system
 
 script:
-  - cpanm -n -v Alien::Libarchive
   - dzil test -v

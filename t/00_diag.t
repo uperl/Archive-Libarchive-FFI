@@ -10,7 +10,7 @@ my %modules;
 my $post_diag;
 
 $modules{$_} = $_ for qw(
-  Alien::Libarchive::Installer
+  Alien::Libarchive3
   Exporter::Tidy
   FFI::Raw
   FFI::Util
