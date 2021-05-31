@@ -35,7 +35,7 @@ BEGIN {
 
 }
 
-# ABSTRACT: Perl bindings to libarchive via FFI
+# ABSTRACT: (Deprecated) Perl bindings to libarchive via FFI
 # VERSION
 
 ffi_lib(\$_) for Alien::Libarchive3->dynamic_libs;
@@ -682,6 +682,10 @@ write archive
  archive_write_free($archive);
 
 =head1 DESCRIPTION
+
+B<NOTE>: This module has been deprecated in favor of L<Archive::Libarchive>.
+It provides a better thought out object-oriented interface and is easier
+to maintain.
 
 This module provides a functional interface to libarchive.  libarchive is a
 C library that can read and write archives in a variety of formats and with a
