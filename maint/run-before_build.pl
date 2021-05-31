@@ -11,17 +11,17 @@ require Archive::Libarchive::XS;
 do { # constants.pm
 
   my $file = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Constant.pm ));
-  
+
   $file->parent->mkpath(0,0755);
-  
+
   eval {
     my $buffer = '';
     $buffer .= "package Archive::Libarchive::FFI::Constant;\n\n";
     $buffer .= "use strict;\n";
     $buffer .= "use warnings;\n\n";
-  
+
     $buffer .= "# VERSION\n\n";
-  
+
     $buffer .= "package\n  Archive::Libarchive::FFI;\n\n";
 
     $buffer .= "use constant {\n";
@@ -32,12 +32,12 @@ do { # constants.pm
       $buffer .= "  $const => $value,\n";
     }
     $buffer .= "};\n\n";
-  
+
     $buffer .= "1;\n\n__END__\n\n";
-    
+
     $file->spew($buffer);
   };
-  
+
   warn "WARNING: did not regenerate constants.pm because there are missing constants: $@" if $@;
 };
 
@@ -54,13 +54,13 @@ do { # import from inc
 do { # import examples from XS version
 
   my $source = file(__FILE__)->parent->parent->parent->parent->subdir('Archive-Libarchive-XS')->subdir('example');
-  
+
   unless(-d $source)
   {
     die "first checkout Archive::Libarchive::XS";
   }
   my $dest = file(__FILE__)->parent->parent->parent->subdir('example');
-  
+
   foreach my $example ($source->children)
   {
     say $example->absolute;
@@ -89,7 +89,7 @@ do { # import tests from XS version
     say $archive->absolute;
     $dest->file($archive->basename)->spew(scalar $archive->slurp);
   }
-  
+
   foreach my $test ($source->children)
   {
     next if $test->is_dir;
@@ -115,10 +115,10 @@ do { # import documentation
   $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Callback.pm ));
   $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Callback.pm ));
   doco($source, $dest);
-  
+
   $source = file(__FILE__)->parent->parent->parent->parent->file(qw( Archive-Libarchive-XS lib Archive Libarchive XS Function.pod ));
   $dest   = file(__FILE__)->parent->parent->parent->file(qw( lib Archive Libarchive FFI Function.pod ));
-  
+
   my $doc = $source->slurp;
   $doc =~ s/XS/FFI/g;
   $dest->spew($doc);
@@ -133,7 +133,7 @@ sub doco
   my @content = $dest->slurp;
 
   pop @content while @content > 0 && $content[-1] ne "__END__\n";
-  
+
   unless(@content > 0)
   {
     die "didn't find __END__";
