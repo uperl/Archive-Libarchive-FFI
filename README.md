@@ -1,6 +1,6 @@
 # Archive::Libarchive::FFI ![linux](https://github.com/uperl/Archive-Libarchive-FFI/workflows/linux/badge.svg)
 
-Perl bindings to libarchive via FFI
+(Deprecated) Perl bindings to libarchive via FFI
 
 # SYNOPSIS
 
@@ -34,7 +34,7 @@ my $archive = archive_read_new();
 archive_read_support_filter_all($archive);
 archive_read_support_format_all($archive);
 my $disk = archive_write_disk_new();
-archive_write_disk_set_options($disk, 
+archive_write_disk_set_options($disk,
   ARCHIVE_EXTRACT_TIME   |
   ARCHIVE_EXTRACT_PERM   |
   ARCHIVE_EXTRACT_ACL    |
@@ -47,9 +47,9 @@ while(1)
 {
   my $r = archive_read_next_header($archive, my $entry);
   last if $r == ARCHIVE_EOF;
-  
+
   archive_write_header($disk, $entry);
-  
+
   while(1)
   {
     my $r = archive_read_data_block($archive, my $buffer, my $offset);
@@ -93,8 +93,12 @@ archive_write_free($archive);
 
 # DESCRIPTION
 
+**NOTE**: This module has been deprecated in favor of [Archive::Libarchive](https://metacpan.org/pod/Archive::Libarchive).
+It provides a better thought out object-oriented interface and is easier
+to maintain.
+
 This module provides a functional interface to libarchive.  libarchive is a
-C library that can read and write archives in a variety of formats and with a 
+C library that can read and write archives in a variety of formats and with a
 variety of compression filters, optimized in a stream oriented way.  A familiarity
 with the libarchive documentation would be helpful, but may not be necessary
 for simple tasks.  The documentation for this module is split into four separate
@@ -161,7 +165,7 @@ if($r != ARCHIVE_OK)
 while (archive_read_next_header($a, my $entry) == ARCHIVE_OK)
 {
   print archive_entry_pathname($entry), "\n";
-  archive_read_data_skip($a); 
+  archive_read_data_skip($a);
 }
 
 $r = archive_read_free($a);
@@ -199,7 +203,7 @@ if($r != ARCHIVE_OK)
 
 while (archive_read_next_header($a, my $entry) == ARCHIVE_OK) {
   print archive_entry_pathname($entry), "\n";
-  archive_read_data_skip($a); 
+  archive_read_data_skip($a);
 }
 
 $r = archive_read_free($a);
@@ -275,7 +279,7 @@ if($r != ARCHIVE_OK)
 $r = archive_read_next_header($a, my $ae);
 if($r != ARCHIVE_OK)
 {
-  die archive_error_string($a);     
+  die archive_error_string($a);
 }
 
 while(1)
@@ -310,13 +314,13 @@ use Archive::Libarchive::FFI qw( :all );
 sub write_archive
 {
   my($outname, @filenames) = @_;
-  
+
   my $a = archive_write_new();
-  
+
   archive_write_add_filter_gzip($a);
   archive_write_set_format_pax_restricted($a);
   archive_write_open_filename($a, $outname);
-  
+
   foreach my $filename (@filenames)
   {
     my $st = stat $filename;
@@ -334,7 +338,7 @@ sub write_archive
       $len = read $fh, $buff, 8192;
     }
     close $fh;
-    
+
     archive_entry_free($entry);
   }
   archive_write_close($a);
@@ -482,7 +486,7 @@ current POSIX locale.  Content data for files stored and retrieved from in
 raw bytes.
 
 The usual operational procedure in Perl is to convert everything on input
-into UTF-8, operate on the UTF-8 data and then convert (if necessary) 
+into UTF-8, operate on the UTF-8 data and then convert (if necessary)
 everything on output to the desired output format.
 
 In order to get useful string data out of libarchive, this module translates
@@ -562,7 +566,7 @@ use Encode qw( encode );
 
 archive_write_data($archive, encode('UTF-8', "привет.txt");
 # or
-archive_write_data($archive, encode('KOI8-R', "привет.txt"); 
+archive_write_data($archive, encode('KOI8-R', "привет.txt");
 ```
 
 read:
@@ -589,10 +593,10 @@ file for traps, hints and pitfalls.
 # CAVEATS
 
 Archive and entry objects are really pointers to opaque C structures
-and need to be freed using one of 
-[archive\_read\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_read_free), 
-[archive\_write\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_write_free) or 
-[archive\_entry\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_entry_free), 
+and need to be freed using one of
+[archive\_read\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_read_free),
+[archive\_write\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_write_free) or
+[archive\_entry\_free](https://metacpan.org/pod/Archive::Libarchive::FFI::Function#archive_entry_free),
 in order to free the resources associated with those objects.
 
 Proper Unicode (or non-ASCII character support) depends on setting the
@@ -601,9 +605,9 @@ correct POSIX locale, which is system dependent.
 The documentation that comes with libarchive is not that great (by its own
 admission), being somewhat incomplete, and containing a few subtle errors.
 In writing the documentation for this distribution, I borrowed heavily (read:
-stole wholesale) from the libarchive documentation, making changes where 
-appropriate for use under Perl (changing `NULL` to `undef` for example, along 
-with the interface change to make that work).  I may and probably have introduced 
+stole wholesale) from the libarchive documentation, making changes where
+appropriate for use under Perl (changing `NULL` to `undef` for example, along
+with the interface change to make that work).  I may and probably have introduced
 additional subtle errors.  Patches to the documentation that match the
 implementation, or fixes to the implementation so that it matches the
 documentation (which ever is appropriate) would greatly appreciated.
