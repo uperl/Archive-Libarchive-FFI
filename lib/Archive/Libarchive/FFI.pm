@@ -687,6 +687,15 @@ B<NOTE>: This module has been deprecated in favor of L<Archive::Libarchive>.
 It provides a better thought out object-oriented interface and is easier
 to maintain.
 
+B<NOTE>: This repository has been archived as it is no longer supported or
+maintained.  You may submitt a ticket at its replacement repository:
+
+=over 4
+
+=item L<https://github.com/uperl/Archive-Libarchive/issues>
+
+=back
+
 This module provides a functional interface to libarchive.  libarchive is a
 C library that can read and write archives in a variety of formats and with a
 variety of compression filters, optimized in a stream oriented way.  A familiarity

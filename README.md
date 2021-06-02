@@ -97,6 +97,11 @@ archive_write_free($archive);
 It provides a better thought out object-oriented interface and is easier
 to maintain.
 
+**NOTE**: This repository has been archived as it is no longer supported or
+maintained.  You may submitt a ticket at its replacement repository:
+
+- [https://github.com/uperl/Archive-Libarchive/issues](https://github.com/uperl/Archive-Libarchive/issues)
+
 This module provides a functional interface to libarchive.  libarchive is a
 C library that can read and write archives in a variety of formats and with a
 variety of compression filters, optimized in a stream oriented way.  A familiarity
